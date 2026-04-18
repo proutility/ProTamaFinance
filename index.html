@@ -27,7 +27,7 @@ body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color
 .sidebar-header { padding: 0 20px 20px; font-size: 1.2rem; font-weight: 700; border-bottom: 1px solid #1e293b; margin-bottom: 20px; color: white; display: flex; align-items: center; gap: 10px; }
 .sidebar button { background: transparent; color: var(--sidebar-text); border: none; padding: 15px 20px; text-align: left; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 12px; }
 .sidebar button:hover, .sidebar button.active { background: #1e293b; color: white; border-left: 4px solid var(--primary); }
-.logout-btn { margin-top: auto; color: var(--danger) !important; }
+.logout-btn { margin-top: auto; color: var(--danger) !important; margin-bottom: 10px; }
 
 /* --- MAIN CONTENT --- */
 .main-content { flex: 1; overflow-y: auto; padding: 30px; position: relative; z-index: 1; background-color: var(--bg); }
@@ -45,15 +45,7 @@ body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color
 .text-success { color: var(--success); } .text-danger { color: var(--danger); } .text-primary { color: var(--primary); }
 
 /* --- ANIMASI SALDO NAIK/TURUN --- */
-.anim-float {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-left: 12px;
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  position: absolute;
-}
+.anim-float { font-size: 1.1rem; font-weight: 700; margin-left: 12px; opacity: 0; pointer-events: none; white-space: nowrap; position: absolute; }
 .anim-up { color: var(--success); animation: floatUp 2.5s ease-out forwards; }
 .anim-down { color: var(--danger); animation: floatDown 2.5s ease-out forwards; }
 @keyframes floatUp { 0% { opacity: 0; transform: translateY(15px) scale(0.8); } 20% { opacity: 1; transform: translateY(0) scale(1.1); } 80% { opacity: 1; transform: translateY(-15px) scale(1); } 100% { opacity: 0; transform: translateY(-25px) scale(0.9); } }
@@ -81,8 +73,11 @@ tr:last-child td { border-bottom: none; }
 .progress-header { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; font-weight: 600; color: var(--text); }
 .progress { background: #e2e8f0; border-radius: 999px; height: 10px; overflow: hidden; margin-bottom: 8px; }
 .progress-bar { height: 100%; transition: width 0.5s ease; border-radius: 999px; }
-.login-wrap { display: flex; align-items: center; justify-content: center; height: 100vh; width: 100vw; background: #0f172a; }
+
+/* TAMPILAN LOGIN - DIBIKIN FIXED BIAR AMAN DI HP/DESKTOP */
+.login-wrap { display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; z-index: 9999; }
 .login-card { background: white; padding: 40px; border-radius: 16px; text-align: center; width: 100%; max-width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); }
+
 .chart-container { position: relative; height: 300px; width: 100%; margin-top: 15px;}
 .chart-controls { margin-bottom: 20px; display: flex; gap: 10px; }
 .chart-controls button { padding: 8px 16px; border: 1px solid #cbd5e1; background: white; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #475569; transition: all 0.2s ease;}
@@ -97,9 +92,7 @@ tr:last-child td { border-bottom: none; }
 /* CSS UNTUK MONTH PICKER */
 .header-with-picker { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; position: relative; z-index: 50; padding-bottom: 15px; border-bottom: 1px solid var(--border);}
 .header-with-picker h2 { margin: 0; }
-.month-picker-capsule {
-  position: relative; display: inline-flex; align-items: center; background: var(--primary); color: white; border-radius: 999px; padding: 8px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4); transition: background-color 0.2s ease, transform 0.1s ease; overflow: hidden; z-index: 51;
-}
+.month-picker-capsule { position: relative; display: inline-flex; align-items: center; background: var(--primary); color: white; border-radius: 999px; padding: 8px 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4); transition: background-color 0.2s ease, transform 0.1s ease; overflow: hidden; z-index: 51; }
 .month-picker-capsule:hover { background: var(--primary-dark); transform: translateY(-1px); }
 .month-picker-capsule i { margin-right: 8px; font-size: 1rem; }
 .month-picker-capsule input[type="month"] { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 52; }
@@ -118,60 +111,76 @@ tr:last-child td { border-bottom: none; }
 /* CSS TAMBAHAN: RESPONSIVITAS LAYAR HP (MOBILE VIEW)        */
 /* ========================================================= */
 @media (max-width: 768px) {
-  /* Buka kunci scroll dan set ulang ukuran Sidebar */
-  .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; transition: 0.3s; z-index: 1000; height: 100vh; box-shadow: 4px 0 15px rgba(0,0,0,0.5); width: 240px; }
+  /* Buka kunci scroll biar lancar di HP */
+  body { display: block; height: auto; overflow: auto; background: var(--bg); }
+  .main-content { display: block; height: auto; overflow: visible; padding: 15px; padding-bottom: 100px; }
+  
+  /* Set ulang ukuran Sidebar dan kasih scroll */
+  .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; transition: 0.3s; z-index: 1000; height: 100dvh; box-shadow: 4px 0 15px rgba(0,0,0,0.5); width: 240px; overflow-y: auto; padding-bottom: 40px; }
   .sidebar.open { left: 0; }
   
-  /* Kasih ruang di bawah biar konten gak ketutup tombol menu bulat */
-  .main-content { padding: 15px; padding-bottom: 90px; }
+  /* Menampilkan overlay dan tombol menu hamburger */
+  #mobileMenuBtn { display: flex !important; }
+  #mobileOverlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; }
+  #mobileOverlay.show { display: block; }
   
-  /* Hilangkan fix width di grid biar gak maksa jebol layar ke samping */
+  /* Form & Grid Layout Fixes biar gak jebol kesamping */
   .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 15px; }
-  
-  .card { padding: 15px; }
-  .card h2 { font-size: 1.8rem; }
-  .header-title { font-size: 1.5rem; margin-bottom: 15px; }
-  
-  /* Tumpuk semua form input ke bawah */
   .form-group { flex-direction: column; align-items: stretch; gap: 10px; }
   .form-group > input, .form-group > select, .form-group > button, .form-group > div { width: 100%; min-width: 100%; box-sizing: border-box; }
+  .header-with-picker { flex-direction: column; align-items: flex-start; gap: 15px; }
+  .month-picker-capsule { width: 100%; justify-content: center; box-sizing: border-box;}
   
-  /* Rapihin header title & tombol bulan */
-  .header-with-picker { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .month-picker-capsule { width: 100%; justify-content: center; box-sizing: border-box; }
+  .card { padding: 15px; }
+  .header-title { font-size: 1.5rem; margin-bottom: 15px; }
   
-  /* Tombol Menu Bulat dimunculin di HP */
-  #mobileMenuBtn { display: flex !important; }
+  /* Mengubah Tabel Menjadi Card (List) biar responsif */
+  table, thead, tbody, th, td, tr { display: block; width: 100%; box-sizing: border-box; }
+  thead tr { position: absolute; top: -9999px; left: -9999px; }
+  tr { margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  td { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; text-align: right; border-bottom: 1px solid #f1f5f9; }
+  td:last-child { border-bottom: none; justify-content: flex-end; }
   
-  /* Ukuran Font Tabel Diperkecil Sedikit di HP */
-  table { min-width: 100% !important; font-size: 0.85rem; }
-  th, td { padding: 12px 10px; }
-  .card[style*="overflow-x: auto"] { padding: 10px; }
+  #trxList td:nth-of-type(1)::before { content: "Tanggal"; font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
+  #trxList td:nth-of-type(2)::before { content: "Jenis"; font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
+  #trxList td:nth-of-type(3)::before { content: "Keterangan"; font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
+  #trxList td:nth-of-type(4)::before { content: "Nominal"; font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
   
-  /* Tampilan Login di HP biar gak mepet banget */
+  #debtList td:nth-of-type(1)::before { content: "Keterangan"; font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
+  #debtList td:nth-of-type(2)::before { content: "Total"; font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
+  #debtList td:nth-of-type(3)::before { content: "Sisa Tagihan"; font-weight: 600; color: #64748b; font-size: 0.8rem; text-transform: uppercase; }
+  
+  td > div { text-align: right; }
+  
   .login-card { padding: 30px 20px; width: 90%; }
 }
 </style>
 </head>
 <body>
 
+<div id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+<button id="mobileMenuBtn" onclick="toggleSidebar()" style="display:none; position:fixed; bottom:20px; right:20px; z-index:998; background:var(--primary); color:white; border:none; border-radius:50%; width:60px; height:60px; font-size:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.3); justify-content:center; align-items:center; cursor:pointer;">
+  <i class="fas fa-bars"></i>
+</button>
+
 <div id="app" style="width: 100%; display: flex;"></div>
 
 <script>
 // ========================================================
-// Fungsi Tombol Menu HP (Buka/Tutup Sidebar)
+// Fungsi Buka Tutup Sidebar HP
 // ========================================================
 function toggleSidebar() {
   const sidebar = document.querySelector('.sidebar');
   const overlay = document.getElementById('mobileOverlay');
   if(sidebar && overlay) {
     sidebar.classList.toggle('open');
-    overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+    overlay.classList.toggle('show');
   }
 }
 
 // ========================================================
-// KONFIGURASI FIREBASE CLOUD 
+// KONFIGURASI FIREBASE CLOUD
 // ========================================================
 const firebaseConfig = {
   apiKey: "AIzaSyCfz1UlF0HD3eZSwridBibwGMqn3-Z8Mu8",
@@ -293,12 +302,6 @@ function save(){
 
 function mainApp(){
 return `
-<div id="mobileOverlay" onclick="toggleSidebar()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:999; backdrop-filter: blur(4px);"></div>
-
-<button id="mobileMenuBtn" onclick="toggleSidebar()" style="display:none; position:fixed; bottom:25px; right:25px; z-index:1000; background:var(--primary); color:white; border:none; border-radius:50%; width:60px; height:60px; font-size:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.3); justify-content:center; align-items:center; cursor:pointer; transition: transform 0.2s;">
-  <i class="fas fa-bars"></i>
-</button>
-
 <div class="sidebar">
   <div class="sidebar-header">
     <img src="logo.png" alt="Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 8px;"> Pro-Tama Finance
@@ -358,18 +361,19 @@ return `
   </div>
   <div class="card">
     <div class="form-group">
-      <select id="type" onchange="handleTypeChange()">
+      <select id="type" style="flex: 0.5; min-width: 180px;" onchange="handleTypeChange()">
         <option value="income">Pemasukan 📈</option>
         <option value="expense">Pengeluaran 📉</option>
         <option value="beli_aset">Beli Saham/Aset 🛒</option>
         <option value="jual_aset">Jual Saham/Aset 💰</option>
         <option value="transfer">Transfer Bank 🔄</option>
       </select>
-      <select id="walletSelect"><option value="">-- Rekening Sumber --</option></select>
-      <select id="assetTargetSelect" style="display: none;"><option value="">-- Target Aset --</option></select>
+      <select id="walletSelect" style="flex: 1;"><option value="">-- Rekening Sumber --</option></select>
+      <select id="assetTargetSelect" style="flex: 1; display: none;"><option value="">-- Target Aset --</option></select>
       
-      <select id="trxCategory" onchange="handleTrxCategoryChange()"></select>
-      <input type="text" id="customTrxCategory" placeholder="Ketik kategori baru..." style="display: none;">
+      <select id="trxCategory" style="flex: 1;" onchange="handleTrxCategoryChange()">
+        </select>
+      <input type="text" id="customTrxCategory" placeholder="Ketik kategori baru..." style="flex: 1; display: none;">
 
       <input type="number" id="amount" placeholder="Nominal (Rp)">
       <input type="text" id="desc" placeholder="Keterangan">
@@ -378,7 +382,7 @@ return `
     </div>
   </div>
   <div class="card" style="overflow-x: auto;">
-    <table style="min-width: 700px;">
+    <table id="tabelTransaksi" style="min-width: 100%;">
       <thead><tr><th>Tanggal</th><th>Jenis</th><th>Keterangan</th><th>Nominal</th><th style="width: 80px; text-align: center;">Aksi</th></tr></thead>
       <tbody id="trxList"></tbody>
     </table>
@@ -396,7 +400,7 @@ return `
   
   <div id="budgetStatusCard" class="card" style="background: #f0f9ff; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
     <div style="flex: 1; min-width: 250px;">
-      <h3 id="budgetCardTitle" style="color: var(--primary-dark); margin-bottom: 5px;">Sisa Rencana Perlu Dana</h3>
+      <h3 id="budgetCardTitle" style="color: var(--primary-dark); margin-bottom: 5px;">Total Anggaran vs Saldo Kas</h3>
       <p style="margin: 0; font-size: 0.9rem; color: #64748b;">Target yang belum dibayar vs Saldo Kas saat ini.</p>
     </div>
     <div style="text-align: right; background: white; padding: 10px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
@@ -406,11 +410,11 @@ return `
 
   <div class="card">
     <div class="form-group">
-      <select id="budgetCategory" onchange="handleBudgetCategoryChange()">
+      <select id="budgetCategory" style="flex: 1;" onchange="handleBudgetCategoryChange()">
         </select>
-      <input type="text" id="customBudgetCategory" placeholder="Ketik kategori baru..." style="display: none;">
+      <input type="text" id="customBudgetCategory" placeholder="Ketik kategori baru..." style="flex: 1; display: none;">
       
-      <input type="number" id="budgetAmount" placeholder="Batas Maksimal (Rp)">
+      <input type="number" id="budgetAmount" placeholder="Batas Maksimal (Rp)" style="flex: 1;">
       <button class="action" onclick="addBudget()"><i class="fas fa-plus"></i> Set Anggaran</button>
     </div>
   </div>
@@ -428,7 +432,7 @@ return `
 
   <div class="card">
     <div class="form-group">
-      <select id="assetType">
+      <select id="assetType" style="flex: 0.5; min-width: 200px;">
         <option value="rekening">Rekening Bank / RDN 💳</option>
         <option value="saham">Saham (Ticker) 📈</option>
         <option value="emas">Emas 🏅</option>
@@ -453,9 +457,9 @@ return `
   </div>
   <div class="card">
     <div class="form-group">
-      <input id="goalName" placeholder="Nama Target">
-      <input type="number" id="goalValue" placeholder="Nominal (Rp)">
-      <button id="btnSelectSource" class="action" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; box-shadow: none;" onclick="openSourceModal('add')"><i class="fas fa-layer-group"></i> Semua Saldo Kas</button>
+      <input id="goalName" placeholder="Nama Target" style="flex: 1;">
+      <input type="number" id="goalValue" placeholder="Nominal (Rp)" style="flex: 1;">
+      <button id="btnSelectSource" class="action" style="flex: 1; background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; box-shadow: none;" onclick="openSourceModal('add')"><i class="fas fa-layer-group"></i> Semua Saldo Kas</button>
       <button class="action" onclick="addGoal()"><i class="fas fa-plus"></i> Simpan Target</button>
     </div>
   </div>
@@ -468,16 +472,16 @@ return `
   </div>
   <div class="card">
     <div class="form-group">
-      <input id="debtName" placeholder="Nama Hutang">
-      <input type="number" id="debtAmount" placeholder="Total Hutang (Rp)">
-      <div style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; padding-right: 10px;">
+      <input id="debtName" placeholder="Nama Hutang" style="flex: 1.5;">
+      <input type="number" id="debtAmount" placeholder="Total Hutang (Rp)" style="flex: 1;">
+      <div style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; padding-right: 10px; flex: 1;">
           <input type="date" id="debtDate" title="Tanggal Jatuh Tempo per Bulan" style="border: none; background: transparent; width: 100%;">
       </div>
       <button class="action" onclick="addDebt()"><i class="fas fa-plus"></i> Catat Hutang</button>
     </div>
   </div>
   <div class="card" style="overflow-x: auto;">
-    <table style="min-width: 800px;">
+    <table id="tabelHutang" style="min-width: 100%;">
       <thead><tr><th>Nama / Keterangan</th><th>Total Pinjaman</th><th>Sisa Tagihan</th><th style="width: 150px; text-align: center;">Aksi</th></tr></thead>
       <tbody id="debtList"></tbody>
     </table>
@@ -516,13 +520,14 @@ function showPage(p){
   document.querySelectorAll(".sidebar button").forEach(btn => btn.classList.remove("active"));
   if(document.getElementById("nav-" + p)) document.getElementById("nav-" + p).classList.add("active");
   
-  // Fitur Tutup Sidebar Otomatis di HP
+  // Tutup sidebar di mobile setelah klik menu
   if (window.innerWidth <= 768) {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('mobileOverlay');
     if(sidebar && overlay) {
       sidebar.classList.remove('open');
       overlay.style.display = 'none';
+      document.body.style.overflow = 'auto'; // Pastikan scroll kebuka lagi
     }
   }
   
@@ -539,7 +544,7 @@ function handleTypeChange() {
   
   assetTarget.style.display = (type === 'beli_aset' || type === 'jual_aset' || type === 'transfer') ? "block" : "none";
   
-  // Tampilkan form Kategori buat Income & Expense
+  // FIX: Kategori tampil buat Pemasukan & Pengeluaran
   trxCat.style.display = (type === 'income' || type === 'expense') ? "block" : "none";
   
   if (type !== 'expense' && type !== 'income') customTrxCat.style.display = "none";
@@ -581,6 +586,7 @@ function updateDropdowns() {
     });
   }
 
+  // FIX: Daftar Kategori Spesifik Pemasukan vs Pengeluaran
   let defaultExpenseCats = ["Kebutuhan Pokok", "Transportasi", "Cicilan / Tagihan", "Hiburan / Ngedate"];
   let defaultIncomeCats = ["Gaji Pokok", "Tunjangan / Bonus", "Dividen Saham", "Hasil Jual Aset", "Pendapatan Lain"];
   
@@ -591,7 +597,7 @@ function updateDropdowns() {
     if(t.category && t.category !== "Tanpa Kategori" && t.category !== "Lainnya") { 
       if(t.type === 'expense' && !defaultExpenseCats.includes(t.category) && !extraExpenseCats.includes(t.category)) {
         extraExpenseCats.push(t.category);
-      } else if(t.type === 'income' && !defaultIncomeCats.includes(t.category) && !extraIncomeCats.includes(t.category)) {
+      } else if (t.type === 'income' && !defaultIncomeCats.includes(t.category) && !extraIncomeCats.includes(t.category)) {
         extraIncomeCats.push(t.category);
       }
     } 
@@ -750,7 +756,9 @@ function addTransaction(){
     trxAssets[assetIdx].value += amountVal;
   }
 
+  // FIX: Simpan Kategori untuk Transaksi Pemasukan juga
   let finalCategory = (type === 'expense' || type === 'income') ? category : null;
+
   transactions.push({id: Date.now(), amount:amountVal, desc, date, type, walletName: trxAssets[walletIdx].name, category: finalCategory});
   
   document.getElementById("amount").value = "";
@@ -1391,7 +1399,7 @@ function renderBudgetList(list, ym) {
     budgetVsLiquid.innerHTML = `<span style="color:${totalRemainingPlanning > cash ? 'var(--danger)' : 'var(--success)'}">${formatRp(totalRemainingPlanning)}</span> <small style="color:#94a3b8">/ ${formatRp(cash)}</small>`;
     statusCard.style.backgroundColor = totalRemainingPlanning > cash ? '#fff1f2' : '#f0fdf4';
     statusCard.style.borderColor = totalRemainingPlanning > cash ? '#fecaca' : '#bbf7d0';
-    document.getElementById("budgetCardTitle").innerText = totalRemainingPlanning > 0 ? "Budgeting" : "Rencana Bulan Ini Beres!";
+    document.getElementById("budgetCardTitle").innerText = totalRemainingPlanning > 0 ? "Sisa Rencana Perlu Dana" : "Rencana Bulan Ini Beres!";
   }
 }
 

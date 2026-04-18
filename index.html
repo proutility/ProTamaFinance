@@ -421,9 +421,9 @@ return `
     <img src="logo.png" alt="Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 8px;"> Pro-Tama Finance
   </div>
   <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-chart-pie"></i> Dashboard</button>
-  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi Mutasi</button>
-  <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran Bulanan</button>
   <button id="nav-aset" onclick="showPage('aset')"><i class="fas fa-gem"></i> Aset & Portofolio</button>
+  <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran Bulanan</button>
+  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi Mutasi</button>
   <button id="nav-target" onclick="showPage('target')"><i class="fas fa-bullseye"></i> Target & Impian</button>
   <button id="nav-hutang" onclick="showPage('hutang')"><i class="fas fa-hand-holding-usd"></i> Hutang/Cicilan</button>
   <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -487,6 +487,10 @@ return `
       
       <select id="trxCategory" style="flex: 1;" onchange="handleTrxCategoryChange()">
         </select>
+        
+      <select id="trxSubCategory" style="flex: 1; display: none;">
+      </select>
+
       <input type="text" id="customTrxCategory" placeholder="Ketik kategori baru..." style="flex: 1; display: none;">
 
       <input type="number" id="amount" placeholder="Nominal (Rp)">
@@ -564,7 +568,7 @@ return `
   </div>
   
   <div style="margin-bottom: 15px; padding: 0 10px;">
-    <h3 style="margin: 0; color: #475569; font-size: 1.1rem;">Daftar Saldo & Portofolio</h3>
+    <h3 style="margin: 0; color: #475569; font-size: 1.1rem;">Daftar Aset & Portofolio</h3>
   </div>
   <div id="assetListContainer"></div>
 </div>
@@ -651,7 +655,6 @@ function showPage(p){
   update();
 }
 
-// FIX: Update formatRp biar menoleransi angka koma/desimal buat Average Saham
 const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(angka);
 
 function handleTypeChange() {
@@ -673,7 +676,37 @@ function handleTypeChange() {
 
 function handleTrxCategoryChange() {
   let val = document.getElementById("trxCategory").value;
-  document.getElementById("customTrxCategory").style.display = (val === 'Lainnya') ? 'block' : 'none';
+  let customCat = document.getElementById("customTrxCategory");
+  let subCatSel = document.getElementById("trxSubCategory");
+  
+  if (val === 'Lainnya') {
+    customCat.style.display = 'block';
+    subCatSel.style.display = 'none';
+  } else {
+    customCat.style.display = 'none';
+    
+    // FIX: Tampilkan dropdown Sub Kategori jika ada
+    let type = document.getElementById("type").value;
+    if(type === 'expense') {
+        let trxDate = document.getElementById("date").value || defaultYM;
+        let ym = trxDate.substring(0, 7);
+        let budget = getBudgetsFor(ym).find(b => b.category === val);
+        
+        if (budget && budget.subBudgets && budget.subBudgets.length > 0) {
+            subCatSel.innerHTML = '<option value="">-- Pilih Sub Kategori (Opsional) --</option>';
+            budget.subBudgets.forEach(sub => {
+                subCatSel.innerHTML += `<option value="${sub.name}">${sub.name}</option>`;
+            });
+            subCatSel.style.display = 'block';
+        } else {
+            subCatSel.style.display = 'none';
+            subCatSel.value = '';
+        }
+    } else {
+        subCatSel.style.display = 'none';
+        subCatSel.value = '';
+    }
+  }
 }
 
 function handleBudgetCategoryChange() {
@@ -760,7 +793,6 @@ function updateDropdowns() {
     
     trxCatSel.innerHTML += '<option value="Lainnya">Lainnya (Ketik Sendiri)</option>';
     
-    // Set ulang kalau masih valid
     let opts = Array.from(trxCatSel.options).map(o => o.value);
     if(opts.includes(currentTrxCat)) trxCatSel.value = currentTrxCat;
   }
@@ -776,6 +808,9 @@ function updateDropdowns() {
     let opts = Array.from(bdgCatSel.options).map(o => o.value);
     if(opts.includes(currentBdgCat)) bdgCatSel.value = currentBdgCat;
   }
+  
+  // FIX: Trigger perubahan untuk nge-load sub kategori kalau ada
+  handleTrxCategoryChange();
 }
 
 function openSourceModal(mode, index) {
@@ -856,6 +891,10 @@ function addTransaction(){
     category = document.getElementById("customTrxCategory").value;
     if (!category) return alert("Isi nama kategori barunya bro!");
   }
+  
+  // FIX: Simpan subKategori kalo ada
+  let subCatEl = document.getElementById("trxSubCategory");
+  let subCategory = (subCatEl.style.display !== 'none' && subCatEl.value !== "") ? subCatEl.value : null;
 
   if(!amountVal || !desc || walletIdx === "") return alert("Lengkapi data mutasi, bro!");
   walletIdx = parseInt(walletIdx);
@@ -893,13 +932,24 @@ function addTransaction(){
 
   let finalCategory = (type === 'expense' || type === 'income') ? category : null;
   
-  transactions.push({id: Date.now(), amount:amountVal, desc, date, type, walletName: trxAssets[walletIdx].name, category: finalCategory});
+  transactions.push({
+      id: Date.now(), 
+      amount: amountVal, 
+      desc, date, type, 
+      walletName: trxAssets[walletIdx].name, 
+      category: finalCategory,
+      subCategory: subCategory // Menyimpan data sub-kategori
+  });
   
   document.getElementById("amount").value = "";
   document.getElementById("desc").value = "";
   if(document.getElementById("trxCategory")) document.getElementById("trxCategory").value = "Tanpa Kategori";
   document.getElementById("customTrxCategory").value = "";
   document.getElementById("customTrxCategory").style.display = "none";
+  if(document.getElementById("trxSubCategory")) {
+      document.getElementById("trxSubCategory").value = "";
+      document.getElementById("trxSubCategory").style.display = "none";
+  }
   
   save(); update();
 }
@@ -945,6 +995,36 @@ function deleteBudget(ym, index) {
   }
 }
 
+// FIX: Fungsi Tambah Sub Budget
+function addSubBudget(ym, index) {
+  let name = prompt("Nama Sub Kategori (misal: Makan, Bensin):");
+  if(!name || name.trim() === "") return;
+  
+  let amountInput = prompt(`Nominal budget maksimal untuk '${name}' (Rp):`);
+  let amount = parseInt(amountInput ? amountInput.replace(/\./g, '').replace(/,/g, '') : 0);
+  
+  if(isNaN(amount) || amount <= 0) return alert("Nominal tidak valid!");
+  
+  if(!budgetsData[ym][index].subBudgets) budgetsData[ym][index].subBudgets = [];
+  
+  // Validasi: Cek total sub budget gak boleh ngelewatin budget utama
+  let currentSubTotal = budgetsData[ym][index].subBudgets.reduce((acc, curr) => acc + curr.amount, 0);
+  if(currentSubTotal + amount > budgetsData[ym][index].amount) {
+      return alert(`Gagal! Total Sub-Budget (${formatRp(currentSubTotal + amount)}) melebihi Batas Maksimal Kategori Utama (${formatRp(budgetsData[ym][index].amount)}).`);
+  }
+
+  budgetsData[ym][index].subBudgets.push({name: name.trim(), amount: amount});
+  save(); update();
+}
+
+// FIX: Fungsi Hapus Sub Budget
+function deleteSubBudget(ym, bIdx, subIdx) {
+  if(confirm("Hapus sub kategori ini?")) {
+      budgetsData[ym][bIdx].subBudgets.splice(subIdx, 1);
+      save(); update();
+  }
+}
+
 function copyPreviousMonthBudgets() {
   let currentYM = document.getElementById("budgetMonthFilter") ? document.getElementById("budgetMonthFilter").value : defaultYM;
   if(!currentYM) currentYM = defaultYM;
@@ -957,7 +1037,6 @@ function copyPreviousMonthBudgets() {
   save(); update();
 }
 
-// FIX: Penambahan parseFloat untuk hitung koma dan hitung Lot saat Add
 function addAsset(){
   let name = document.getElementById("assetName").value;
   let value = parseFloat(document.getElementById("assetValue").value);
@@ -990,7 +1069,6 @@ function addAsset(){
   save(); update();
 }
 
-// FIX: Penggunaan parseFloat dan replace koma waktu Edit Saham
 function updateStockValue(i) {
   let assetYM = document.getElementById("assetMonthFilter") ? document.getElementById("assetMonthFilter").value : defaultYM;
   if(!assetYM) assetYM = defaultYM;
@@ -1312,7 +1390,12 @@ function update(){
     trxList.innerHTML = "";
     [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 15).forEach((t, i) => {
       let originalIndex = transactions.findIndex(orig => orig.id === t.id);
-      let catLabel = t.category ? `<span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; margin-left:8px; display:inline-block; color:#475569;">${t.category}</span>` : "";
+      
+      // FIX: Tampilkan Sub Kategori di Mutasi kalau ada (misal: "Kebutuhan Pokok - Makan")
+      let fullCatName = t.category || "";
+      if (t.category && t.subCategory) fullCatName = `${t.category} - ${t.subCategory}`;
+      
+      let catLabel = fullCatName ? `<span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; margin-left:8px; display:inline-block; color:#475569;">${fullCatName}</span>` : "";
       
       let typeIcon = t.type === 'income' ? '<i class="fas fa-arrow-down text-success"></i>' : (t.type === 'expense' ? '<i class="fas fa-arrow-up text-danger"></i>' : '<i class="fas fa-exchange-alt text-primary"></i>');
       
@@ -1322,7 +1405,6 @@ function update(){
 
   renderBudgetList(currentBudgets, budgetYM);
 
-  // FIX: Tampilan P/L di Menu Aset biar angkanya pas
   const assetListContainer = document.getElementById("assetListContainer");
   if(assetListContainer) {
     assetListContainer.innerHTML = "";
@@ -1490,7 +1572,7 @@ function update(){
   }
 }
 
-// LOGIKA ANGGARAN CERDAS
+// LOGIKA ANGGARAN CERDAS + SUB BUDGET
 function renderBudgetList(list, ym) {
   const container = document.getElementById("budgetList"); 
   if(!container) return;
@@ -1530,6 +1612,7 @@ function renderBudgetList(list, ym) {
   
   let spentThisMonth = {};
   transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense').forEach(t => {
+    // Save under category
     spentThisMonth[t.category] = (spentThisMonth[t.category] || 0) + t.amount;
   });
 
@@ -1550,11 +1633,42 @@ function renderBudgetList(list, ym) {
     let bgLightColor = isDanger ? '#fee2e2' : (isWarning ? '#fef08a' : '#f1f5f9');
     let borderCardColor = isDanger ? '#fca5a5' : 'var(--border)';
     
+    // FIX: Render HTML untuk Sub-Categories kalau ada
+    let subHTML = '';
+    if(b.subBudgets && b.subBudgets.length > 0) {
+        subHTML += `<div style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 12px;">`;
+        b.subBudgets.forEach((sub, subIdx) => {
+            // Hitung pengeluaran khusus sub kategori ini
+            let subSpent = transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense' && t.category === b.category && t.subCategory === sub.name).reduce((acc, t) => acc + t.amount, 0);
+            let subPercent = Math.min((subSpent / sub.amount) * 100, 100).toFixed(1);
+            let subIsDanger = subSpent > sub.amount;
+            let subColorCode = subIsDanger ? 'var(--danger)' : '#0ea5e9';
+            
+            subHTML += `
+                <div style="display:flex; justify-content:space-between; font-size: 0.85rem; margin-bottom: 6px; color:#475569;">
+                    <span style="display:flex; align-items:center;">
+                        <i class="fas fa-level-up-alt fa-rotate-90" style="margin-right:8px; color:#cbd5e1;"></i> 
+                        ${sub.name} 
+                        <button onclick="deleteSubBudget('${ym}', ${i}, ${subIdx})" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0;margin-left:8px;" title="Hapus Sub"><i class="fas fa-times"></i></button>
+                    </span>
+                    <strong style="color:${subIsDanger ? 'var(--danger)' : '#1e293b'}">${formatRp(subSpent)} <span style="color:#94a3b8; font-weight:400; font-size:0.75rem;">/ ${formatRp(sub.amount)}</span></strong>
+                </div>
+                <div class="progress" style="height: 6px; margin-bottom: 12px; background: ${subIsDanger ? '#fee2e2' : '#e0f2fe'};">
+                    <div class="progress-bar" style="width:${subPercent}%; background: ${subColorCode}"></div>
+                </div>
+            `;
+        });
+        subHTML += `</div>`;
+    }
+    
     container.innerHTML += `
       <div class="card" style="margin-bottom: 0; border: 1px solid ${borderCardColor}; border-left: 5px solid ${isDone ? 'var(--success)' : 'var(--primary)'}">
         <div class="progress-header" style="align-items: center; margin-bottom: 12px;">
           <strong style="font-size: 1.05rem; color: #1e293b;">${b.category} ${isDone ? '<span class="budget-badge badge-paid">✓ Terpenuhi</span>' : ''}</strong>
-          <button class="btn-danger" style="padding: 4px 8px; background: transparent; color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#cbd5e1'" onclick="deleteBudget('${ym}', ${i})"><i class="fas fa-trash"></i></button>
+          <div style="display:flex; gap:8px;">
+            <button style="padding: 4px 8px; background: #e0f2fe; color: #0ea5e9; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display:flex; align-items:center; gap:4px;" onclick="addSubBudget('${ym}', ${i})"><i class="fas fa-plus"></i> Sub</button>
+            <button class="btn-danger" style="padding: 4px 8px; background: transparent; color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#cbd5e1'" onclick="deleteBudget('${ym}', ${i})"><i class="fas fa-trash"></i></button>
+          </div>
         </div>
         <div style="font-size: 0.95rem; color: #475569; margin-bottom: 12px;">
           Terpakai: <strong style="color:#1e293b;">${formatRp(spent)}</strong> <span style="color:#94a3b8; font-size:0.85rem;">/ ${formatRp(b.amount)}</span>
@@ -1565,6 +1679,7 @@ function renderBudgetList(list, ym) {
         <div style="text-align: right; font-weight: 700; font-size: 0.85rem; color: ${barColor}">
           ${percent}% ${isDanger ? ' (Over Budget!)' : ''}
         </div>
+        ${subHTML}
       </div>
     `;
   });

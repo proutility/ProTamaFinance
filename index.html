@@ -181,6 +181,17 @@ tr:last-child td { border-bottom: none; }
   margin-right: 8px;
   font-size: 0.9em;
 }
+
+/* BADGE ANGGARAN */
+.budget-badge { 
+  font-size: 0.75rem; 
+  padding: 3px 8px; 
+  border-radius: 12px; 
+  font-weight: 700; 
+  margin-left: 8px; 
+  text-transform: uppercase; 
+}
+.badge-paid { background: #dcfce7; color: #15803d; }
 </style>
 </head>
 <body>
@@ -189,9 +200,8 @@ tr:last-child td { border-bottom: none; }
 
 <script>
 // ========================================================
-// ⚠️ KONFIGURASI FIREBASE CLOUD (GANTI PAKE PUNYA LO) ⚠️
+// KONFIGURASI FIREBASE CLOUD 
 // ========================================================
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCfz1UlF0HD3eZSwridBibwGMqn3-Z8Mu8",
   authDomain: "pratama-finance.firebaseapp.com",
@@ -317,9 +327,9 @@ return `
     <img src="logo.png" alt="Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 8px;"> Pro-Tama Finance
   </div>
   <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-chart-pie"></i> Dashboard</button>
-  <button id="nav-" onclick="showPage('aset')"><i class="fas fa-gem"></i> Aset Portofolio</button>
-  <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran Bulanan</button>
   <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi Mutasi</button>
+  <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran Bulanan</button>
+  <button id="nav-aset" onclick="showPage('aset')"><i class="fas fa-gem"></i> Aset Portofolio</button>
   <button id="nav-target" onclick="showPage('target')"><i class="fas fa-bullseye"></i> Target & Impian</button>
   <button id="nav-hutang" onclick="showPage('hutang')"><i class="fas fa-hand-holding-usd"></i> Hutang / Cicilan</button>
   <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -408,10 +418,10 @@ return `
     </div>
   </div>
   
-  <div class="card" style="background: #f0f9ff; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+  <div id="budgetStatusCard" class="card" style="background: #f0f9ff; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
     <div style="flex: 1; min-width: 250px;">
-      <h3 style="color: var(--primary-dark); margin-bottom: 5px;">Total Anggaran vs Saldo Kas</h3>
-      <p style="margin: 0; font-size: 0.9rem; color: #64748b;">Pastikan total budget nggak melebihi total uang kas/rekening saat ini.</p>
+      <h3 id="budgetCardTitle" style="color: var(--primary-dark); margin-bottom: 5px;">Total Anggaran vs Saldo Kas</h3>
+      <p style="margin: 0; font-size: 0.9rem; color: #64748b;">Target yang belum dibayar vs Saldo Kas saat ini.</p>
     </div>
     <div style="text-align: right; background: white; padding: 10px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
       <h2 id="budgetVsLiquid" style="margin: 0; color: var(--text); font-size: 1.8rem;">Rp 0 / Rp 0</h2>
@@ -778,10 +788,9 @@ function addBudget() {
   save(); update();
 }
 
-function deleteBudget(index) {
+function deleteBudget(ym, index) {
   if(confirm("Hapus anggaran untuk kategori ini?")) {
-    let budgetYM = document.getElementById("budgetMonthFilter") ? document.getElementById("budgetMonthFilter").value : defaultYM;
-    budgetsData[budgetYM].splice(index, 1); 
+    budgetsData[ym].splice(index, 1); 
     save(); update();
   }
 }
@@ -1128,11 +1137,10 @@ function update(){
     });
   }
 
-  // RENDER BUDGET
+  // RENDER BUDGET (SUDAH DIPERBAIKI LOGIKANYA)
   const budgetList = document.getElementById("budgetList");
   if(budgetList) {
     budgetList.innerHTML = "";
-    let totalBudgetSet = 0;
     
     if(currentBudgets.length === 0) {
       budgetList.innerHTML = `
@@ -1147,6 +1155,8 @@ function update(){
           </button>
         </div>
       `;
+      // Reset status box atas kalau kosong
+      document.getElementById("budgetVsLiquid").innerHTML = `<span style="color: var(--success)">Rp 0</span> <small style="color:#94a3b8">/ ${formatRp(balance)}</small>`;
     } else {
       let spentThisMonth = {};
       transactions.forEach(t => {
@@ -1157,21 +1167,28 @@ function update(){
         }
       });
 
+      let totalRemainingPlanning = 0;
+
       currentBudgets.forEach((b, i) => {
-        totalBudgetSet += b.amount;
         let spent = spentThisMonth[b.category] || 0;
+        let remainingCategory = Math.max(0, b.amount - spent);
+        totalRemainingPlanning += remainingCategory;
+        
         let percent = Math.min((spent / b.amount) * 100, 100).toFixed(1);
         let isWarning = percent > 80;
         let isDanger = percent >= 100;
+        let isDone = spent >= b.amount;
+        
         let barColor = isDanger ? 'var(--danger)' : (isWarning ? 'var(--warning)' : 'var(--primary)');
+        if(isDone) barColor = 'var(--success)';
         let bgLightColor = isDanger ? '#fee2e2' : (isWarning ? '#fef08a' : '#f1f5f9');
         let borderCardColor = isDanger ? '#fca5a5' : 'var(--border)';
         
         budgetList.innerHTML += `
-          <div class="card" style="margin-bottom: 0; border: 1px solid ${borderCardColor};">
+          <div class="card" style="margin-bottom: 0; border: 1px solid ${borderCardColor}; border-left: 5px solid ${isDone ? 'var(--success)' : 'var(--primary)'}">
             <div class="progress-header" style="align-items: center; margin-bottom: 12px;">
-              <strong style="font-size: 1.05rem; color: #1e293b;">${b.category}</strong>
-              <button class="btn-danger" style="padding: 4px 8px; background: transparent; color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#cbd5e1'" onclick="deleteBudget(${i})"><i class="fas fa-trash"></i></button>
+              <strong style="font-size: 1.05rem; color: #1e293b;">${b.category} ${isDone ? '<span class="budget-badge badge-paid">✓ Terpenuhi</span>' : ''}</strong>
+              <button class="btn-danger" style="padding: 4px 8px; background: transparent; color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#cbd5e1'" onclick="deleteBudget('${budgetYM}', ${i})"><i class="fas fa-trash"></i></button>
             </div>
             <div style="font-size: 0.95rem; color: #475569; margin-bottom: 12px;">
               Terpakai: <strong style="color:#1e293b;">${formatRp(spent)}</strong> <span style="color:#94a3b8; font-size:0.85rem;">/ ${formatRp(b.amount)}</span>
@@ -1185,14 +1202,16 @@ function update(){
           </div>
         `;
       });
+      
+      const statusCard = document.getElementById("budgetStatusCard");
+      const budgetVsLiquid = document.getElementById("budgetVsLiquid");
+      if(statusCard && budgetVsLiquid){
+        budgetVsLiquid.innerHTML = `<span style="color:${totalRemainingPlanning > balance ? 'var(--danger)' : 'var(--success)'}">${formatRp(totalRemainingPlanning)}</span> <small style="color:#94a3b8">/ ${formatRp(balance)}</small>`;
+        statusCard.style.backgroundColor = totalRemainingPlanning > balance ? '#fff1f2' : '#f0fdf4';
+        statusCard.style.borderColor = totalRemainingPlanning > balance ? '#fecaca' : '#bbf7d0';
+        document.getElementById("budgetCardTitle").innerText = totalRemainingPlanning > 0 ? "Sisa Rencana Perlu Dana" : "Rencana Bulan Ini Beres!";
+      }
     }
-    
-    let bMonthAssets = getAssetsFor(budgetYM);
-    let bMonthBalance = 0;
-    bMonthAssets.forEach(a => { if(a.type === 'rekening') bMonthBalance += a.value; });
-    
-    let isBudgetSafe = totalBudgetSet <= bMonthBalance;
-    document.getElementById("budgetVsLiquid").innerHTML = `<span style="color: ${isBudgetSafe ? 'var(--success)' : 'var(--danger)'}">${formatRp(totalBudgetSet)}</span> <span style="color:#94a3b8; font-size: 1.2rem;">/</span> <span style="color:#475569; font-size: 1.4rem;">${formatRp(bMonthBalance)}</span>`;
   }
 
   const assetListContainer = document.getElementById("assetListContainer");

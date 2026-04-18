@@ -12,6 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
 :root {
@@ -310,6 +311,31 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+// ========================================================
+// OVERRIDE ALERT BAWAAN JADI SWEETALERT MODERN
+// ========================================================
+window.alert = function(message) {
+  let msgLower = message.toLowerCase();
+  let iconType = 'info';
+  
+  // Deteksi otomatis tipe pesannya bro
+  if (msgLower.includes('sukses')) iconType = 'success';
+  else if (msgLower.includes('gagal') || msgLower.includes('cukup') || msgLower.includes('valid') || msgLower.includes('kosong')) iconType = 'error';
+  else if (msgLower.includes('lengkapi') || msgLower.includes('pilih')) iconType = 'warning';
+
+  Swal.fire({
+    text: message,
+    icon: iconType,
+    confirmButtonColor: '#3b82f6',
+    confirmButtonText: 'Siap!',
+    background: '#ffffff',
+    borderRadius: '12px',
+    customClass: {
+      popup: 'swal2-custom-popup'
+    }
+  });
+};
 
 // ================= VARIABEL GLOBAL =================
 let currentUser = null;

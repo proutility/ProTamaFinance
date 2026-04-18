@@ -1347,7 +1347,7 @@ function renderBudgetList(list, ym) {
       budgetVsLiquid.innerHTML = `<span style="color:var(--success)">Rp 0</span> <small style="color:#94a3b8">/ ${formatRp(cash)}</small>`;
       statusCard.style.backgroundColor = '#f0fdf4';
       statusCard.style.borderColor = '#bbf7d0';
-      document.getElementById("budgetCardTitle").innerText = "Sisa Rencana Perlu Dana";
+      document.getElementById("budgetCardTitle").innerText = "Budgeting";
     }
     return;
   }
@@ -1399,7 +1399,7 @@ function renderBudgetList(list, ym) {
     budgetVsLiquid.innerHTML = `<span style="color:${totalRemainingPlanning > cash ? 'var(--danger)' : 'var(--success)'}">${formatRp(totalRemainingPlanning)}</span> <small style="color:#94a3b8">/ ${formatRp(cash)}</small>`;
     statusCard.style.backgroundColor = totalRemainingPlanning > cash ? '#fff1f2' : '#f0fdf4';
     statusCard.style.borderColor = totalRemainingPlanning > cash ? '#fecaca' : '#bbf7d0';
-    document.getElementById("budgetCardTitle").innerText = totalRemainingPlanning > 0 ? "Sisa Rencana Perlu Dana" : "Rencana Bulan Ini Beres!";
+    document.getElementById("budgetCardTitle").innerText = totalRemainingPlanning > 0 ? "Budgeting" : "Rencana Bulan Ini Beres!";
   }
 }
 

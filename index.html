@@ -553,12 +553,12 @@ return `
         <option value="bergerak">Aset Bergerak 🚗</option>
         <option value="nonbergerak">Aset Tetap 🏠</option>
       </select>
-      <input id="assetName" placeholder="Nama (Misal: BCA, INET)">
+      <input id="assetName" placeholder="Nama (Misal: Saham INET, Seabank)">
       
       <input type="number" id="assetLot" placeholder="Jml Lot" style="display:none; flex: 0.5;">
-      <input type="number" id="assetAvg" placeholder="Avg Beli (Rp)" style="display:none; flex: 0.5;">
+      <input type="number" id="assetAvg" placeholder="Avg Beli (Rp)" step="any" style="display:none; flex: 0.5;">
       
-      <input type="number" id="assetValue" placeholder="Nilai Saat Ini / Saldo (Rp)">
+      <input type="number" id="assetValue" placeholder="Nilai Awal / Saldo (Rp)" step="any">
       <button class="action" onclick="addAsset()"><i class="fas fa-plus"></i> Tambah Aset</button>
     </div>
   </div>
@@ -651,7 +651,8 @@ function showPage(p){
   update();
 }
 
-const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+// FIX: Update formatRp biar menoleransi angka koma/desimal buat Average Saham
+const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(angka);
 
 function handleTypeChange() {
   let type = document.getElementById("type").value;
@@ -680,18 +681,20 @@ function handleBudgetCategoryChange() {
   document.getElementById("customBudgetCategory").style.display = (val === 'Lainnya') ? 'block' : 'none';
 }
 
-// FIX: Menampilkan form khusus kalau pilih Saham
 function handleAssetTypeChange() {
   let type = document.getElementById("assetType").value;
   let lotInput = document.getElementById("assetLot");
   let avgInput = document.getElementById("assetAvg");
+  let valInput = document.getElementById("assetValue");
   
   if (type === 'saham') {
     lotInput.style.display = "block";
     avgInput.style.display = "block";
+    valInput.placeholder = "Harga Saat Ini / Lembar (Rp)";
   } else {
     lotInput.style.display = "none";
     avgInput.style.display = "none";
+    valInput.placeholder = "Nilai Awal / Saldo (Rp)";
   }
 }
 
@@ -757,6 +760,7 @@ function updateDropdowns() {
     
     trxCatSel.innerHTML += '<option value="Lainnya">Lainnya (Ketik Sendiri)</option>';
     
+    // Set ulang kalau masih valid
     let opts = Array.from(trxCatSel.options).map(o => o.value);
     if(opts.includes(currentTrxCat)) trxCatSel.value = currentTrxCat;
   }
@@ -953,23 +957,23 @@ function copyPreviousMonthBudgets() {
   save(); update();
 }
 
-// FIX: Update Fungsi Add Asset untuk nyimpen data saham
+// FIX: Penambahan parseFloat untuk hitung koma dan hitung Lot saat Add
 function addAsset(){
   let name = document.getElementById("assetName").value;
-  let value = parseInt(document.getElementById("assetValue").value);
+  let value = parseFloat(document.getElementById("assetValue").value);
   let type = document.getElementById("assetType").value;
   
   if(!name || isNaN(value)) return alert("Isi nama dan nominal!");
   
   let newData = {name, value, type};
   
-  // Simpan info lot dan avg kalau tipenya saham
   if (type === 'saham') {
     let lot = parseInt(document.getElementById("assetLot").value);
-    let avg = parseInt(document.getElementById("assetAvg").value);
+    let avg = parseFloat(document.getElementById("assetAvg").value);
     if(isNaN(lot) || isNaN(avg)) return alert("Isi Jumlah Lot dan Average Harga Beli untuk saham bro!");
     newData.lot = lot;
     newData.avg = avg;
+    newData.value = value * lot * 100; // Harga Saat Ini dikali lot dikali 100 lembar
   }
   
   let assetYM = document.getElementById("assetMonthFilter") ? document.getElementById("assetMonthFilter").value : defaultYM;
@@ -986,7 +990,7 @@ function addAsset(){
   save(); update();
 }
 
-// FIX: Update Fungsi Edit Saham jadi dinamis hitung pakai Lot
+// FIX: Penggunaan parseFloat dan replace koma waktu Edit Saham
 function updateStockValue(i) {
   let assetYM = document.getElementById("assetMonthFilter") ? document.getElementById("assetMonthFilter").value : defaultYM;
   if(!assetYM) assetYM = defaultYM;
@@ -998,15 +1002,14 @@ function updateStockValue(i) {
       let newPrice = prompt(`Update harga saham ${asset.name} (per lembar).\n\nHarga saat ini: Rp ${currentPrice}\nLot dimiliki: ${asset.lot} lot\nAvg beli: Rp ${asset.avg || 0}`, currentPrice);
       
       if (newPrice === null || newPrice.trim() === "") return;
-      newPrice = parseInt(newPrice);
+      newPrice = parseFloat(newPrice.replace(/,/g, '.')); // Handle input koma jadi desimal
       if (isNaN(newPrice) || newPrice < 0) return alert("Harga gak valid bro!");
       
-      // Auto hitung total value baru
       asset.value = newPrice * asset.lot * 100;
   } else {
       let newVal = prompt(`Update nominal terbaru untuk ${asset.name} (Rp):`, asset.value);
       if (newVal === null || newVal.trim() === "") return;
-      newVal = parseInt(newVal);
+      newVal = parseFloat(newVal.replace(/,/g, '.'));
       if (isNaN(newVal) || newVal < 0) return alert("Nominal gak valid bro!");
       asset.value = newVal;
   }
@@ -1317,10 +1320,9 @@ function update(){
     });
   }
 
-  // RENDER BUDGET (LOGIKA CERDAS)
   renderBudgetList(currentBudgets, budgetYM);
 
-  // FIX: RENDER ASET DENGAN PROFIT/LOSS SAHAM
+  // FIX: Tampilan P/L di Menu Aset biar angkanya pas
   const assetListContainer = document.getElementById("assetListContainer");
   if(assetListContainer) {
     assetListContainer.innerHTML = "";
@@ -1363,7 +1365,6 @@ function update(){
         groupedAssets[cat].forEach(a => {
           let stockInfo = "";
           
-          // Logika khusus nampilin detail saham dan Profit/Loss
           if (a.type === 'saham' && a.lot && a.avg) {
              let modal = a.lot * 100 * a.avg;
              let profitLoss = a.value - modal;

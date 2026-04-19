@@ -294,11 +294,11 @@ tr:last-child td { border-bottom: none; }
   #wedVendorList td:nth-of-type(2)::before { content: "Layanan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedVendorList td:nth-of-type(3)::before { content: "Status"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   
-  #wedGuestListVIP td:nth-of-type(1)::before, #wedGuestListReguler td:nth-of-type(1)::before { content: "Nama Tamu"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedGuestListVIP td:nth-of-type(2)::before, #wedGuestListReguler td:nth-of-type(2)::before { content: "Jumlah"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedGuestListVIP td:nth-of-type(3)::before, #wedGuestListReguler td:nth-of-type(3)::before { content: "Undangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedGuestListVIP td:nth-of-type(4)::before, #wedGuestListReguler td:nth-of-type(4)::before { content: "Kehadiran"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-
+  #wedGuestListVIP td:nth-of-type(1)::before, #wedGuestListReguler td:nth-of-type(1)::before, #wedGuestListPria td:nth-of-type(1)::before, #wedGuestListWanita td:nth-of-type(1)::before { content: "Nama Tamu"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestListVIP td:nth-of-type(2)::before, #wedGuestListReguler td:nth-of-type(2)::before, #wedGuestListPria td:nth-of-type(2)::before, #wedGuestListWanita td:nth-of-type(2)::before { content: "Jumlah"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestListVIP td:nth-of-type(3)::before, #wedGuestListReguler td:nth-of-type(3)::before, #wedGuestListPria td:nth-of-type(3)::before, #wedGuestListWanita td:nth-of-type(3)::before { content: "Undangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestListVIP td:nth-of-type(4)::before, #wedGuestListReguler td:nth-of-type(4)::before, #wedGuestListPria td:nth-of-type(4)::before, #wedGuestListWanita td:nth-of-type(4)::before { content: "Kehadiran"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  
   td * { text-align: left !important; word-wrap: break-word; white-space: normal; }
   
   .login-card { padding: 30px 20px; width: 90%; }
@@ -449,16 +449,13 @@ function loadDataFromFirebase() {
       budgetsData = data.budgetsData || {};
       assetsData = data.assetsData || {};
       
-      // Load Wedding Data if exists
       if(data.weddingData) {
           weddingData = data.weddingData;
       }
     }
     
-    // Refresh alias var
     assets = getAssetsFor(defaultYM);
     
-    // Render UI
     document.getElementById("app").innerHTML = mainApp();
     setTimeout(() => {
         showPage('dashboard');
@@ -479,7 +476,7 @@ function save(){
     debts: debts,
     budgetsData: budgetsData,
     assetsData: assetsData,
-    weddingData: weddingData, // Save wedding data
+    weddingData: weddingData, 
     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch((error) => {
     console.error("Gagal nyimpen bro: ", error);
@@ -721,21 +718,44 @@ return `
   
   <div id="wed-content-guest" class="wed-content" style="display:none;">
       <div class="card" style="background: #f0fdf4; border-color: #bbf7d0; margin-bottom: 15px;">
-         <h3 style="margin:0; color:#15803d; display:flex; justify-content:space-between;">
+         <h3 style="margin:0; color:#15803d; display:flex; justify-content:space-between; align-items:center;">
              <span>Total Tamu Diundang:</span>
-             <strong id="wedTotalGuests" style="font-size: 1.5rem;">0 Orang</strong>
+             <div style="text-align:right;">
+                <strong id="wedTotalGuests" style="font-size: 1.5rem;">0 Orang</strong>
+                <div style="margin-top: 8px;">
+                   <button class="btn-success" onclick="exportGuestsToCSV()" style="font-size:0.8rem; padding:6px 12px; cursor:pointer;"><i class="fas fa-file-excel"></i> Download Excel</button>
+                </div>
+             </div>
          </h3>
       </div>
       <div class="card">
         <div class="form-group">
           <input id="wedGuestName" placeholder="Nama Tamu / Keluarga" style="flex: 1.5;">
           <select id="wedGuestType" style="flex: 0.5;">
-              <option value="Reguler">Reguler</option>
+              <option value="Keluarga Pria">Keluarga Pria</option>
+              <option value="Keluarga Wanita">Keluarga Wanita</option>
               <option value="VIP">VIP</option>
+              <option value="Reguler">Reguler</option>
           </select>
           <input type="number" id="wedGuestCount" placeholder="Jumlah Orang" style="flex: 0.5;" value="1">
           <button class="action" onclick="addWedGuest()"><i class="fas fa-plus"></i> Tambah Tamu</button>
         </div>
+      </div>
+      
+      <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #3b82f6;">
+        <h4 style="margin-top:0; color:#1d4ed8; display: flex; align-items: center; gap: 8px;"><i class="fas fa-mars" style="color: #3b82f6;"></i> Daftar Keluarga Pria</h4>
+        <table id="wedGuestListPria" style="min-width: 100%;">
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedGuestTbodyPria"></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #ec4899;">
+        <h4 style="margin-top:0; color:#be185d; display: flex; align-items: center; gap: 8px;"><i class="fas fa-venus" style="color: #ec4899;"></i> Daftar Keluarga Wanita</h4>
+        <table id="wedGuestListWanita" style="min-width: 100%;">
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedGuestTbodyWanita"></tbody>
+        </table>
       </div>
       
       <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #eab308;">
@@ -809,7 +829,6 @@ function showPage(p){
   document.querySelectorAll(".sidebar button").forEach(btn => btn.classList.remove("active"));
   if(document.getElementById("nav-" + p)) document.getElementById("nav-" + p).classList.add("active");
   
-  // Tutup sidebar di mobile setelah klik menu
   if (window.innerWidth <= 768) {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('mobileOverlay');
@@ -969,7 +988,7 @@ function addWedGuest() {
     weddingData.guests.push({ id: Date.now(), name: name, type: type, count: count, isInvited: false, isAttending: true });
     
     document.getElementById('wedGuestName').value = '';
-    document.getElementById('wedGuestType').value = 'Reguler';
+    document.getElementById('wedGuestType').value = 'Keluarga Pria';
     document.getElementById('wedGuestCount').value = '1';
     
     save(); renderWedding();
@@ -995,14 +1014,38 @@ function deleteWedGuest(id) {
     }
 }
 
+function exportGuestsToCSV() {
+    if(weddingData.guests.length === 0) return alert("Belum ada data tamu buat di-download bro!");
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Nama Tamu,Tipe Tamu,Jumlah (Pax),Status Undangan,Kehadiran\n";
+    
+    weddingData.guests.forEach(g => {
+        let name = g.name.replace(/,/g, " "); // Hapus koma di nama biar excel ga error
+        let type = g.type || 'Reguler';
+        let count = g.count;
+        let invited = g.isInvited ? "Terkirim" : "Belum Terkirim";
+        let attend = (g.isAttending !== false) ? "Hadir" : "Batal/Ragu";
+        
+        let row = `${name},${type},${count},${invited},${attend}`;
+        csvContent += row + "\n";
+    });
+    
+    var encodedUri = encodeURI(csvContent);
+    var link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "ProTama_Wedding_GuestList.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 function renderWedding() {
-    // --- CEK TARGET BIAYA NIKAH ---
     let wedGoal = goals.find(g => g.name.toLowerCase().includes('nikah') || g.name.toLowerCase().includes('wedding'));
     let maxBudget = wedGoal ? wedGoal.target : 0;
     let maxBudgetEl = document.getElementById('wedMaxBudget');
     if (maxBudgetEl) maxBudgetEl.innerText = maxBudget > 0 ? formatRp(maxBudget) : "Set Target 'Nikah' di menu Impian";
 
-    // 1. Render Budget
     const budgetTbody = document.getElementById('wedBudgetTbody');
     if(budgetTbody) {
         budgetTbody.innerHTML = '';
@@ -1074,7 +1117,6 @@ function renderWedding() {
         `;
     }
 
-    // 2. Render Vendors
     const vendorTbody = document.getElementById('wedVendorTbody');
     if(vendorTbody) {
         vendorTbody.innerHTML = '';
@@ -1097,46 +1139,45 @@ function renderWedding() {
         });
     }
 
-    // 3. Render Guests
     const tbodyVIP = document.getElementById('wedGuestTbodyVIP');
+    const tbodyPria = document.getElementById('wedGuestTbodyPria');
+    const tbodyWanita = document.getElementById('wedGuestTbodyWanita');
     const tbodyReguler = document.getElementById('wedGuestTbodyReguler');
     const totalGuestsEl = document.getElementById('wedTotalGuests');
     
-    if(tbodyVIP && tbodyReguler && totalGuestsEl) {
-        tbodyVIP.innerHTML = '';
-        tbodyReguler.innerHTML = '';
+    if(tbodyVIP && tbodyReguler && tbodyPria && tbodyWanita && totalGuestsEl) {
+        tbodyVIP.innerHTML = ''; tbodyReguler.innerHTML = '';
+        tbodyPria.innerHTML = ''; tbodyWanita.innerHTML = '';
         
-        let totalPax = 0; let totalVIP = 0; let totalReguler = 0;
-        let hadirPax = 0; let hadirVIP = 0; let hadirReguler = 0;
+        let totalPax = 0; let totalVIP = 0; let totalReguler = 0; let totalPria = 0; let totalWanita = 0;
+        let hadirPax = 0; let hadirVIP = 0; let hadirReguler = 0; let hadirPria = 0; let hadirWanita = 0;
 
-        let sortedGuests = [...weddingData.guests].sort((a, b) => {
-            let aType = a.type || 'Reguler';
-            let bType = b.type || 'Reguler';
-            if (aType === 'VIP' && bType !== 'VIP') return -1;
-            if (aType !== 'VIP' && bType === 'VIP') return 1;
-            return 0;
-        });
-
-        sortedGuests.forEach(g => {
+        weddingData.guests.forEach(g => {
             let gType = g.type || 'Reguler';
             let isAttend = g.isAttending !== false;
 
             totalPax += g.count;
             if (gType === 'VIP') totalVIP += g.count;
+            else if (gType === 'Keluarga Pria') totalPria += g.count;
+            else if (gType === 'Keluarga Wanita') totalWanita += g.count;
             else totalReguler += g.count;
 
             if (isAttend) {
                 hadirPax += g.count;
                 if (gType === 'VIP') hadirVIP += g.count;
+                else if (gType === 'Keluarga Pria') hadirPria += g.count;
+                else if (gType === 'Keluarga Wanita') hadirWanita += g.count;
                 else hadirReguler += g.count;
             }
 
             let checkIcon = g.isInvited ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>' : '<i class="far fa-circle" style="color:#cbd5e1; font-size:1.2rem;"></i>';
             let attendIcon = isAttend ? '<i class="fas fa-user-check" style="color:var(--primary); font-size:1.2rem;"></i>' : '<i class="fas fa-user-times" style="color:var(--danger); font-size:1.2rem;"></i>';
             
-            let typeBadge = gType === 'VIP' 
-                ? '<span style="background:#fef08a; color:#854d0e; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">VIP</span>' 
-                : '<span style="background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">Reguler</span>';
+            let typeBadge = '';
+            if(gType === 'VIP') typeBadge = '<span style="background:#fef08a; color:#854d0e; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">VIP</span>';
+            else if(gType === 'Keluarga Pria') typeBadge = '<span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">PRIA</span>';
+            else if(gType === 'Keluarga Wanita') typeBadge = '<span style="background:#fce7f3; color:#9d174d; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">WANITA</span>';
+            else typeBadge = '<span style="background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">Reguler</span>';
             
             let rowHTML = `
                 <tr style="opacity: ${isAttend ? '1' : '0.5'};">
@@ -1155,24 +1196,27 @@ function renderWedding() {
             `;
 
             if (gType === 'VIP') tbodyVIP.innerHTML += rowHTML;
+            else if (gType === 'Keluarga Pria') tbodyPria.innerHTML += rowHTML;
+            else if (gType === 'Keluarga Wanita') tbodyWanita.innerHTML += rowHTML;
             else tbodyReguler.innerHTML += rowHTML;
         });
         
+        if(tbodyPria.innerHTML === '') tbodyPria.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Pria</td></tr>';
+        if(tbodyWanita.innerHTML === '') tbodyWanita.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Wanita</td></tr>';
         if(tbodyVIP.innerHTML === '') tbodyVIP.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu VIP</td></tr>';
         if(tbodyReguler.innerHTML === '') tbodyReguler.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu Reguler</td></tr>';
 
         totalGuestsEl.innerHTML = `
             <div style="text-align: right;">
                 <div style="font-size: 0.9rem; font-weight: 500; color: #475569; margin-bottom: 5px;">
-                    Diundang: ${totalPax} <span style="font-size: 0.8rem;">(VIP ${totalVIP} | Reg ${totalReguler})</span>
+                    Diundang: ${totalPax} <span style="font-size: 0.8rem;">(Pria ${totalPria} | Wanita ${totalWanita} | VIP ${totalVIP} | Reg ${totalReguler})</span>
                 </div>
                 <span style="color: var(--primary);"><i class="fas fa-users"></i> Estimasi Hadir: ${hadirPax} Orang</span><br>
-                <span style="font-size: 0.85rem; color: #3b82f6; font-weight: 500;">(VIP Hadir: ${hadirVIP} | Reg Hadir: ${hadirReguler})</span>
+                <span style="font-size: 0.85rem; color: #3b82f6; font-weight: 500;">(Pria: ${hadirPria} | Wanita: ${hadirWanita} | VIP: ${hadirVIP} | Reg: ${hadirReguler})</span>
             </div>
         `;
     }
 }
-// ==========================================
 
 
 const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(angka);
@@ -1510,6 +1554,33 @@ function deleteBudget(ym, index) {
   if(confirm("Hapus anggaran untuk kategori ini?")) {
     budgetsData[ym].splice(index, 1); 
     save(); update();
+  }
+}
+
+function addSubBudget(ym, index) {
+  let name = prompt("Nama Sub Kategori (misal: Makan, Bensin):");
+  if(!name || name.trim() === "") return;
+  
+  let amountInput = prompt(`Nominal budget maksimal untuk '${name}' (Rp):`);
+  let amount = parseInt(amountInput ? amountInput.replace(/\./g, '').replace(/,/g, '') : 0);
+  
+  if(isNaN(amount) || amount <= 0) return alert("Nominal tidak valid!");
+  
+  if(!budgetsData[ym][index].subBudgets) budgetsData[ym][index].subBudgets = [];
+  
+  let currentSubTotal = budgetsData[ym][index].subBudgets.reduce((acc, curr) => acc + curr.amount, 0);
+  if(currentSubTotal + amount > budgetsData[ym][index].amount) {
+      return alert(`Gagal! Total Sub-Budget (${formatRp(currentSubTotal + amount)}) melebihi Batas Maksimal Kategori Utama (${formatRp(budgetsData[ym][index].amount)}).`);
+  }
+
+  budgetsData[ym][index].subBudgets.push({name: name.trim(), amount: amount});
+  save(); update();
+}
+
+function deleteSubBudget(ym, bIdx, subIdx) {
+  if(confirm("Hapus sub kategori ini?")) {
+      budgetsData[ym][bIdx].subBudgets.splice(subIdx, 1);
+      save(); update();
   }
 }
 

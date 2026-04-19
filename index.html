@@ -972,18 +972,33 @@ function renderWedding() {
         budgetTbody.innerHTML = '';
         let totalAlokasi = 0; let totalRealisasi = 0;
 
+        // FUNGSI PINTAR DETEKSI LINK OTOMATIS
+        const formatCatatan = (text) => {
+            if (!text) return "";
+            // Cari kata yang diawali http, https, atau www
+            let urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
+            return text.replace(urlRegex, function(url) {
+                let href = url.startsWith('http') ? url : 'https://' + url;
+                return `<a href="${href}" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600; background: #eff6ff; padding: 2px 6px; border-radius: 4px;">Buka Link <i class="fas fa-external-link-alt" style="font-size:0.7rem;"></i></a>`;
+            });
+        };
+
         weddingData.budget.forEach(b => {
             totalAlokasi += b.target; totalRealisasi += b.real;
             let isWarning = b.real > b.target;
             let realColor = isWarning ? 'color: var(--danger); font-weight:bold;' : 'color: var(--success);';
-            let notesHTML = b.notes ? `<div style="color:#64748b; font-size:0.8rem; margin-top:4px;"><i class="fas fa-info-circle"></i> ${b.notes}</div>` : '';
+            
+            // Panggil fungsi biar link otomatis berubah jadi tombol
+            let notesHTML = b.notes ? `<div style="color:#64748b; font-size:0.8rem; margin-top:4px;"><i class="fas fa-info-circle"></i> ${formatCatatan(b.notes)}</div>` : '';
             
             let subHTML = '';
             if (b.subItems && b.subItems.length > 0) {
                 b.subItems.forEach(sub => {
                     let subIsWarning = sub.real > sub.target;
                     let subRealColor = subIsWarning ? 'color: var(--danger);' : 'color: var(--success);';
-                    let subNotes = sub.notes ? `<div style="color:#94a3b8; font-size:0.75rem;">- ${sub.notes}</div>` : '';
+                    
+                    // Panggil fungsi buat sub-item juga
+                    let subNotes = sub.notes ? `<div style="color:#94a3b8; font-size:0.75rem; margin-top: 4px;">- ${formatCatatan(sub.notes)}</div>` : '';
                     
                     subHTML += `
                         <tr style="background-color: #f8fafc; font-size: 0.9rem;">
@@ -1025,7 +1040,6 @@ function renderWedding() {
             </tr>
         `;
     }
-
     // 2. Render Vendors
     const vendorTbody = document.getElementById('wedVendorTbody');
     if(vendorTbody) {

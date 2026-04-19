@@ -725,41 +725,51 @@ function deleteWedGuest(id) {
 }
 
 function editWedGuest(id) {
+    // Tombol Edit kuning sekarang fokus buat pindah-pindah jenis tamu aja
     let guest = weddingData.guests.find(g => g.id === id);
     if (!guest) return;
 
-    // 1. Edit Nama
-    let newName = prompt("Edit Nama Tamu / Keluarga:", guest.name);
-    if (newName === null) return;
-    if (newName.trim() === "") return alert("Nama tidak boleh kosong bro!");
-    
-    // 1.5 Edit Kota
-    let newCity = prompt("Edit Kota / Domisili:", guest.city || '-');
-    if (newCity === null) return;
-
-    // 2. Edit Jenis Tamu
-    let newType = prompt("Edit Jenis (Keluarga Pria / Keluarga Wanita / VIP / Reguler):", guest.type || 'Reguler');
+    let newType = prompt("Pindah ke Jenis (Keluarga Pria / Keluarga Wanita / VIP / Reguler):", guest.type || 'Reguler');
     if (newType === null) return;
     
     const validTypes = ['VIP', 'Keluarga Pria', 'Keluarga Wanita', 'Reguler'];
     if (!validTypes.includes(newType.trim())) {
-        return alert("Gagal! Jenis harus: VIP, Keluarga Pria, Keluarga Wanita, atau Reguler (sesuaikan huruf besar/kecilnya).");
+        return alert("Gagal! Jenis harus: VIP, Keluarga Pria, Keluarga Wanita, atau Reguler.");
     }
 
-    // 3. Edit Jumlah Pax
-    let newCountStr = prompt(`Edit Jumlah (Pax) untuk ${newName.trim()}:`, guest.count);
-    if (newCountStr === null) return;
-    let newCount = parseInt(newCountStr);
-    if (isNaN(newCount) || newCount <= 0) return alert("Jumlah (Pax) nggak valid bro!");
-
-    // Simpan semua perubahan
-    guest.name = newName.trim();
-    guest.city = newCity.trim(); // SIMPAN KOTA
     guest.type = newType.trim();
-    guest.count = newCount;
+    save(); renderWedding();
+}
 
-    save(); 
-    renderWedding();
+// Fungsi Baru buat Double Click (Klik 2x)
+function inlineEditGuest(id, field) {
+    let guest = weddingData.guests.find(g => g.id === id);
+    if (!guest) return;
+
+    if (field === 'name') {
+        let newName = prompt("Edit Nama Tamu:", guest.name);
+        if (newName !== null && newName.trim() !== "") {
+            guest.name = newName.trim();
+            save(); renderWedding();
+        }
+    } else if (field === 'city') {
+        let newCity = prompt("Edit Kota / Domisili:", guest.city || '-');
+        if (newCity !== null) {
+            guest.city = newCity.trim();
+            save(); renderWedding();
+        }
+    } else if (field === 'count') {
+        let newCountStr = prompt(`Edit Jumlah (Pax) untuk ${guest.name}:`, guest.count);
+        if (newCountStr !== null) {
+            let newCount = parseInt(newCountStr);
+            if (!isNaN(newCount) && newCount > 0) {
+                guest.count = newCount;
+                save(); renderWedding();
+            } else {
+                alert("Jumlah (Pax) nggak valid bro!");
+            }
+        }
+    }
 }
 
 function exportGuestsToCSV() {
@@ -991,12 +1001,12 @@ function renderWedding() {
             else if(gType === 'Keluarga Wanita') typeBadge = '<span style="background:#fce7f3; color:#9d174d; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">WANITA</span>';
             else typeBadge = '<span style="background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">Reguler</span>';
             
-            // RENDER BARIS TABEL DENGAN KOLOM KOTA
+            // RENDER BARIS TABEL DENGAN SENSOR KLIK 2X
             let rowHTML = `
-                <tr style="opacity: ${isAttend ? '1' : '0.5'};">
-                    <td><strong style="color:#1e293b;">${g.name}</strong>${typeBadge}</td>
-                    <td style="color:#64748b;"><i class="fas fa-map-marker-alt" style="color:#cbd5e1; margin-right:4px;"></i> ${g.city || '-'}</td>
-                    <td style="color:#475569; font-weight:600;">${g.count} Orang</td>
+                <tr style="opacity: ${isAttend ? '1' : '0.5'}; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <td ondblclick="inlineEditGuest(${g.id}, 'name')" title="Klik 2x untuk edit Nama" style="cursor:pointer;"><strong style="color:#1e293b;">${g.name}</strong>${typeBadge}</td>
+                    <td ondblclick="inlineEditGuest(${g.id}, 'city')" title="Klik 2x untuk edit Kota" style="cursor:pointer; color:#64748b;"><i class="fas fa-map-marker-alt" style="color:#cbd5e1; margin-right:4px;"></i> ${g.city || '-'}</td>
+                    <td ondblclick="inlineEditGuest(${g.id}, 'count')" title="Klik 2x untuk edit Pax" style="cursor:pointer; color:#475569; font-weight:600;">${g.count} Orang</td>
                     <td style="cursor:pointer;" onclick="toggleWedGuestInvite(${g.id})">
                         ${checkIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${g.isInvited ? 'Terkirim' : 'Belum'}</span>
                     </td>
@@ -1004,7 +1014,7 @@ function renderWedding() {
                         ${attendIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${isAttend ? 'Hadir' : 'Batal'}</span>
                     </td>
                     <td style="text-align:center; display:flex; justify-content:center; gap:5px;">
-                        <button class="btn-warning" style="padding: 6px 10px;" onclick="editWedGuest(${g.id})" title="Edit Tamu"><i class="fas fa-edit"></i></button>
+                        <button class="btn-warning" style="padding: 6px 10px;" onclick="editWedGuest(${g.id})" title="Pindah Jenis Tamu"><i class="fas fa-exchange-alt"></i></button>
                         <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedGuest(${g.id})" title="Hapus Tamu"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>

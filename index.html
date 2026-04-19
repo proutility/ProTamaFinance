@@ -227,21 +227,17 @@ tr:last-child td { border-bottom: none; }
 /* CSS TAMBAHAN: RESPONSIVITAS LAYAR HP (MOBILE VIEW)        */
 /* ========================================================= */
 @media (max-width: 768px) {
-  /* Buka kunci scroll biar lancar di HP */
   body { display: block; height: auto; overflow: auto; background: var(--bg); }
   .main-content { display: block; height: auto; overflow: visible; padding: 15px; padding-bottom: 100px; }
   
-  /* Set ulang ukuran Sidebar dan kasih scroll */
   .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; transition: 0.3s; z-index: 1000; height: 100dvh; box-shadow: 4px 0 15px rgba(0,0,0,0.5); width: 240px; overflow-y: auto; display: flex; flex-direction: column; padding-bottom: 20px;}
   .sidebar.open { left: 0; }
-  .logout-btn { margin-top: auto; margin-bottom: 30px; } /* Pastikan gak ketutup tombol bawah */
+  .logout-btn { margin-top: auto; margin-bottom: 30px; }
   
-  /* Menampilkan overlay dan tombol menu hamburger */
   #mobileMenuBtn { display: flex !important; }
   #mobileOverlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; }
   #mobileOverlay.show { display: block; }
   
-  /* Form & Grid Layout Fixes biar rapi dan mixed */
   .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 12px; }
   .form-group { flex-direction: column; align-items: stretch; gap: 10px; }
   .form-group > input, .form-group > select, .form-group > button, .form-group > div { width: 100%; min-width: 100%; box-sizing: border-box; font-size: 0.9rem; }
@@ -253,7 +249,6 @@ tr:last-child td { border-bottom: none; }
   .card h3 { font-size: 0.75rem !important; margin-bottom: 8px;}
   .anim-float { font-size: 0.9rem !important; }
   
-  /* --- PERBAIKAN HEADER & REMINDER KHUSUS HP --- */
   .header-title { 
     font-size: 1.25rem !important; 
     line-height: 1.4 !important; 
@@ -268,20 +263,16 @@ tr:last-child td { border-bottom: none; }
   .reminder-title { font-size: 0.95rem !important; }
   .reminder-item { font-size: 0.85rem !important; align-items: flex-start !important; }
   .reminder-item span { line-height: 1.4; }
-  /* --------------------------------------------- */
   
-  /* Anggaran Bulanan Status Card di HP */
   #budgetStatusCard { flex-direction: column; align-items: flex-start; padding: 15px; gap: 5px !important;}
   #budgetStatusCard > div:first-child p { font-size: 0.8rem; }
   #budgetStatusCard > div:last-child { text-align: left !important; padding: 0 !important; box-shadow: none !important; background: transparent !important; }
   #budgetVsLiquid { font-size: 1.4rem !important; }
   
-  /* Mengubah Tabel Menjadi Card (List) biar responsif */
   table, thead, tbody, th, td, tr { display: block; width: 100%; box-sizing: border-box; }
   thead tr { position: absolute; top: -9999px; left: -9999px; }
   tr { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   
-  /* Ubah TD jadi flex column ke bawah biar tulisan panjang rapi */
   td { display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: 6px 0; border-bottom: 1px dashed #f1f5f9; font-size: 0.9rem;}
   td:last-child { border-bottom: none; flex-direction: row; justify-content: flex-start; gap: 8px; padding-bottom: 0; margin-top: 8px; }
   
@@ -294,7 +285,6 @@ tr:last-child td { border-bottom: none; }
   #debtList td:nth-of-type(2)::before { content: "Total"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #debtList td:nth-of-type(3)::before { content: "Sisa Tagihan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   
-  /* Buat Tabel Tambahan Wedding */
   #wedBudgetList td:nth-of-type(1)::before { content: "Item"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedBudgetList td:nth-of-type(2)::before { content: "Keterangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedBudgetList td:nth-of-type(3)::before { content: "Alokasi Target"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
@@ -307,7 +297,8 @@ tr:last-child td { border-bottom: none; }
   #wedGuestListVIP td:nth-of-type(1)::before, #wedGuestListReguler td:nth-of-type(1)::before { content: "Nama Tamu"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedGuestListVIP td:nth-of-type(2)::before, #wedGuestListReguler td:nth-of-type(2)::before { content: "Jumlah"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedGuestListVIP td:nth-of-type(3)::before, #wedGuestListReguler td:nth-of-type(3)::before { content: "Undangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  
+  #wedGuestListVIP td:nth-of-type(4)::before, #wedGuestListReguler td:nth-of-type(4)::before { content: "Kehadiran"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+
   td * { text-align: left !important; word-wrap: break-word; white-space: normal; }
   
   .login-card { padding: 30px 20px; width: 90%; }
@@ -402,7 +393,7 @@ let assetsData = {};
 let weddingData = {
     budget: [], // {id, name, target, real, notes, subItems: []}
     vendors: [], // {id, name, service, status} -> status: DP, Lunas, Tanya
-    guests: [] // {id, name, count, isInvited}
+    guests: [] // {id, name, type, count, isInvited, isAttending}
 };
 
 let nowDt = new Date();
@@ -750,7 +741,7 @@ return `
       <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #eab308;">
         <h4 style="margin-top:0; color:#854d0e; display: flex; align-items: center; gap: 8px;"><i class="fas fa-star" style="color: #eab308;"></i> Daftar Tamu VIP</h4>
         <table id="wedGuestListVIP" style="min-width: 100%;">
-          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedGuestTbodyVIP"></tbody>
         </table>
       </div>
@@ -758,7 +749,7 @@ return `
       <div class="card" style="overflow-x: auto; border-top: 4px solid #94a3b8;">
         <h4 style="margin-top:0; color:#475569; display: flex; align-items: center; gap: 8px;"><i class="fas fa-users"></i> Daftar Tamu Reguler</h4>
         <table id="wedGuestListReguler" style="min-width: 100%;">
-          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedGuestTbodyReguler"></tbody>
         </table>
       </div>
@@ -850,7 +841,6 @@ function addWedBudget() {
     
     if(!name || isNaN(target)) return alert("Isi nama item dan alokasi budgetnya bro!");
     
-    // Simpan subItems array dan notes
     weddingData.budget.push({ id: Date.now(), name: name, target: target, real: 0, notes: notes, subItems: [] });
     
     document.getElementById('wedBudgetItem').value = '';
@@ -908,7 +898,7 @@ function updateWedSubItemReal(itemId, subId) {
     if(isNaN(newReal)) return alert("Nominal nggak valid bro!");
     
     sub.real = newReal;
-    item.real = item.subItems.reduce((acc, curr) => acc + (curr.real || 0), 0); // Auto kalkulasi induk
+    item.real = item.subItems.reduce((acc, curr) => acc + (curr.real || 0), 0);
     
     save(); renderWedding();
 }
@@ -917,7 +907,7 @@ function deleteWedSubItem(itemId, subId) {
     if(confirm("Hapus sub item ini?")) {
         let item = weddingData.budget.find(b => b.id === itemId);
         item.subItems = item.subItems.filter(s => s.id !== subId);
-        item.real = item.subItems.reduce((acc, curr) => acc + (curr.real || 0), 0); // Auto kalkulasi induk
+        item.real = item.subItems.reduce((acc, curr) => acc + (curr.real || 0), 0);
         save(); renderWedding();
     }
 }
@@ -976,7 +966,7 @@ function addWedGuest() {
     
     if(!name || isNaN(count)) return alert("Lengkapi nama dan jumlah tamu bro!");
     
-    weddingData.guests.push({ id: Date.now(), name: name, type: type, count: count, isInvited: false });
+    weddingData.guests.push({ id: Date.now(), name: name, type: type, count: count, isInvited: false, isAttending: true });
     
     document.getElementById('wedGuestName').value = '';
     document.getElementById('wedGuestType').value = 'Reguler';
@@ -988,6 +978,13 @@ function addWedGuest() {
 function toggleWedGuestInvite(id) {
     let guest = weddingData.guests.find(g => g.id === id);
     guest.isInvited = !guest.isInvited;
+    save(); renderWedding();
+}
+
+function toggleWedGuestAttend(id) {
+    let guest = weddingData.guests.find(g => g.id === id);
+    if (guest.isAttending === undefined) guest.isAttending = true;
+    guest.isAttending = !guest.isAttending;
     save(); renderWedding();
 }
 
@@ -1011,10 +1008,8 @@ function renderWedding() {
         budgetTbody.innerHTML = '';
         let totalAlokasi = 0; let totalRealisasi = 0;
 
-        // FUNGSI PINTAR DETEKSI LINK OTOMATIS
         const formatCatatan = (text) => {
             if (!text) return "";
-            // Cari kata yang diawali http, https, atau www
             let urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
             return text.replace(urlRegex, function(url) {
                 let href = url.startsWith('http') ? url : 'https://' + url;
@@ -1027,7 +1022,6 @@ function renderWedding() {
             let isWarning = b.real > b.target;
             let realColor = isWarning ? 'color: var(--danger); font-weight:bold;' : 'color: var(--success);';
             
-            // Panggil fungsi biar link otomatis berubah jadi tombol
             let notesHTML = b.notes ? `<div style="color:#64748b; font-size:0.8rem; margin-top:4px;"><i class="fas fa-info-circle"></i> ${formatCatatan(b.notes)}</div>` : '';
             
             let subHTML = '';
@@ -1035,8 +1029,6 @@ function renderWedding() {
                 b.subItems.forEach(sub => {
                     let subIsWarning = sub.real > sub.target;
                     let subRealColor = subIsWarning ? 'color: var(--danger);' : 'color: var(--success);';
-                    
-                    // Panggil fungsi buat sub-item juga
                     let subNotes = sub.notes ? `<div style="color:#94a3b8; font-size:0.75rem; margin-top: 4px;">- ${formatCatatan(sub.notes)}</div>` : '';
                     
                     subHTML += `
@@ -1113,11 +1105,10 @@ function renderWedding() {
     if(tbodyVIP && tbodyReguler && totalGuestsEl) {
         tbodyVIP.innerHTML = '';
         tbodyReguler.innerHTML = '';
-        let totalPax = 0;
-        let totalVIP = 0;
-        let totalReguler = 0;
+        
+        let totalPax = 0; let totalVIP = 0; let totalReguler = 0;
+        let hadirPax = 0; let hadirVIP = 0; let hadirReguler = 0;
 
-        // Sortir biar VIP nampil di atas duluan
         let sortedGuests = [...weddingData.guests].sort((a, b) => {
             let aType = a.type || 'Reguler';
             let bType = b.type || 'Reguler';
@@ -1127,25 +1118,35 @@ function renderWedding() {
         });
 
         sortedGuests.forEach(g => {
-            totalPax += g.count;
             let gType = g.type || 'Reguler';
-            
+            let isAttend = g.isAttending !== false;
+
+            totalPax += g.count;
             if (gType === 'VIP') totalVIP += g.count;
             else totalReguler += g.count;
 
+            if (isAttend) {
+                hadirPax += g.count;
+                if (gType === 'VIP') hadirVIP += g.count;
+                else hadirReguler += g.count;
+            }
+
             let checkIcon = g.isInvited ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>' : '<i class="far fa-circle" style="color:#cbd5e1; font-size:1.2rem;"></i>';
+            let attendIcon = isAttend ? '<i class="fas fa-user-check" style="color:var(--primary); font-size:1.2rem;"></i>' : '<i class="fas fa-user-times" style="color:var(--danger); font-size:1.2rem;"></i>';
             
-            // Bikin badge VIP kuning atau Reguler abu-abu
             let typeBadge = gType === 'VIP' 
                 ? '<span style="background:#fef08a; color:#854d0e; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">VIP</span>' 
                 : '<span style="background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">Reguler</span>';
             
             let rowHTML = `
-                <tr>
+                <tr style="opacity: ${isAttend ? '1' : '0.5'};">
                     <td><strong style="color:#1e293b;">${g.name}</strong>${typeBadge}</td>
                     <td style="color:#475569; font-weight:600;">${g.count} Orang</td>
                     <td style="cursor:pointer;" onclick="toggleWedGuestInvite(${g.id})">
                         ${checkIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${g.isInvited ? 'Terkirim' : 'Belum'}</span>
+                    </td>
+                    <td style="cursor:pointer;" onclick="toggleWedGuestAttend(${g.id})">
+                        ${attendIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${isAttend ? 'Hadir' : 'Batal'}</span>
                     </td>
                     <td style="text-align:center;">
                         <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedGuest(${g.id})"><i class="fas fa-trash"></i></button>
@@ -1153,22 +1154,20 @@ function renderWedding() {
                 </tr>
             `;
 
-            // Tembak HTML ke tabel yang sesuai
-            if (gType === 'VIP') {
-                tbodyVIP.innerHTML += rowHTML;
-            } else {
-                tbodyReguler.innerHTML += rowHTML;
-            }
+            if (gType === 'VIP') tbodyVIP.innerHTML += rowHTML;
+            else tbodyReguler.innerHTML += rowHTML;
         });
         
-        // Pesan kalau tabel masih kosong
-        if(tbodyVIP.innerHTML === '') tbodyVIP.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu VIP</td></tr>';
-        if(tbodyReguler.innerHTML === '') tbodyReguler.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu Reguler</td></tr>';
+        if(tbodyVIP.innerHTML === '') tbodyVIP.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu VIP</td></tr>';
+        if(tbodyReguler.innerHTML === '') tbodyReguler.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu Reguler</td></tr>';
 
         totalGuestsEl.innerHTML = `
             <div style="text-align: right;">
-                ${totalPax} Orang<br>
-                <span style="font-size: 0.85rem; color: #166534; font-weight: 500;">(VIP: ${totalVIP} | Reg: ${totalReguler})</span>
+                <div style="font-size: 0.9rem; font-weight: 500; color: #475569; margin-bottom: 5px;">
+                    Diundang: ${totalPax} <span style="font-size: 0.8rem;">(VIP ${totalVIP} | Reg ${totalReguler})</span>
+                </div>
+                <span style="color: var(--primary);"><i class="fas fa-users"></i> Estimasi Hadir: ${hadirPax} Orang</span><br>
+                <span style="font-size: 0.85rem; color: #3b82f6; font-weight: 500;">(VIP Hadir: ${hadirVIP} | Reg Hadir: ${hadirReguler})</span>
             </div>
         `;
     }
@@ -1511,33 +1510,6 @@ function deleteBudget(ym, index) {
   if(confirm("Hapus anggaran untuk kategori ini?")) {
     budgetsData[ym].splice(index, 1); 
     save(); update();
-  }
-}
-
-function addSubBudget(ym, index) {
-  let name = prompt("Nama Sub Kategori (misal: Makan, Bensin):");
-  if(!name || name.trim() === "") return;
-  
-  let amountInput = prompt(`Nominal budget maksimal untuk '${name}' (Rp):`);
-  let amount = parseInt(amountInput ? amountInput.replace(/\./g, '').replace(/,/g, '') : 0);
-  
-  if(isNaN(amount) || amount <= 0) return alert("Nominal tidak valid!");
-  
-  if(!budgetsData[ym][index].subBudgets) budgetsData[ym][index].subBudgets = [];
-  
-  let currentSubTotal = budgetsData[ym][index].subBudgets.reduce((acc, curr) => acc + curr.amount, 0);
-  if(currentSubTotal + amount > budgetsData[ym][index].amount) {
-      return alert(`Gagal! Total Sub-Budget (${formatRp(currentSubTotal + amount)}) melebihi Batas Maksimal Kategori Utama (${formatRp(budgetsData[ym][index].amount)}).`);
-  }
-
-  budgetsData[ym][index].subBudgets.push({name: name.trim(), amount: amount});
-  save(); update();
-}
-
-function deleteSubBudget(ym, bIdx, subIdx) {
-  if(confirm("Hapus sub kategori ini?")) {
-      budgetsData[ym][bIdx].subBudgets.splice(subIdx, 1);
-      save(); update();
   }
 }
 

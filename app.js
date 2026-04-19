@@ -538,6 +538,18 @@ function addWedBudget() {
     
     if(!name || isNaN(target)) return alert("Isi nama item dan alokasi budgetnya bro!");
     
+    // --- FITUR CEK LIMIT MAKSIMAL BUDGET NIKAH ---
+    let wedGoal = goals.find(g => g.name.toLowerCase().includes('nikah') || g.name.toLowerCase().includes('wedding'));
+    let maxBudget = wedGoal ? wedGoal.target : 0;
+    
+    if (maxBudget > 0) {
+        let currentTotalTarget = weddingData.budget.reduce((sum, b) => sum + b.target, 0);
+        if (currentTotalTarget + target > maxBudget) {
+            return alert(`Gagal! Total target item (${formatRp(currentTotalTarget + target)}) melebihi Patokan Maksimal (${formatRp(maxBudget)}) bro! Naikkan dulu target di menu Impian.`);
+        }
+    }
+    // ----------------------------------------------
+    
     weddingData.budget.push({ id: Date.now(), name: name, target: target, real: 0, notes: notes, subItems: [] });
     
     document.getElementById('wedBudgetItem').value = '';
@@ -577,9 +589,16 @@ function addWedSubItem(id) {
     let amount = parseInt(amountInput ? amountInput.replace(/\./g, '').replace(/,/g, '') : 0);
     if(isNaN(amount) || amount <= 0) return alert("Nominal tidak valid!");
 
+    // --- FITUR CEK LIMIT MAKSIMAL SUB-ITEM ---
+    if(!item.subItems) item.subItems = [];
+    let currentSubTotal = item.subItems.reduce((sum, sub) => sum + sub.target, 0);
+    if (currentSubTotal + amount > item.target) {
+        return alert(`Gagal! Total Target Sub-Item (${formatRp(currentSubTotal + amount)}) melebihi Target Induk ${item.name} (${formatRp(item.target)}) bro!`);
+    }
+    // ------------------------------------------
+
     let notes = prompt(`Keterangan / Link Vendor untuk '${name}' (Boleh dikosongkan):`);
     
-    if(!item.subItems) item.subItems = [];
     item.subItems.push({ id: Date.now(), name: name.trim(), target: amount, real: 0, notes: notes || "" });
     
     save(); renderWedding();

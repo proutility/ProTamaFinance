@@ -353,7 +353,7 @@ return `
       <button id="wed-tab-guest" onclick="switchWedTab('guest')">Guest List</button>
   </div>
 
-  <div id="wed-content-budget" class="wed-content">
+ <div id="wed-content-budget" class="wed-content">
       <div class="card" style="background: #eff6ff; border-color: #bfdbfe; margin-bottom: 15px;">
          <h3 style="margin:0; color:#1d4ed8; display:flex; justify-content:space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
              <span><i class="fas fa-bullseye"></i> Patokan Maksimal (Dari Target):</span>
@@ -369,12 +369,8 @@ return `
           <button class="action" onclick="addWedBudget()"><i class="fas fa-plus"></i> Tambah</button>
         </div>
       </div>
-      <div class="card" style="overflow-x: auto;">
-        <table id="wedBudgetList" style="min-width: 100%;">
-          <thead><tr><th>Item</th><th>Keterangan</th><th>Alokasi Target</th><th>Realisasi (Terpakai)</th><th style="width: 140px; text-align: center;">Aksi</th></tr></thead>
-          <tbody id="wedBudgetTbody"></tbody>
-        </table>
-      </div>
+      
+      <div id="wedBudgetContainer"></div>
   </div>
   
   <div id="wed-content-vendor" class="wed-content" style="display:none;">
@@ -728,11 +724,13 @@ function renderWedding() {
     let maxBudgetEl = document.getElementById('wedMaxBudget');
     if (maxBudgetEl) maxBudgetEl.innerText = maxBudget > 0 ? formatRp(maxBudget) : "Set Target 'Nikah' di menu Impian";
 
-    const budgetTbody = document.getElementById('wedBudgetTbody');
-    if(budgetTbody) {
-        budgetTbody.innerHTML = '';
+    // 1. Render Budget
+    const budgetContainer = document.getElementById('wedBudgetContainer');
+    if(budgetContainer) {
+        let budgetHTML = '';
         let totalAlokasi = 0; let totalRealisasi = 0;
 
+        // Fungsi Deteksi Link
         const formatCatatan = (text) => {
             if (!text) return "";
             let urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
@@ -742,61 +740,112 @@ function renderWedding() {
             });
         };
 
-        weddingData.budget.forEach(b => {
+        // Palet Warna Dinamis Biar Keren
+        const colorPalette = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#14b8a6', '#f97316'];
+
+        if(weddingData.budget.length === 0) {
+            budgetHTML = `<div class="card" style="text-align:center; color:#94a3b8; padding:30px; border: 1px dashed #cbd5e1;">Belum ada rincian biaya. Tambahkan di atas bro!</div>`;
+        }
+
+        weddingData.budget.forEach((b, index) => {
+            // Ambil warna bergiliran
+            let themeColor = colorPalette[index % colorPalette.length];
+            
             totalAlokasi += b.target; totalRealisasi += b.real;
             let isWarning = b.real > b.target;
             let realColor = isWarning ? 'color: var(--danger); font-weight:bold;' : 'color: var(--success);';
+            let notesHTML = b.notes ? `<div style="color:#64748b; font-size:0.85rem; margin-top:6px;"><i class="fas fa-info-circle"></i> ${formatCatatan(b.notes)}</div>` : '';
             
-            let notesHTML = b.notes ? `<div style="color:#64748b; font-size:0.8rem; margin-top:4px;"><i class="fas fa-info-circle"></i> ${formatCatatan(b.notes)}</div>` : '';
-            
+            // Loop Sub-Items di dalam Tabel Khusus Card Ini
             let subHTML = '';
             if (b.subItems && b.subItems.length > 0) {
+                subHTML += `
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table style="min-width: 100%; border-radius: 8px; overflow: hidden; border-collapse: separate; border-spacing: 0; margin-top:0;">
+                        <thead style="background: ${themeColor}15;">
+                            <tr>
+                                <th style="color: ${themeColor}; padding: 12px 15px; font-size:0.75rem; text-transform: uppercase;">Sub Item</th>
+                                <th style="color: ${themeColor}; padding: 12px 15px; font-size:0.75rem; text-transform: uppercase;">Target</th>
+                                <th style="color: ${themeColor}; padding: 12px 15px; font-size:0.75rem; text-transform: uppercase;">Realisasi</th>
+                                <th style="color: ${themeColor}; padding: 12px 15px; font-size:0.75rem; text-transform: uppercase; text-align:center; width:120px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                
                 b.subItems.forEach(sub => {
                     let subIsWarning = sub.real > sub.target;
                     let subRealColor = subIsWarning ? 'color: var(--danger);' : 'color: var(--success);';
-                    let subNotes = sub.notes ? `<div style="color:#94a3b8; font-size:0.75rem; margin-top: 4px;">- ${formatCatatan(sub.notes)}</div>` : '';
+                    let subNotes = sub.notes ? `<div style="color:#94a3b8; font-size:0.75rem; margin-top: 4px; font-weight: normal;">- ${formatCatatan(sub.notes)}</div>` : '';
                     
                     subHTML += `
-                        <tr style="background-color: #f8fafc; font-size: 0.9rem;">
-                            <td style="padding-left: 30px;"><i class="fas fa-level-up-alt fa-rotate-90" style="margin-right:8px; color:#cbd5e1;"></i> <strong style="color:#475569;">${sub.name}</strong></td>
-                            <td>${subNotes}</td>
-                            <td style="color:#64748b;">${formatRp(sub.target)}</td>
-                            <td style="${subRealColor}">${formatRp(sub.real)}</td>
-                            <td style="text-align:center; display:flex; justify-content:center; gap:5px;">
-                                <button style="padding: 4px 8px; font-size: 0.75rem; background: #e2e8f0; color: #475569; border: none; border-radius: 6px; cursor: pointer;" onclick="editWedSubItemNotes(${b.id}, ${sub.id})" title="Edit Keterangan / Link"><i class="fas fa-link"></i></button>
-                                <button class="btn-warning" style="padding: 4px 8px; font-size: 0.75rem;" onclick="updateWedSubItemReal(${b.id}, ${sub.id})" title="Update Realisasi Sub"><i class="fas fa-edit"></i></button>
-                                <button class="btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteWedSubItem(${b.id}, ${sub.id})"><i class="fas fa-trash"></i></button>
+                        <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px 15px; border-bottom: 1px solid #f1f5f9;"><strong style="color:#475569;">${sub.name}</strong>${subNotes}</td>
+                            <td style="padding: 12px 15px; color:#64748b; border-bottom: 1px solid #f1f5f9;">${formatRp(sub.target)}</td>
+                            <td style="padding: 12px 15px; ${subRealColor}; border-bottom: 1px solid #f1f5f9;">${formatRp(sub.real)}</td>
+                            <td style="padding: 12px 15px; text-align:center; border-bottom: 1px solid #f1f5f9;">
+                                <div style="display:flex; justify-content:center; gap:5px;">
+                                    <button style="padding: 4px 8px; font-size: 0.75rem; background: #e2e8f0; color: #475569; border: none; border-radius: 6px; cursor: pointer;" onclick="editWedSubItemNotes(${b.id}, ${sub.id})" title="Edit Keterangan"><i class="fas fa-link"></i></button>
+                                    <button class="btn-warning" style="padding: 4px 8px; font-size: 0.75rem;" onclick="updateWedSubItemReal(${b.id}, ${sub.id})" title="Update Realisasi Sub"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteWedSubItem(${b.id}, ${sub.id})"><i class="fas fa-trash"></i></button>
+                                </div>
                             </td>
                         </tr>
                     `;
                 });
+                subHTML += `</tbody></table></div>`;
+            } else {
+                subHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.85rem; padding: 15px; background: #f8fafc; border-radius: 8px; margin-top:15px; border: 1px dashed #cbd5e1;">Belum ada sub-item. Silakan tambah!</div>`;
             }
 
-            budgetTbody.innerHTML += `
-                <tr style="border-top: 2px solid var(--border);">
-                    <td><strong style="color:#1e293b; font-size:1.05rem;">${b.name}</strong></td>
-                    <td>${notesHTML}</td>
-                    <td style="color:#1e293b; font-weight:600;">${formatRp(b.target)}</td>
-                    <td style="${realColor}">${formatRp(b.real)} ${isWarning ? '<i class="fas fa-exclamation-triangle" title="Overbudget!"></i>' : ''}</td>
-                    <td style="text-align:center; display:flex; justify-content:center; gap:5px;">
-                        <button style="padding: 6px 10px; background: #e0f2fe; color: #0ea5e9; border: none; border-radius: 6px; cursor: pointer;" onclick="addWedSubItem(${b.id})" title="Tambah Sub Item"><i class="fas fa-plus"></i></button>
-                        <button style="padding: 6px 10px; background: #e2e8f0; color: #475569; border: none; border-radius: 6px; cursor: pointer;" onclick="editWedBudgetNotes(${b.id})" title="Edit Keterangan / Link"><i class="fas fa-link"></i></button>
-                        <button class="btn-warning" style="padding: 6px 10px;" onclick="updateWedBudgetReal(${b.id})" title="Update Realisasi"><i class="fas fa-edit"></i></button>
-                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedBudget(${b.id})"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
+            // Kerangka Utama Masing-Masing Card Budget
+            budgetHTML += `
+            <div class="card" style="border-top: 4px solid ${themeColor}; margin-bottom: 20px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap: wrap; gap: 15px;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <h3 style="margin:0; font-size:1.15rem; color: ${themeColor}; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-cube"></i> ${b.name}
+                        </h3>
+                        ${notesHTML}
+                    </div>
+                    
+                    <div style="display:flex; align-items:center; gap: 15px; flex-wrap: wrap;">
+                        <div style="text-align: right; background: ${themeColor}10; padding: 8px 15px; border-radius: 8px; border: 1px solid ${themeColor}30;">
+                            <div style="font-size:0.8rem; color:#64748b; margin-bottom: 4px; text-transform: uppercase; font-weight:700;">Target <span style="color:#1e293b; font-size:0.9rem; display:block;">${formatRp(b.target)}</span></div>
+                            <div style="font-size:0.8rem; color:#64748b; text-transform: uppercase; font-weight:700;">Terpakai <span style="${realColor} font-size:0.9rem; display:block;">${formatRp(b.real)}</span></div>
+                        </div>
+                        
+                        <div style="display:flex; flex-direction:column; gap: 5px;">
+                            <div style="display:flex; gap: 5px;">
+                                <button style="flex:1; padding: 6px 10px; background: ${themeColor}; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight:600;" onclick="addWedSubItem(${b.id})" title="Tambah Sub Item"><i class="fas fa-plus"></i> Sub Item</button>
+                                <button style="padding: 6px 10px; background: #e2e8f0; color: #475569; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem;" onclick="editWedBudgetNotes(${b.id})" title="Edit Keterangan"><i class="fas fa-link"></i></button>
+                            </div>
+                            <div style="display:flex; gap: 5px;">
+                                <button class="btn-warning" style="flex:1; padding: 6px 10px; font-size: 0.8rem;" onclick="updateWedBudgetReal(${b.id})" title="Update Realisasi"><i class="fas fa-edit"></i> Edit Nominal</button>
+                                <button class="btn-danger" style="padding: 6px 10px; font-size: 0.8rem;" onclick="deleteWedBudget(${b.id})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 ${subHTML}
+            </div>
             `;
         });
         
-        budgetTbody.innerHTML += `
-            <tr style="background: #f1f5f9; border-top: 2px solid #cbd5e1;">
-                <td colspan="2"><strong style="color:#1e293b;">TOTAL KESELURUHAN</strong></td>
-                <td><strong style="color:#1e293b;">${formatRp(totalAlokasi)}</strong></td>
-                <td><strong style="${totalRealisasi > maxBudget && maxBudget > 0 ? 'color: var(--danger);' : 'color: var(--success);'}">${formatRp(totalRealisasi)}</strong></td>
-                <td></td>
-            </tr>
+        // Footer: Total Keseluruhan Paling Bawah
+        budgetHTML += `
+            <div class="card" style="background: #0f172a; color: white; border: none; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
+                <div>
+                    <h3 style="margin: 0; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Total Keseluruhan Target</h3>
+                    <h2 style="margin: 0; font-size: 1.6rem; color: #f8fafc;">${formatRp(totalAlokasi)}</h2>
+                </div>
+                <div style="text-align: right;">
+                    <h3 style="margin: 0; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Total Realisasi (Terpakai)</h3>
+                    <h2 style="margin: 0; font-size: 1.6rem; ${totalRealisasi > maxBudget && maxBudget > 0 ? 'color: #ef4444;' : 'color: #22c55e;'}">${formatRp(totalRealisasi)}</h2>
+                </div>
+            </div>
         `;
+        
+        budgetContainer.innerHTML = budgetHTML;
     }
 
     const vendorTbody = document.getElementById('wedVendorTbody');

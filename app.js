@@ -710,6 +710,27 @@ function deleteWedGuest(id) {
         save(); renderWedding();
     }
 }
+function editWedGuest(id) {
+    let guest = weddingData.guests.find(g => g.id === id);
+    if (!guest) return;
+
+    // Munculin pop-up buat edit nama (default isinya nama yang lama)
+    let newName = prompt("Edit Nama Tamu / Keluarga:", guest.name);
+    if (newName === null) return; // Kalau di-cancel
+    if (newName.trim() === "") return alert("Nama tidak boleh kosong bro!");
+
+    // Munculin pop-up buat edit jumlah Pax
+    let newCountStr = prompt(`Edit Jumlah (Pax) untuk ${newName.trim()}:`, guest.count);
+    if (newCountStr === null) return; // Kalau di-cancel
+    let newCount = parseInt(newCountStr);
+    if (isNaN(newCount) || newCount <= 0) return alert("Jumlah (Pax) nggak valid bro!");
+
+    // Save perubahan
+    guest.name = newName.trim();
+    guest.count = newCount;
+
+    save(); renderWedding();
+}
 
 function exportGuestsToCSV() {
     if(weddingData.guests.length === 0) return alert("Belum ada data tamu buat di-download bro!");
@@ -939,8 +960,9 @@ function renderWedding() {
                     <td style="cursor:pointer;" onclick="toggleWedGuestAttend(${g.id})">
                         ${attendIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${isAttend ? 'Hadir' : 'Batal'}</span>
                     </td>
-                    <td style="text-align:center;">
-                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedGuest(${g.id})"><i class="fas fa-trash"></i></button>
+                    <td style="text-align:center; display:flex; justify-content:center; gap:5px;">
+                        <button class="btn-warning" style="padding: 6px 10px;" onclick="editWedGuest(${g.id})" title="Edit Tamu"><i class="fas fa-edit"></i></button>
+                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedGuest(${g.id})" title="Hapus Tamu"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `;

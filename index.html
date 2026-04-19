@@ -296,8 +296,9 @@ tr:last-child td { border-bottom: none; }
   
   /* Buat Tabel Tambahan Wedding */
   #wedBudgetList td:nth-of-type(1)::before { content: "Item"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedBudgetList td:nth-of-type(2)::before { content: "Alokasi Target"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedBudgetList td:nth-of-type(3)::before { content: "Realisasi"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedBudgetList td:nth-of-type(2)::before { content: "Keterangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedBudgetList td:nth-of-type(3)::before { content: "Alokasi Target"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedBudgetList td:nth-of-type(4)::before { content: "Realisasi"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedVendorList td:nth-of-type(1)::before { content: "Vendor"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedVendorList td:nth-of-type(2)::before { content: "Layanan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedVendorList td:nth-of-type(3)::before { content: "Status"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
@@ -681,16 +682,24 @@ return `
   </div>
 
   <div id="wed-content-budget" class="wed-content">
+      <div class="card" style="background: #eff6ff; border-color: #bfdbfe; margin-bottom: 15px;">
+         <h3 style="margin:0; color:#1d4ed8; display:flex; justify-content:space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+             <span><i class="fas fa-bullseye"></i> Patokan Maksimal (Dari Target):</span>
+             <strong id="wedMaxBudget" style="font-size: 1.5rem;">Rp 0</strong>
+         </h3>
+      </div>
+
       <div class="card">
         <div class="form-group">
           <input id="wedBudgetItem" placeholder="Item (Catering, Mas Kawin, dll)" style="flex: 1;">
-          <input type="number" id="wedBudgetTarget" placeholder="Alokasi Budget (Rp)" style="flex: 1;">
-          <button class="action" onclick="addWedBudget()"><i class="fas fa-plus"></i> Set Alokasi</button>
+          <input type="number" id="wedBudgetTarget" placeholder="Alokasi (Rp)" style="flex: 1;">
+          <input id="wedBudgetNotes" placeholder="Keterangan / Link Toko" style="flex: 1.5;">
+          <button class="action" onclick="addWedBudget()"><i class="fas fa-plus"></i> Tambah</button>
         </div>
       </div>
       <div class="card" style="overflow-x: auto;">
         <table id="wedBudgetList" style="min-width: 100%;">
-          <thead><tr><th>Item</th><th>Alokasi Target</th><th>Realisasi (Terpakai)</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Item</th><th>Keterangan</th><th>Alokasi Target</th><th>Realisasi (Terpakai)</th><th style="width: 140px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedBudgetTbody"></tbody>
         </table>
       </div>
@@ -821,18 +830,25 @@ function switchWedTab(tabName) {
 function addWedBudget() {
     let name = document.getElementById('wedBudgetItem').value;
     let target = parseInt(document.getElementById('wedBudgetTarget').value);
+    let notes = document.getElementById('wedBudgetNotes').value;
     
     if(!name || isNaN(target)) return alert("Isi nama item dan alokasi budgetnya bro!");
     
-    weddingData.budget.push({ id: Date.now(), name: name, target: target, real: 0 });
+    // Simpan subItems array dan notes
+    weddingData.budget.push({ id: Date.now(), name: name, target: target, real: 0, notes: notes, subItems: [] });
+    
     document.getElementById('wedBudgetItem').value = '';
     document.getElementById('wedBudgetTarget').value = '';
+    document.getElementById('wedBudgetNotes').value = '';
     
     save(); renderWedding();
 }
 
 function updateWedBudgetReal(id) {
     let item = weddingData.budget.find(b => b.id === id);
+    if (item.subItems && item.subItems.length > 0) {
+        return alert("Realisasi dihitung otomatis dari total Sub-Item bro! Update realisasi di masing-masing sub-item ya.");
+    }
     let newReal = prompt(`Update Realisasi Biaya untuk ${item.name} (Rp):`, item.real);
     if(newReal === null || newReal.trim() === "") return;
     newReal = parseInt(newReal.replace(/\./g, '').replace(/,/g, ''));
@@ -845,6 +861,45 @@ function updateWedBudgetReal(id) {
 function deleteWedBudget(id) {
     if(confirm("Hapus budget item ini?")) {
         weddingData.budget = weddingData.budget.filter(b => b.id !== id);
+        save(); renderWedding();
+    }
+function addWedSubItem(id) {
+    let item = weddingData.budget.find(b => b.id === id);
+    let name = prompt("Nama Sub Item (misal: Cincin Cowo):");
+    if(!name || name.trim() === "") return;
+    
+    let amountInput = prompt(`Alokasi target untuk '${name}' (Rp):`);
+    let amount = parseInt(amountInput ? amountInput.replace(/\./g, '').replace(/,/g, '') : 0);
+    if(isNaN(amount) || amount <= 0) return alert("Nominal tidak valid!");
+
+    let notes = prompt(`Keterangan / Link Vendor untuk '${name}' (Boleh dikosongkan):`);
+    
+    if(!item.subItems) item.subItems = [];
+    item.subItems.push({ id: Date.now(), name: name.trim(), target: amount, real: 0, notes: notes || "" });
+    
+    save(); renderWedding();
+}
+
+function updateWedSubItemReal(itemId, subId) {
+    let item = weddingData.budget.find(b => b.id === itemId);
+    let sub = item.subItems.find(s => s.id === subId);
+    
+    let newReal = prompt(`Update Realisasi Biaya untuk ${sub.name} (Rp):`, sub.real || 0);
+    if(newReal === null || newReal.trim() === "") return;
+    newReal = parseInt(newReal.replace(/\./g, '').replace(/,/g, ''));
+    if(isNaN(newReal)) return alert("Nominal nggak valid bro!");
+    
+    sub.real = newReal;
+    item.real = item.subItems.reduce((acc, curr) => acc + (curr.real || 0), 0); // Auto kalkulasi induk
+    
+    save(); renderWedding();
+}
+
+function deleteWedSubItem(itemId, subId) {
+    if(confirm("Hapus sub item ini?")) {
+        let item = weddingData.budget.find(b => b.id === itemId);
+        item.subItems = item.subItems.filter(s => s.id !== subId);
+        item.real = item.subItems.reduce((acc, curr) => acc + (curr.real || 0), 0); // Auto kalkulasi induk
         save(); renderWedding();
     }
 }
@@ -904,25 +959,70 @@ function deleteWedGuest(id) {
 }
 
 function renderWedding() {
+    // --- CEK TARGET BIAYA NIKAH ---
+    let wedGoal = goals.find(g => g.name.toLowerCase().includes('nikah') || g.name.toLowerCase().includes('wedding'));
+    let maxBudget = wedGoal ? wedGoal.target : 0;
+    let maxBudgetEl = document.getElementById('wedMaxBudget');
+    if (maxBudgetEl) maxBudgetEl.innerText = maxBudget > 0 ? formatRp(maxBudget) : "Set Target 'Nikah' di menu Impian";
+
     // 1. Render Budget
     const budgetTbody = document.getElementById('wedBudgetTbody');
     if(budgetTbody) {
         budgetTbody.innerHTML = '';
+        let totalAlokasi = 0; let totalRealisasi = 0;
+
         weddingData.budget.forEach(b => {
+            totalAlokasi += b.target; totalRealisasi += b.real;
             let isWarning = b.real > b.target;
             let realColor = isWarning ? 'color: var(--danger); font-weight:bold;' : 'color: var(--success);';
+            let notesHTML = b.notes ? `<div style="color:#64748b; font-size:0.8rem; margin-top:4px;"><i class="fas fa-info-circle"></i> ${b.notes}</div>` : '';
+            
+            let subHTML = '';
+            if (b.subItems && b.subItems.length > 0) {
+                b.subItems.forEach(sub => {
+                    let subIsWarning = sub.real > sub.target;
+                    let subRealColor = subIsWarning ? 'color: var(--danger);' : 'color: var(--success);';
+                    let subNotes = sub.notes ? `<div style="color:#94a3b8; font-size:0.75rem;">- ${sub.notes}</div>` : '';
+                    
+                    subHTML += `
+                        <tr style="background-color: #f8fafc; font-size: 0.9rem;">
+                            <td style="padding-left: 30px;"><i class="fas fa-level-up-alt fa-rotate-90" style="margin-right:8px; color:#cbd5e1;"></i> <strong style="color:#475569;">${sub.name}</strong></td>
+                            <td>${subNotes}</td>
+                            <td style="color:#64748b;">${formatRp(sub.target)}</td>
+                            <td style="${subRealColor}">${formatRp(sub.real)}</td>
+                            <td style="text-align:center; display:flex; justify-content:center; gap:5px;">
+                                <button class="btn-warning" style="padding: 4px 8px; font-size: 0.75rem;" onclick="updateWedSubItemReal(${b.id}, ${sub.id})" title="Update Realisasi Sub"><i class="fas fa-edit"></i></button>
+                                <button class="btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="deleteWedSubItem(${b.id}, ${sub.id})"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
             budgetTbody.innerHTML += `
-                <tr>
-                    <td><strong style="color:#1e293b;">${b.name}</strong></td>
-                    <td style="color:#475569;">${formatRp(b.target)}</td>
+                <tr style="border-top: 2px solid var(--border);">
+                    <td><strong style="color:#1e293b; font-size:1.05rem;">${b.name}</strong></td>
+                    <td>${notesHTML}</td>
+                    <td style="color:#1e293b; font-weight:600;">${formatRp(b.target)}</td>
                     <td style="${realColor}">${formatRp(b.real)} ${isWarning ? '<i class="fas fa-exclamation-triangle" title="Overbudget!"></i>' : ''}</td>
-                    <td style="text-align:center;">
+                    <td style="text-align:center; display:flex; justify-content:center; gap:5px;">
+                        <button style="padding: 6px 10px; background: #e0f2fe; color: #0ea5e9; border: none; border-radius: 6px; cursor: pointer;" onclick="addWedSubItem(${b.id})" title="Tambah Sub Item"><i class="fas fa-plus"></i></button>
                         <button class="btn-warning" style="padding: 6px 10px;" onclick="updateWedBudgetReal(${b.id})" title="Update Realisasi"><i class="fas fa-edit"></i></button>
                         <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedBudget(${b.id})"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
+                ${subHTML}
             `;
         });
+        
+        budgetTbody.innerHTML += `
+            <tr style="background: #f1f5f9; border-top: 2px solid #cbd5e1;">
+                <td colspan="2"><strong style="color:#1e293b;">TOTAL KESELURUHAN</strong></td>
+                <td><strong style="color:#1e293b;">${formatRp(totalAlokasi)}</strong></td>
+                <td><strong style="${totalRealisasi > maxBudget && maxBudget > 0 ? 'color: var(--danger);' : 'color: var(--success);'}">${formatRp(totalRealisasi)}</strong></td>
+                <td></td>
+            </tr>
+        `;
     }
 
     // 2. Render Vendors

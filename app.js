@@ -75,8 +75,10 @@ let assetsData = {};
 let weddingData = {
     budget: [], // {id, name, target, real, notes, subItems: []}
     vendors: [], // {id, name, service, status} -> status: DP, Lunas, Tanya
-    guests: [] // {id, name, type, count, isInvited, isAttending}
+    guests: [] // {id, name, city, type, count, isInvited, isAttending}
 };
+
+let currentGuestSort = 'newest'; // Variabel untuk fitur Urutkan Tamu
 
 let nowDt = new Date();
 let defaultYM = nowDt.getFullYear() + "-" + String(nowDt.getMonth() + 1).padStart(2, '0');
@@ -409,6 +411,7 @@ return `
       <div class="card">
         <div class="form-group">
           <input id="wedGuestName" placeholder="Nama Tamu / Keluarga" style="flex: 1.5;">
+          <input id="wedGuestCity" placeholder="Kota / Domisili" style="flex: 1;">
           <select id="wedGuestType" style="flex: 0.5;">
               <option value="Keluarga Pria">Keluarga Pria</option>
               <option value="Keluarga Wanita">Keluarga Wanita</option>
@@ -419,11 +422,19 @@ return `
           <button class="action" onclick="addWedGuest()"><i class="fas fa-plus"></i> Tambah Tamu</button>
         </div>
       </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-bottom: 15px;">
+          <select id="guestSortSelect" onchange="changeGuestSort(this.value)" style="padding: 8px 15px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-weight: 600; color: #475569; outline: none; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              <option value="newest">Urutkan: Paling Baru</option>
+              <option value="name">Urutkan: Abjad Nama (A-Z)</option>
+              <option value="city">Urutkan: Kota Domisili (A-Z)</option>
+          </select>
+      </div>
       
       <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #3b82f6;">
         <h4 style="margin-top:0; color:#1d4ed8; display: flex; align-items: center; gap: 8px;"><i class="fas fa-mars" style="color: #3b82f6;"></i> Daftar Keluarga Pria</h4>
         <table id="wedGuestListPria" style="min-width: 100%;">
-          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Nama Tamu</th><th>Kota</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedGuestTbodyPria"></tbody>
         </table>
       </div>
@@ -431,7 +442,7 @@ return `
       <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #ec4899;">
         <h4 style="margin-top:0; color:#be185d; display: flex; align-items: center; gap: 8px;"><i class="fas fa-venus" style="color: #ec4899;"></i> Daftar Keluarga Wanita</h4>
         <table id="wedGuestListWanita" style="min-width: 100%;">
-          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Nama Tamu</th><th>Kota</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedGuestTbodyWanita"></tbody>
         </table>
       </div>
@@ -439,7 +450,7 @@ return `
       <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #eab308;">
         <h4 style="margin-top:0; color:#854d0e; display: flex; align-items: center; gap: 8px;"><i class="fas fa-star" style="color: #eab308;"></i> Daftar Tamu VIP</h4>
         <table id="wedGuestListVIP" style="min-width: 100%;">
-          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Nama Tamu</th><th>Kota</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedGuestTbodyVIP"></tbody>
         </table>
       </div>
@@ -447,7 +458,7 @@ return `
       <div class="card" style="overflow-x: auto; border-top: 4px solid #94a3b8;">
         <h4 style="margin-top:0; color:#475569; display: flex; align-items: center; gap: 8px;"><i class="fas fa-users"></i> Daftar Tamu Reguler</h4>
         <table id="wedGuestListReguler" style="min-width: 100%;">
-          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Nama Tamu</th><th>Kota</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th>Kehadiran</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedGuestTbodyReguler"></tbody>
         </table>
       </div>
@@ -677,14 +688,16 @@ function deleteWedVendor(id) {
 
 function addWedGuest() {
     let name = document.getElementById('wedGuestName').value;
+    let city = document.getElementById('wedGuestCity').value || '-'; // AMBIL DATA KOTA
     let type = document.getElementById('wedGuestType').value;
     let count = parseInt(document.getElementById('wedGuestCount').value);
     
     if(!name || isNaN(count)) return alert("Lengkapi nama dan jumlah tamu bro!");
     
-    weddingData.guests.push({ id: Date.now(), name: name, type: type, count: count, isInvited: false, isAttending: true });
+    weddingData.guests.push({ id: Date.now(), name: name, city: city, type: type, count: count, isInvited: false, isAttending: true }); // SIMPAN KOTA
     
     document.getElementById('wedGuestName').value = '';
+    document.getElementById('wedGuestCity').value = ''; // RESET KOTA
     document.getElementById('wedGuestType').value = 'Keluarga Pria';
     document.getElementById('wedGuestCount').value = '1';
     
@@ -710,6 +723,7 @@ function deleteWedGuest(id) {
         save(); renderWedding();
     }
 }
+
 function editWedGuest(id) {
     let guest = weddingData.guests.find(g => g.id === id);
     if (!guest) return;
@@ -718,12 +732,15 @@ function editWedGuest(id) {
     let newName = prompt("Edit Nama Tamu / Keluarga:", guest.name);
     if (newName === null) return;
     if (newName.trim() === "") return alert("Nama tidak boleh kosong bro!");
+    
+    // 1.5 Edit Kota
+    let newCity = prompt("Edit Kota / Domisili:", guest.city || '-');
+    if (newCity === null) return;
 
-    // 2. Edit Jenis Tamu (VIP, Keluarga Pria, Keluarga Wanita, Reguler)
+    // 2. Edit Jenis Tamu
     let newType = prompt("Edit Jenis (Keluarga Pria / Keluarga Wanita / VIP / Reguler):", guest.type || 'Reguler');
     if (newType === null) return;
     
-    // Validasi agar input sesuai dengan kategori yang ada
     const validTypes = ['VIP', 'Keluarga Pria', 'Keluarga Wanita', 'Reguler'];
     if (!validTypes.includes(newType.trim())) {
         return alert("Gagal! Jenis harus: VIP, Keluarga Pria, Keluarga Wanita, atau Reguler (sesuaikan huruf besar/kecilnya).");
@@ -737,27 +754,29 @@ function editWedGuest(id) {
 
     // Simpan semua perubahan
     guest.name = newName.trim();
+    guest.city = newCity.trim(); // SIMPAN KOTA
     guest.type = newType.trim();
     guest.count = newCount;
 
     save(); 
-    renderWedding(); // Refresh tabel agar tamu pindah ke tabel yang sesuai jika jenisnya berubah
+    renderWedding();
 }
 
 function exportGuestsToCSV() {
     if(weddingData.guests.length === 0) return alert("Belum ada data tamu buat di-download bro!");
     
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Nama Tamu,Tipe Tamu,Jumlah (Pax),Status Undangan,Kehadiran\n";
+    csvContent += "Nama Tamu,Kota/Domisili,Tipe Tamu,Jumlah (Pax),Status Undangan,Kehadiran\n"; // HEADER KOTA
     
     weddingData.guests.forEach(g => {
-        let name = g.name.replace(/,/g, " "); // Hapus koma di nama biar excel ga error
+        let name = g.name.replace(/,/g, " "); 
+        let city = (g.city || '-').replace(/,/g, " "); // KOTA EXCEL
         let type = g.type || 'Reguler';
         let count = g.count;
         let invited = g.isInvited ? "Terkirim" : "Belum Terkirim";
         let attend = (g.isAttending !== false) ? "Hadir" : "Batal/Ragu";
         
-        let row = `${name},${type},${count},${invited},${attend}`;
+        let row = `${name},${city},${type},${count},${invited},${attend}`; // ROW KOTA
         csvContent += row + "\n";
     });
     
@@ -768,6 +787,11 @@ function exportGuestsToCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+function changeGuestSort(val) {
+    currentGuestSort = val;
+    renderWedding();
 }
 
 function renderWedding() {
@@ -782,7 +806,6 @@ function renderWedding() {
         let budgetHTML = '';
         let totalAlokasi = 0; let totalRealisasi = 0;
 
-        // Fungsi Deteksi Link
         const formatCatatan = (text) => {
             if (!text) return "";
             let urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
@@ -792,7 +815,6 @@ function renderWedding() {
             });
         };
 
-        // Palet Warna Dinamis Biar Keren
         const colorPalette = ['#3b82f6', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#14b8a6', '#f97316'];
 
         if(weddingData.budget.length === 0) {
@@ -800,7 +822,6 @@ function renderWedding() {
         }
 
         weddingData.budget.forEach((b, index) => {
-            // Ambil warna bergiliran
             let themeColor = colorPalette[index % colorPalette.length];
             
             totalAlokasi += b.target; totalRealisasi += b.real;
@@ -808,7 +829,6 @@ function renderWedding() {
             let realColor = isWarning ? 'color: var(--danger); font-weight:bold;' : 'color: var(--success);';
             let notesHTML = b.notes ? `<div style="color:#64748b; font-size:0.85rem; margin-top:6px;"><i class="fas fa-info-circle"></i> ${formatCatatan(b.notes)}</div>` : '';
             
-            // Loop Sub-Items di dalam Tabel Khusus Card Ini
             let subHTML = '';
             if (b.subItems && b.subItems.length > 0) {
                 subHTML += `
@@ -849,7 +869,6 @@ function renderWedding() {
                 subHTML = `<div style="text-align:center; color:#94a3b8; font-size:0.85rem; padding: 15px; background: #f8fafc; border-radius: 8px; margin-top:15px; border: 1px dashed #cbd5e1;">Belum ada sub-item. Silakan tambah!</div>`;
             }
 
-            // Kerangka Utama Masing-Masing Card Budget
             budgetHTML += `
             <div class="card" style="border-top: 4px solid ${themeColor}; margin-bottom: 20px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap: wrap; gap: 15px;">
@@ -883,7 +902,6 @@ function renderWedding() {
             `;
         });
         
-        // Footer: Total Keseluruhan Paling Bawah
         budgetHTML += `
             <div class="card" style="background: #0f172a; color: white; border: none; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
                 <div>
@@ -927,6 +945,7 @@ function renderWedding() {
     const tbodyWanita = document.getElementById('wedGuestTbodyWanita');
     const tbodyReguler = document.getElementById('wedGuestTbodyReguler');
     const totalGuestsEl = document.getElementById('wedTotalGuests');
+    const sortSelectEl = document.getElementById('guestSortSelect'); // BACA SELECT SORT
     
     if(tbodyVIP && tbodyReguler && tbodyPria && tbodyWanita && totalGuestsEl) {
         tbodyVIP.innerHTML = ''; tbodyReguler.innerHTML = '';
@@ -935,7 +954,17 @@ function renderWedding() {
         let totalPax = 0; let totalVIP = 0; let totalReguler = 0; let totalPria = 0; let totalWanita = 0;
         let hadirPax = 0; let hadirVIP = 0; let hadirReguler = 0; let hadirPria = 0; let hadirWanita = 0;
 
-        weddingData.guests.forEach(g => {
+        if (sortSelectEl) sortSelectEl.value = currentGuestSort;
+
+        // FUNGSI SORTING TAMU
+        let sortedGuests = [...weddingData.guests];
+        if (currentGuestSort === 'name') {
+            sortedGuests.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (currentGuestSort === 'city') {
+            sortedGuests.sort((a, b) => (a.city || '').localeCompare(b.city || ''));
+        } // Kalau newest, biarin aja susunan aslinya
+
+        sortedGuests.forEach(g => {
             let gType = g.type || 'Reguler';
             let isAttend = g.isAttending !== false;
 
@@ -962,9 +991,11 @@ function renderWedding() {
             else if(gType === 'Keluarga Wanita') typeBadge = '<span style="background:#fce7f3; color:#9d174d; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">WANITA</span>';
             else typeBadge = '<span style="background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">Reguler</span>';
             
+            // RENDER BARIS TABEL DENGAN KOLOM KOTA
             let rowHTML = `
                 <tr style="opacity: ${isAttend ? '1' : '0.5'};">
                     <td><strong style="color:#1e293b;">${g.name}</strong>${typeBadge}</td>
+                    <td style="color:#64748b;"><i class="fas fa-map-marker-alt" style="color:#cbd5e1; margin-right:4px;"></i> ${g.city || '-'}</td>
                     <td style="color:#475569; font-weight:600;">${g.count} Orang</td>
                     <td style="cursor:pointer;" onclick="toggleWedGuestInvite(${g.id})">
                         ${checkIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${g.isInvited ? 'Terkirim' : 'Belum'}</span>
@@ -985,10 +1016,11 @@ function renderWedding() {
             else tbodyReguler.innerHTML += rowHTML;
         });
         
-        if(tbodyPria.innerHTML === '') tbodyPria.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Pria</td></tr>';
-        if(tbodyWanita.innerHTML === '') tbodyWanita.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Wanita</td></tr>';
-        if(tbodyVIP.innerHTML === '') tbodyVIP.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu VIP</td></tr>';
-        if(tbodyReguler.innerHTML === '') tbodyReguler.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu Reguler</td></tr>';
+        // UPDATE COLSPAN JADI 6 (KARENA NAMBAH KOLOM KOTA)
+        if(tbodyPria.innerHTML === '') tbodyPria.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Pria</td></tr>';
+        if(tbodyWanita.innerHTML === '') tbodyWanita.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Wanita</td></tr>';
+        if(tbodyVIP.innerHTML === '') tbodyVIP.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu VIP</td></tr>';
+        if(tbodyReguler.innerHTML === '') tbodyReguler.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu Reguler</td></tr>';
 
         totalGuestsEl.innerHTML = `
             <div style="text-align: right;">

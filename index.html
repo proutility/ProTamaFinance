@@ -299,12 +299,14 @@ tr:last-child td { border-bottom: none; }
   #wedBudgetList td:nth-of-type(2)::before { content: "Keterangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedBudgetList td:nth-of-type(3)::before { content: "Alokasi Target"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedBudgetList td:nth-of-type(4)::before { content: "Realisasi"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  
   #wedVendorList td:nth-of-type(1)::before { content: "Vendor"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedVendorList td:nth-of-type(2)::before { content: "Layanan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #wedVendorList td:nth-of-type(3)::before { content: "Status"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedGuestList td:nth-of-type(1)::before { content: "Nama Tamu"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedGuestList td:nth-of-type(2)::before { content: "Jumlah"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
-  #wedGuestList td:nth-of-type(3)::before { content: "Undangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  
+  #wedGuestListVIP td:nth-of-type(1)::before, #wedGuestListReguler td:nth-of-type(1)::before { content: "Nama Tamu"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestListVIP td:nth-of-type(2)::before, #wedGuestListReguler td:nth-of-type(2)::before { content: "Jumlah"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestListVIP td:nth-of-type(3)::before, #wedGuestListReguler td:nth-of-type(3)::before { content: "Undangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   
   td * { text-align: left !important; word-wrap: break-word; white-space: normal; }
   
@@ -726,7 +728,7 @@ return `
       </div>
   </div>
   
-  <div id="wed-content-guest" class="wed-content" style="display:none;">
+<div id="wed-content-guest" class="wed-content" style="display:none;">
       <div class="card" style="background: #f0fdf4; border-color: #bbf7d0; margin-bottom: 15px;">
          <h3 style="margin:0; color:#15803d; display:flex; justify-content:space-between;">
              <span>Total Tamu Diundang:</span>
@@ -736,14 +738,28 @@ return `
       <div class="card">
         <div class="form-group">
           <input id="wedGuestName" placeholder="Nama Tamu / Keluarga" style="flex: 1.5;">
+          <select id="wedGuestType" style="flex: 0.5;">
+              <option value="Reguler">Reguler</option>
+              <option value="VIP">VIP</option>
+          </select>
           <input type="number" id="wedGuestCount" placeholder="Jumlah Orang" style="flex: 0.5;" value="1">
           <button class="action" onclick="addWedGuest()"><i class="fas fa-plus"></i> Tambah Tamu</button>
         </div>
       </div>
-      <div class="card" style="overflow-x: auto;">
-        <table id="wedGuestList" style="min-width: 100%;">
+      
+      <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #eab308;">
+        <h4 style="margin-top:0; color:#854d0e; display: flex; align-items: center; gap: 8px;"><i class="fas fa-star" style="color: #eab308;"></i> Daftar Tamu VIP</h4>
+        <table id="wedGuestListVIP" style="min-width: 100%;">
           <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
-          <tbody id="wedGuestTbody"></tbody>
+          <tbody id="wedGuestTbodyVIP"></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="overflow-x: auto; border-top: 4px solid #94a3b8;">
+        <h4 style="margin-top:0; color:#475569; display: flex; align-items: center; gap: 8px;"><i class="fas fa-users"></i> Daftar Tamu Reguler</h4>
+        <table id="wedGuestListReguler" style="min-width: 100%;">
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedGuestTbodyReguler"></tbody>
         </table>
       </div>
   </div>
@@ -1086,31 +1102,41 @@ function renderWedding() {
         });
     }
 
-    // 3. Render Guests
-    const guestTbody = document.getElementById('wedGuestTbody');
-    const totalGuestsEl = document.getElementById('wedTotalGuests');
-    if(guestTbody && totalGuestsEl) {
-        guestTbody.innerHTML = '';
-        let totalPax = 0;
-        weddingData.guests.forEach(g => {
-            totalPax += g.count;
-            let checkIcon = g.isInvited ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>' : '<i class="far fa-circle" style="color:#cbd5e1; font-size:1.2rem;"></i>';
-            
-            guestTbody.innerHTML += `
-                <tr>
-                    <td><strong style="color:#1e293b;">${g.name}</strong></td>
-                    <td style="color:#475569;">${g.count} Orang</td>
-                    <td style="cursor:pointer;" onclick="toggleWedGuestInvite(${g.id})">
-                        ${checkIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${g.isInvited ? 'Terkirim' : 'Belum'}</span>
-                    </td>
-                    <td style="text-align:center;">
-                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedGuest(${g.id})"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        });
-        totalGuestsEl.innerText = `${totalPax} Orang`;
-    }
+<div id="wed-content-guest" class="wed-content" style="display:none;">
+      <div class="card" style="background: #f0fdf4; border-color: #bbf7d0; margin-bottom: 15px;">
+         <h3 style="margin:0; color:#15803d; display:flex; justify-content:space-between;">
+             <span>Total Tamu Diundang:</span>
+             <strong id="wedTotalGuests" style="font-size: 1.5rem;">0 Orang</strong>
+         </h3>
+      </div>
+      <div class="card">
+        <div class="form-group">
+          <input id="wedGuestName" placeholder="Nama Tamu / Keluarga" style="flex: 1.5;">
+          <select id="wedGuestType" style="flex: 0.5;">
+              <option value="Reguler">Reguler</option>
+              <option value="VIP">VIP</option>
+          </select>
+          <input type="number" id="wedGuestCount" placeholder="Jumlah Orang" style="flex: 0.5;" value="1">
+          <button class="action" onclick="addWedGuest()"><i class="fas fa-plus"></i> Tambah Tamu</button>
+        </div>
+      </div>
+      
+      <div class="card" style="overflow-x: auto; margin-bottom: 20px; border-top: 4px solid #eab308;">
+        <h4 style="margin-top:0; color:#854d0e; display: flex; align-items: center; gap: 8px;"><i class="fas fa-star" style="color: #eab308;"></i> Daftar Tamu VIP</h4>
+        <table id="wedGuestListVIP" style="min-width: 100%;">
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedGuestTbodyVIP"></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="overflow-x: auto; border-top: 4px solid #94a3b8;">
+        <h4 style="margin-top:0; color:#475569; display: flex; align-items: center; gap: 8px;"><i class="fas fa-users"></i> Daftar Tamu Reguler</h4>
+        <table id="wedGuestListReguler" style="min-width: 100%;">
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedGuestTbodyReguler"></tbody>
+        </table>
+      </div>
+  </div>
 }
 // ==========================================
 

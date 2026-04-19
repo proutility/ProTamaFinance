@@ -194,6 +194,35 @@ tr:last-child td { border-bottom: none; }
 }
 .badge-paid { background: #dcfce7; color: #15803d; }
 
+/* WEDDING PLANNER CSS TWEAKS */
+.wedding-tab {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 10px;
+    overflow-x: auto;
+}
+.wedding-tab button {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+.wedding-tab button.active {
+    background: var(--primary);
+    color: white;
+}
+.wedding-tab button:hover:not(.active) {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
 /* ========================================================= */
 /* CSS TAMBAHAN: RESPONSIVITAS LAYAR HP (MOBILE VIEW)        */
 /* ========================================================= */
@@ -265,6 +294,17 @@ tr:last-child td { border-bottom: none; }
   #debtList td:nth-of-type(2)::before { content: "Total"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   #debtList td:nth-of-type(3)::before { content: "Sisa Tagihan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
   
+  /* Buat Tabel Tambahan Wedding */
+  #wedBudgetList td:nth-of-type(1)::before { content: "Item"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedBudgetList td:nth-of-type(2)::before { content: "Alokasi Target"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedBudgetList td:nth-of-type(3)::before { content: "Realisasi"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedVendorList td:nth-of-type(1)::before { content: "Vendor"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedVendorList td:nth-of-type(2)::before { content: "Layanan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedVendorList td:nth-of-type(3)::before { content: "Status"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestList td:nth-of-type(1)::before { content: "Nama Tamu"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestList td:nth-of-type(2)::before { content: "Jumlah"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  #wedGuestList td:nth-of-type(3)::before { content: "Undangan"; font-size: 0.7rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;}
+  
   td * { text-align: left !important; word-wrap: break-word; white-space: normal; }
   
   .login-card { padding: 30px 20px; width: 90%; }
@@ -319,9 +359,8 @@ window.alert = function(message) {
   let msgLower = message.toLowerCase();
   let iconType = 'info';
   
-  // Deteksi otomatis tipe pesannya bro
-  if (msgLower.includes('sukses')) iconType = 'success';
-  else if (msgLower.includes('gagal') || msgLower.includes('cukup') || msgLower.includes('valid') || msgLower.includes('kosong')) iconType = 'error';
+  if (msgLower.includes('sukses') || msgLower.includes('berhasil')) iconType = 'success';
+  else if (msgLower.includes('gagal') || msgLower.includes('cukup') || msgLower.includes('valid') || msgLower.includes('kosong') || msgLower.includes('melebihi')) iconType = 'error';
   else if (msgLower.includes('lengkapi') || msgLower.includes('pilih')) iconType = 'warning';
 
   Swal.fire({
@@ -355,6 +394,13 @@ let goals = [];
 let debts = [];
 let budgetsData = {};
 let assetsData = {};
+
+// TAMBAHAN UNTUK WEDDING PLANNER
+let weddingData = {
+    budget: [], // {id, name, target, real}
+    vendors: [], // {id, name, service, status} -> status: DP, Lunas, Tanya
+    guests: [] // {id, name, count, isInvited}
+};
 
 let nowDt = new Date();
 let defaultYM = nowDt.getFullYear() + "-" + String(nowDt.getMonth() + 1).padStart(2, '0');
@@ -408,6 +454,11 @@ function loadDataFromFirebase() {
       debts = data.debts || [];
       budgetsData = data.budgetsData || {};
       assetsData = data.assetsData || {};
+      
+      // Load Wedding Data if exists
+      if(data.weddingData) {
+          weddingData = data.weddingData;
+      }
     }
     
     // Refresh alias var
@@ -434,6 +485,7 @@ function save(){
     debts: debts,
     budgetsData: budgetsData,
     assetsData: assetsData,
+    weddingData: weddingData, // Save wedding data
     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch((error) => {
     console.error("Gagal nyimpen bro: ", error);
@@ -451,6 +503,7 @@ return `
   <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran Bulanan</button>
   <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi Mutasi</button>
   <button id="nav-target" onclick="showPage('target')"><i class="fas fa-bullseye"></i> Target & Impian</button>
+  <button id="nav-wedding" onclick="showPage('wedding')"><i class="fas fa-ring" style="color: #f472b6;"></i> Wedding Planner</button>
   <button id="nav-hutang" onclick="showPage('hutang')"><i class="fas fa-hand-holding-usd"></i> Hutang/Cicilan</button>
   <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 </div>
@@ -614,6 +667,78 @@ return `
   <div class="grid-2" id="goalList"></div>
 </div>
 
+<div id="wedding" class="page" style="display:none;">
+  <div class="header-with-picker">
+    <h2 class="header-title" style="display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-ring" style="color: #f472b6;"></i> Wedding Planner
+    </h2>
+  </div>
+  
+  <div class="wedding-tab">
+      <button id="wed-tab-budget" class="active" onclick="switchWedTab('budget')">Budgeting</button>
+      <button id="wed-tab-vendor" onclick="switchWedTab('vendor')">Vendor Tracker</button>
+      <button id="wed-tab-guest" onclick="switchWedTab('guest')">Guest List</button>
+  </div>
+
+  <div id="wed-content-budget" class="wed-content">
+      <div class="card">
+        <div class="form-group">
+          <input id="wedBudgetItem" placeholder="Item (Catering, Mas Kawin, dll)" style="flex: 1;">
+          <input type="number" id="wedBudgetTarget" placeholder="Alokasi Budget (Rp)" style="flex: 1;">
+          <button class="action" onclick="addWedBudget()"><i class="fas fa-plus"></i> Set Alokasi</button>
+        </div>
+      </div>
+      <div class="card" style="overflow-x: auto;">
+        <table id="wedBudgetList" style="min-width: 100%;">
+          <thead><tr><th>Item</th><th>Alokasi Target</th><th>Realisasi (Terpakai)</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedBudgetTbody"></tbody>
+        </table>
+      </div>
+  </div>
+  
+  <div id="wed-content-vendor" class="wed-content" style="display:none;">
+      <div class="card">
+        <div class="form-group">
+          <input id="wedVendorName" placeholder="Nama Vendor" style="flex: 1;">
+          <input id="wedVendorService" placeholder="Layanan (MUA, Dekor, Venue)" style="flex: 1;">
+          <select id="wedVendorStatus" style="flex: 0.5;">
+              <option value="Tanya">Baru Nanya / Survei</option>
+              <option value="DP">Sudah DP</option>
+              <option value="Lunas">Lunas</option>
+          </select>
+          <button class="action" onclick="addWedVendor()"><i class="fas fa-plus"></i> Tambah Vendor</button>
+        </div>
+      </div>
+      <div class="card" style="overflow-x: auto;">
+        <table id="wedVendorList" style="min-width: 100%;">
+          <thead><tr><th>Nama Vendor</th><th>Layanan</th><th>Status</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedVendorTbody"></tbody>
+        </table>
+      </div>
+  </div>
+  
+  <div id="wed-content-guest" class="wed-content" style="display:none;">
+      <div class="card" style="background: #f0fdf4; border-color: #bbf7d0; margin-bottom: 15px;">
+         <h3 style="margin:0; color:#15803d; display:flex; justify-content:space-between;">
+             <span>Total Tamu Diundang:</span>
+             <strong id="wedTotalGuests" style="font-size: 1.5rem;">0 Orang</strong>
+         </h3>
+      </div>
+      <div class="card">
+        <div class="form-group">
+          <input id="wedGuestName" placeholder="Nama Tamu / Keluarga" style="flex: 1.5;">
+          <input type="number" id="wedGuestCount" placeholder="Jumlah Orang" style="flex: 0.5;" value="1">
+          <button class="action" onclick="addWedGuest()"><i class="fas fa-plus"></i> Tambah Tamu</button>
+        </div>
+      </div>
+      <div class="card" style="overflow-x: auto;">
+        <table id="wedGuestList" style="min-width: 100%;">
+          <thead><tr><th>Nama Tamu</th><th>Jumlah (Pax)</th><th>Status Undangan</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <tbody id="wedGuestTbody"></tbody>
+        </table>
+      </div>
+  </div>
+</div>
 <div id="hutang" class="page" style="display:none;">
   <div class="header-with-picker">
     <h2 class="header-title">Manajemen Hutang & Cicilan</h2>
@@ -678,8 +803,179 @@ function showPage(p){
     }
   }
   
+  if (p === 'wedding') { renderWedding(); }
   update();
 }
+
+// ==========================================
+// FUNGSI WEDDING PLANNER
+// ==========================================
+function switchWedTab(tabName) {
+    document.querySelectorAll('.wedding-tab button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('wed-tab-' + tabName).classList.add('active');
+    
+    document.querySelectorAll('.wed-content').forEach(content => content.style.display = 'none');
+    document.getElementById('wed-content-' + tabName).style.display = 'block';
+}
+
+function addWedBudget() {
+    let name = document.getElementById('wedBudgetItem').value;
+    let target = parseInt(document.getElementById('wedBudgetTarget').value);
+    
+    if(!name || isNaN(target)) return alert("Isi nama item dan alokasi budgetnya bro!");
+    
+    weddingData.budget.push({ id: Date.now(), name: name, target: target, real: 0 });
+    document.getElementById('wedBudgetItem').value = '';
+    document.getElementById('wedBudgetTarget').value = '';
+    
+    save(); renderWedding();
+}
+
+function updateWedBudgetReal(id) {
+    let item = weddingData.budget.find(b => b.id === id);
+    let newReal = prompt(`Update Realisasi Biaya untuk ${item.name} (Rp):`, item.real);
+    if(newReal === null || newReal.trim() === "") return;
+    newReal = parseInt(newReal.replace(/\./g, '').replace(/,/g, ''));
+    if(isNaN(newReal)) return alert("Nominal nggak valid bro!");
+    
+    item.real = newReal;
+    save(); renderWedding();
+}
+
+function deleteWedBudget(id) {
+    if(confirm("Hapus budget item ini?")) {
+        weddingData.budget = weddingData.budget.filter(b => b.id !== id);
+        save(); renderWedding();
+    }
+}
+
+function addWedVendor() {
+    let name = document.getElementById('wedVendorName').value;
+    let service = document.getElementById('wedVendorService').value;
+    let status = document.getElementById('wedVendorStatus').value;
+    
+    if(!name || !service) return alert("Lengkapi nama vendor dan layanannya bro!");
+    
+    weddingData.vendors.push({ id: Date.now(), name: name, service: service, status: status });
+    document.getElementById('wedVendorName').value = '';
+    document.getElementById('wedVendorService').value = '';
+    
+    save(); renderWedding();
+}
+
+function toggleWedVendorStatus(id) {
+    let vendor = weddingData.vendors.find(v => v.id === id);
+    let nextStatus = vendor.status === 'Tanya' ? 'DP' : (vendor.status === 'DP' ? 'Lunas' : 'Tanya');
+    vendor.status = nextStatus;
+    save(); renderWedding();
+}
+
+function deleteWedVendor(id) {
+    if(confirm("Hapus vendor ini?")) {
+        weddingData.vendors = weddingData.vendors.filter(v => v.id !== id);
+        save(); renderWedding();
+    }
+}
+
+function addWedGuest() {
+    let name = document.getElementById('wedGuestName').value;
+    let count = parseInt(document.getElementById('wedGuestCount').value);
+    
+    if(!name || isNaN(count)) return alert("Lengkapi nama dan jumlah tamu bro!");
+    
+    weddingData.guests.push({ id: Date.now(), name: name, count: count, isInvited: false });
+    document.getElementById('wedGuestName').value = '';
+    document.getElementById('wedGuestCount').value = '1';
+    
+    save(); renderWedding();
+}
+
+function toggleWedGuestInvite(id) {
+    let guest = weddingData.guests.find(g => g.id === id);
+    guest.isInvited = !guest.isInvited;
+    save(); renderWedding();
+}
+
+function deleteWedGuest(id) {
+    if(confirm("Hapus tamu ini?")) {
+        weddingData.guests = weddingData.guests.filter(g => g.id !== id);
+        save(); renderWedding();
+    }
+}
+
+function renderWedding() {
+    // 1. Render Budget
+    const budgetTbody = document.getElementById('wedBudgetTbody');
+    if(budgetTbody) {
+        budgetTbody.innerHTML = '';
+        weddingData.budget.forEach(b => {
+            let isWarning = b.real > b.target;
+            let realColor = isWarning ? 'color: var(--danger); font-weight:bold;' : 'color: var(--success);';
+            budgetTbody.innerHTML += `
+                <tr>
+                    <td><strong style="color:#1e293b;">${b.name}</strong></td>
+                    <td style="color:#475569;">${formatRp(b.target)}</td>
+                    <td style="${realColor}">${formatRp(b.real)} ${isWarning ? '<i class="fas fa-exclamation-triangle" title="Overbudget!"></i>' : ''}</td>
+                    <td style="text-align:center;">
+                        <button class="btn-warning" style="padding: 6px 10px;" onclick="updateWedBudgetReal(${b.id})" title="Update Realisasi"><i class="fas fa-edit"></i></button>
+                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedBudget(${b.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 2. Render Vendors
+    const vendorTbody = document.getElementById('wedVendorTbody');
+    if(vendorTbody) {
+        vendorTbody.innerHTML = '';
+        weddingData.vendors.forEach(v => {
+            let statusBtnClass = v.status === 'Lunas' ? 'btn-success' : (v.status === 'DP' ? 'btn-warning' : 'action');
+            let statusBtnStyle = v.status === 'Tanya' ? 'background:#e2e8f0; color:#475569;' : '';
+            
+            vendorTbody.innerHTML += `
+                <tr>
+                    <td><strong style="color:#1e293b;">${v.name}</strong></td>
+                    <td style="color:#475569;">${v.service}</td>
+                    <td>
+                        <button class="${statusBtnClass}" style="padding: 4px 10px; font-size:0.8rem; ${statusBtnStyle}" onclick="toggleWedVendorStatus(${v.id})">${v.status}</button>
+                    </td>
+                    <td style="text-align:center;">
+                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedVendor(${v.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 3. Render Guests
+    const guestTbody = document.getElementById('wedGuestTbody');
+    const totalGuestsEl = document.getElementById('wedTotalGuests');
+    if(guestTbody && totalGuestsEl) {
+        guestTbody.innerHTML = '';
+        let totalPax = 0;
+        weddingData.guests.forEach(g => {
+            totalPax += g.count;
+            let checkIcon = g.isInvited ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>' : '<i class="far fa-circle" style="color:#cbd5e1; font-size:1.2rem;"></i>';
+            
+            guestTbody.innerHTML += `
+                <tr>
+                    <td><strong style="color:#1e293b;">${g.name}</strong></td>
+                    <td style="color:#475569;">${g.count} Orang</td>
+                    <td style="cursor:pointer;" onclick="toggleWedGuestInvite(${g.id})">
+                        ${checkIcon} <span style="font-size:0.85rem; color:#64748b; margin-left:5px;">${g.isInvited ? 'Terkirim' : 'Belum'}</span>
+                    </td>
+                    <td style="text-align:center;">
+                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedGuest(${g.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+        totalGuestsEl.innerText = `${totalPax} Orang`;
+    }
+}
+// ==========================================
+
 
 const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(angka);
 
@@ -711,7 +1007,7 @@ function handleTrxCategoryChange() {
   } else {
     customCat.style.display = 'none';
     
-    // FIX: Tampilkan dropdown Sub Kategori jika ada
+    // Tampilkan dropdown Sub Kategori jika ada
     let type = document.getElementById("type").value;
     if(type === 'expense') {
         let trxDate = document.getElementById("date").value || defaultYM;
@@ -835,7 +1131,6 @@ function updateDropdowns() {
     if(opts.includes(currentBdgCat)) bdgCatSel.value = currentBdgCat;
   }
   
-  // FIX: Trigger perubahan untuk nge-load sub kategori kalau ada
   handleTrxCategoryChange();
 }
 
@@ -918,7 +1213,6 @@ function addTransaction(){
     if (!category) return alert("Isi nama kategori barunya bro!");
   }
   
-  // FIX: Simpan subKategori kalo ada
   let subCatEl = document.getElementById("trxSubCategory");
   let subCategory = (subCatEl.style.display !== 'none' && subCatEl.value !== "") ? subCatEl.value : null;
 
@@ -964,7 +1258,7 @@ function addTransaction(){
       desc, date, type, 
       walletName: trxAssets[walletIdx].name, 
       category: finalCategory,
-      subCategory: subCategory // Menyimpan data sub-kategori
+      subCategory: subCategory
   });
   
   document.getElementById("amount").value = "";
@@ -1021,7 +1315,6 @@ function deleteBudget(ym, index) {
   }
 }
 
-// FIX: Fungsi Tambah Sub Budget
 function addSubBudget(ym, index) {
   let name = prompt("Nama Sub Kategori (misal: Makan, Bensin):");
   if(!name || name.trim() === "") return;
@@ -1033,7 +1326,6 @@ function addSubBudget(ym, index) {
   
   if(!budgetsData[ym][index].subBudgets) budgetsData[ym][index].subBudgets = [];
   
-  // Validasi: Cek total sub budget gak boleh ngelewatin budget utama
   let currentSubTotal = budgetsData[ym][index].subBudgets.reduce((acc, curr) => acc + curr.amount, 0);
   if(currentSubTotal + amount > budgetsData[ym][index].amount) {
       return alert(`Gagal! Total Sub-Budget (${formatRp(currentSubTotal + amount)}) melebihi Batas Maksimal Kategori Utama (${formatRp(budgetsData[ym][index].amount)}).`);
@@ -1043,7 +1335,6 @@ function addSubBudget(ym, index) {
   save(); update();
 }
 
-// FIX: Fungsi Hapus Sub Budget
 function deleteSubBudget(ym, bIdx, subIdx) {
   if(confirm("Hapus sub kategori ini?")) {
       budgetsData[ym][bIdx].subBudgets.splice(subIdx, 1);
@@ -1078,7 +1369,7 @@ function addAsset(){
     if(isNaN(lot) || isNaN(avg)) return alert("Isi Jumlah Lot dan Average Harga Beli untuk saham bro!");
     newData.lot = lot;
     newData.avg = avg;
-    newData.value = value * lot * 100; // Harga Saat Ini dikali lot dikali 100 lembar
+    newData.value = value * lot * 100;
   }
   
   let assetYM = document.getElementById("assetMonthFilter") ? document.getElementById("assetMonthFilter").value : defaultYM;
@@ -1106,7 +1397,7 @@ function updateStockValue(i) {
       let newPrice = prompt(`Update harga saham ${asset.name} (per lembar).\n\nHarga saat ini: Rp ${currentPrice}\nLot dimiliki: ${asset.lot} lot\nAvg beli: Rp ${asset.avg || 0}`, currentPrice);
       
       if (newPrice === null || newPrice.trim() === "") return;
-      newPrice = parseFloat(newPrice.replace(/,/g, '.')); // Handle input koma jadi desimal
+      newPrice = parseFloat(newPrice.replace(/,/g, '.'));
       if (isNaN(newPrice) || newPrice < 0) return alert("Harga gak valid bro!");
       
       asset.value = newPrice * asset.lot * 100;
@@ -1417,7 +1708,6 @@ function update(){
     [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 15).forEach((t, i) => {
       let originalIndex = transactions.findIndex(orig => orig.id === t.id);
       
-      // FIX: Tampilkan Sub Kategori di Mutasi kalau ada (misal: "Kebutuhan Pokok - Makan")
       let fullCatName = t.category || "";
       if (t.category && t.subCategory) fullCatName = `${t.category} - ${t.subCategory}`;
       
@@ -1598,7 +1888,6 @@ function update(){
   }
 }
 
-// LOGIKA ANGGARAN CERDAS + SUB BUDGET
 function renderBudgetList(list, ym) {
   const container = document.getElementById("budgetList"); 
   if(!container) return;
@@ -1631,14 +1920,13 @@ function renderBudgetList(list, ym) {
       budgetVsLiquid.innerHTML = `<span style="color:var(--success)">Rp 0</span> <small style="color:#94a3b8">/ ${formatRp(cash)}</small>`;
       statusCard.style.backgroundColor = '#f0fdf4';
       statusCard.style.borderColor = '#bbf7d0';
-      document.getElementById("budgetCardTitle").innerText = "Budgeting";
+      document.getElementById("budgetCardTitle").innerText = "Sisa Rencana Perlu Dana";
     }
     return;
   }
   
   let spentThisMonth = {};
   transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense').forEach(t => {
-    // Save under category
     spentThisMonth[t.category] = (spentThisMonth[t.category] || 0) + t.amount;
   });
 
@@ -1659,12 +1947,10 @@ function renderBudgetList(list, ym) {
     let bgLightColor = isDanger ? '#fee2e2' : (isWarning ? '#fef08a' : '#f1f5f9');
     let borderCardColor = isDanger ? '#fca5a5' : 'var(--border)';
     
-    // FIX: Render HTML untuk Sub-Categories kalau ada
     let subHTML = '';
     if(b.subBudgets && b.subBudgets.length > 0) {
         subHTML += `<div style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 12px;">`;
         b.subBudgets.forEach((sub, subIdx) => {
-            // Hitung pengeluaran khusus sub kategori ini
             let subSpent = transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense' && t.category === b.category && t.subCategory === sub.name).reduce((acc, t) => acc + t.amount, 0);
             let subPercent = Math.min((subSpent / sub.amount) * 100, 100).toFixed(1);
             let subIsDanger = subSpent > sub.amount;
@@ -1716,7 +2002,7 @@ function renderBudgetList(list, ym) {
     budgetVsLiquid.innerHTML = `<span style="color:${totalRemainingPlanning > cash ? 'var(--danger)' : 'var(--success)'}">${formatRp(totalRemainingPlanning)}</span> <small style="color:#94a3b8">/ ${formatRp(cash)}</small>`;
     statusCard.style.backgroundColor = totalRemainingPlanning > cash ? '#fff1f2' : '#f0fdf4';
     statusCard.style.borderColor = totalRemainingPlanning > cash ? '#fecaca' : '#bbf7d0';
-    document.getElementById("budgetCardTitle").innerText = totalRemainingPlanning > 0 ? "Budgeting" : "Rencana Bulan Ini Beres!";
+    document.getElementById("budgetCardTitle").innerText = totalRemainingPlanning > 0 ? "Sisa Rencana Perlu Dana" : "Rencana Bulan Ini Beres!";
   }
 }
 

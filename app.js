@@ -766,7 +766,11 @@ function renderLaporan() {
 // ================= FUNGSI NOTIFIKASI LONCENG =================
 function toggleNotif() {
     const el = document.getElementById('notifPanel');
-    if(!el) return console.log('Panel notif belum dirender html-nya');
+    
+    // Tampilkan tombol lonceng di header desktop jika layarnya besar
+    if(window.innerWidth > 768) {
+        document.getElementById('desktopBellWrap').style.display = 'block';
+    }
     
     if(el.style.display === 'block') {
         el.style.display = 'none';
@@ -777,66 +781,34 @@ function toggleNotif() {
 }
 
 function renderNotifs() {
-    let html = ""; 
-    let today = new Date(); 
+    let html = "";
+    let today = new Date();
     let currentDay = today.getDate();
     let ym = defaultYM;
     
-    try {
-        // 1. Cek Pemasukan (Aman dari error null)
-        let incomes = transactions.filter(t => t.type === 'income' && t.date && t.date.startsWith(ym));
-        if(incomes.length > 0) {
-            let lastInc = incomes[incomes.length - 1]; // Ambil yang terbaru
-            html += `<div class="notif-item success"><i class="fas fa-check-circle"></i><div><strong>Duit Masuk!</strong><br><span style="color:#64748b; font-size:0.8rem;">Terakhir: ${lastInc.desc} (${formatRp(lastInc.amount)})</span></div></div>`;
-        }
-        
-        // 2. Cek Hutang/Cicilan Jatuh Tempo (Aman dari error format tanggal)
-        debts.filter(d => d.remaining > 0).forEach(d => {
-            if(!d.date) return; // Kalau tanggal kosong, skip biar ga error
-            let dueDay = parseInt(d.date.split('-')[2]);
+    // 1. Cek Pemasukan Terakhir (Bulan ini)
+    let recentIncomes = transactions.filter(t => t.type === 'income' && t.date.startsWith(ym)).sort((a,b) => new Date(b.date) - new Date(a.date));
+    if(recentIncomes.length > 0) {
+        html += `<div class="notif-item success"><i class="fas fa-check-circle" style="color:#22c55e;"></i><div><strong>Pemasukan Masuk!</strong><br><span style="color:#64748b;">${recentIncomes[0].desc} sebesar ${formatRp(recentIncomes[0].amount)} udah mendarat di rekening.</span></div></div>`;
+    }
+
+    // 2. Cek Hutang/Cicilan Jatuh Tempo <= 7 hari
+    debts.filter(d => d.remaining > 0).forEach(d => {
+        let dueDay = parseInt(d.date.split('-')[2]);
+        if(!isNaN(dueDay)) {
+            let diff = dueDay - currentDay;
+            let isPaid = transactions.some(t => t.type === 'expense' && t.desc.toLowerCase().includes(d.name.toLowerCase()) && t.date.startsWith(ym));
             
-            if(!isNaN(dueDay)) {
-                let diff = dueDay - currentDay;
-                // Cek apakah bulan ini udah dibayar
-                let isPaid = transactions.some(t => t.type === 'expense' && t.desc.toLowerCase().includes(d.name.toLowerCase()) && t.date && t.date.startsWith(ym));
-                
-                if(!isPaid) {
-                    if(diff <= 5 && diff >= 0) {
-                        html += `<div class="notif-item danger"><i class="fas fa-clock"></i><div><strong>Tagihan!</strong><br><span style="color:#64748b; font-size:0.8rem;">${d.name} jatuh tempo ${diff === 0 ? 'HARI INI' : 'dlm ' + diff + ' hari'}.</span></div></div>`;
-                    }
+            if(!isPaid) {
+                if(diff === 0 || diff < 0) {
+                    html += `<div class="notif-item danger"><i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><div><strong>Cicilan Jatuh Tempo!</strong><br><span style="color:#64748b;">Segera bayar ${d.name} (${formatRp(d.remaining)}).</span></div></div>`;
+                } else if(diff > 0 && diff <= 5) {
+                    html += `<div class="notif-item warning"><i class="fas fa-clock" style="color:#eab308;"></i><div><strong>H-${diff} Jatuh Tempo</strong><br><span style="color:#64748b;">Siapin dana buat bayar ${d.name}.</span></div></div>`;
                 }
             }
-        });
-
-        // 3. Cek Budget Over > 80% (Sekarang udah MASUK ke dalam fungsi)
-        let currentBudgets = getBudgetsFor(ym);
-        let spentThisMonth = {};
-        transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense').forEach(t => {
-            spentThisMonth[t.category] = (spentThisMonth[t.category] || 0) + t.amount;
-        });
-
-        currentBudgets.forEach(b => {
-            let spent = spentThisMonth[b.category] || 0;
-            let pct = (spent / b.amount) * 100;
-            if(pct >= 100) {
-                html += `<div class="notif-item danger"><i class="fas fa-times-circle" style="color:#ef4444;"></i><div><strong>Overbudget: ${b.category}</strong><br><span style="color:#64748b;">Pengeluaran tembus 100% dari target!</span></div></div>`;
-            } else if(pct >= 80) {
-                html += `<div class="notif-item warning"><i class="fas fa-exclamation-triangle" style="color:#eab308;"></i><div><strong>Warning Budget: ${b.category}</strong><br><span style="color:#64748b;">Pengeluaran udah ${pct.toFixed(0)}%. Ngerem dikit!</span></div></div>`;
-            }
-        });
-        
-        // Kalau ga ada notif sama sekali
-        if(html === "") {
-            html = `<div style="text-align:center; padding:25px 20px; color:#94a3b8; font-size:0.85rem;"><i class="fas fa-mug-hot" style="font-size:2rem; color:#cbd5e1; margin-bottom:10px; display:block;"></i>Belum ada notifikasi penting bulan ini bro.<br>Santai dulu!</div>`;
         }
-        
-        document.getElementById('notifBody').innerHTML = html;
-        
-    } catch(e) {
-        console.error("Error ngerender notif: ", e);
-        document.getElementById('notifBody').innerHTML = `<div style="padding:15px; color:red; font-size:0.8rem;">Gagal memuat notifikasi.</div>`;
-    }
-}
+    });
+
     // 3. Cek Budget Over > 80%
     let currentBudgets = getBudgetsFor(ym);
     let spentThisMonth = {};

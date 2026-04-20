@@ -145,9 +145,14 @@ return `
   <div class="sidebar-header">
     <img src="logo.png" alt="Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 8px;"> Pro-Tama Finance
   </div>
+  
   <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-home"></i> Dashboard</button>
   <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi / Mutasi</button>
-  <button id="nav-profil" onclick="showPage('profil')" style="margin-top: auto; margin-bottom: 20px;"><i class="fas fa-user-circle"></i> Profil Saya</button>
+  
+  <div style="margin-top: auto; display: flex; flex-direction: column; width: 100%;">
+    <button id="nav-profil" onclick="showPage('profil')"><i class="fas fa-user-circle"></i> Profil Saya</button>
+    <button class="logout-btn" onclick="logout()" style="color: #ef4444; border-top: 1px solid #334155; border-radius: 0 0 16px 16px; padding: 12px 20px; background: transparent; text-align: left; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'"><i class="fas fa-sign-out-alt"></i> Logout Akun</button>
+  </div>
 </div>
 
 <div class="main-content" style="position: relative;">
@@ -161,6 +166,18 @@ return `
         </div>
 </div>
 
+<div class="desktop-global-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
+     <div style="display: flex; align-items: center; gap: 15px;">
+         <i class="fas fa-bars desktop-menu-btn" onclick="toggleDesktopSidebar()" style="font-size: 1.4rem; color: #475569; cursor: pointer;" title="Mode Fokus (Tutup Sidebar)"></i>
+         <h2 class="header-title" style="margin: 0; font-size: 1.4rem; color: #1e293b;">Halo, ${userProfile.fullname || currentUser}! 👋</h2>
+     </div>
+     
+     <div class="desktop-bell" onclick="toggleNotif()" style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;">
+        <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning);"></i>
+        <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Notifikasi</span>
+     </div>
+  </div>
+
 <div id="dashboard" class="page">
   <div class="mobile-only-header">
      <div style="display:flex; align-items:center; gap:10px;">
@@ -168,18 +185,6 @@ return `
         <strong style="font-size:1.2rem; color:#1e293b;">Pro-Tama Apps</strong>
      </div>
      <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
-  </div>
-
-  <div class="header-with-picker" style="border-bottom: none; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-     <div style="display: flex; align-items: center; gap: 15px;">
-         <i class="fas fa-bars desktop-menu-btn" onclick="toggleDesktopSidebar()" style="font-size: 1.4rem; color: #475569; cursor: pointer;" title="Mode Fokus (Tutup Sidebar)"></i>
-         <h2 class="header-title" style="margin: 0;">Halo, ${userProfile.fullname || currentUser}! 👋</h2>
-     </div>
-     
-     <div class="desktop-bell" onclick="toggleNotif()">
-        <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning);"></i>
-        <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Notifikasi</span>
-     </div>
   </div>
 
   <div class="mobile-banner">

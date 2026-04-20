@@ -95,7 +95,7 @@ auth.onAuthStateChanged((user) => {
           <div class="login-left">
             <img src="logo.png" alt="Logo" style="width: 75px; height: 75px; object-fit: cover; border-radius: 18px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
             <h1 style="margin: 0 0 10px 0; color: #1e293b; font-size: 2.2rem; line-height: 1.2;">Pro-Tama Finance</h1>
-            <p style="color:#64748b; font-size: 1.05rem; margin-bottom: 20px; line-height: 1.5;">Platform manajemen keuangan & aset kelas elit untuk masa depan yang lebih tertata.</p>
+            <p style="color:#64748b; font-size: 1.05rem; margin-bottom: 20px; line-height: 1.5;">Platform manajemen keuangan & aset yang terintegrasi untuk masa depan yang lebih tertata.</p>
             
             <div class="login-features">
                 <div class="feature-item"><i class="fas fa-chart-pie"></i> <span>Pantau Cashflow & Aset Real-time</span></div>

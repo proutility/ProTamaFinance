@@ -287,3 +287,47 @@ tr:last-child td { border-bottom: none; }
   
   .login-card { padding: 30px 20px; width: 90%; }
 }
+/* ========================================================= */
+/* UI UPDATE ALA SUPER APP (BOTTOM NAV & GRID MENU KHUSUS HP)*/
+/* ========================================================= */
+.mobile-only-header { display: none; }
+.mobile-banner { display: none; position: relative; margin-bottom: 25px; margin-top: 10px; }
+.mobile-banner img { width: 100%; height: 150px; object-fit: cover; border-radius: 16px; filter: brightness(0.7); box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+.mobile-banner-text { position: absolute; bottom: 15px; left: 15px; color: white; font-weight: 700; font-size: 1.1rem; text-shadow: 0px 2px 4px rgba(0,0,0,0.8); }
+
+.mobile-menu-grid { display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 35px; }
+.mobile-menu-grid .menu-btn { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; cursor: pointer; transition: transform 0.2s;}
+.mobile-menu-grid .menu-btn:active { transform: scale(0.95); }
+.mobile-menu-grid .icon-box { width: 55px; height: 55px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+.mobile-menu-grid span { font-size: 0.75rem; font-weight: 700; color: #334155; line-height: 1.2;}
+
+.bottom-nav { display: none; }
+
+@media (max-width: 768px) {
+  /* Matikan Sidebar & Tombol Lama */
+  .sidebar { display: none !important; } 
+  #mobileMenuBtn { display: none !important; }
+  .header-with-picker .header-title { display: none; } /* Sembunyikan judul sapaan lama */
+
+  /* Nyalakan UI Baru */
+  .mobile-only-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+  .mobile-banner { display: block; }
+  .mobile-menu-grid { display: grid; }
+
+  /* Navbar Bawah Ala Super App */
+  .bottom-nav {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff;
+    border-top: 1px solid #e2e8f0; z-index: 9999; padding: 12px 0;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    justify-content: space-around; box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    border-top-left-radius: 20px; border-top-right-radius: 20px;
+  }
+  .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 0.7rem; font-weight: 700; cursor: pointer; gap: 4px; transition: color 0.2s;}
+  .bottom-nav .nav-item.active { color: var(--primary); }
+  .bottom-nav .nav-item i { font-size: 1.4rem; margin-bottom: 2px;}
+
+  .main-content { padding-bottom: 100px; padding-top: 15px; background: #ffffff;} 
+  body { background: #ffffff; }
+  
+  .card { border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+}

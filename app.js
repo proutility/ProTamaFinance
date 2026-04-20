@@ -23,7 +23,6 @@ const firebaseConfig = {
   measurementId: "G-0Y2Q0TD0VE"
 };
 
-// Inisialisasi Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -35,7 +34,7 @@ window.alert = function(message) {
   let msgLower = message.toLowerCase();
   let iconType = 'info';
   
-  if (msgLower.includes('sukses') || msgLower.includes('berhasil')) iconType = 'success';
+  if (msgLower.includes('sukses') || msgLower.includes('berhasil') || msgLower.includes('disimpan')) iconType = 'success';
   else if (msgLower.includes('gagal') || msgLower.includes('cukup') || msgLower.includes('valid') || msgLower.includes('kosong') || msgLower.includes('melebihi')) iconType = 'error';
   else if (msgLower.includes('lengkapi') || msgLower.includes('pilih')) iconType = 'warning';
 
@@ -46,9 +45,7 @@ window.alert = function(message) {
     confirmButtonText: 'Siap!',
     background: '#ffffff',
     borderRadius: '12px',
-    customClass: {
-      popup: 'swal2-custom-popup'
-    }
+    customClass: { popup: 'swal2-custom-popup' }
   });
 };
 
@@ -56,29 +53,22 @@ window.alert = function(message) {
 let currentUser = null;
 let currentUid = null;
 
+let userProfile = { fullname: '', phone: '', city: '', job: '' };
+
 let tempSelectedSources = ['all_liquid'];
 let currentSourceMode = 'add';
 let editingGoalIndex = -1;
 
-let lastBalance = null;
-let lastWealth = null;
-let lastDebt = null;
+let lastBalance = null; let lastWealth = null; let lastDebt = null;
 
-// Database Array Lokal (Bakal di-sync sama Firebase)
-let transactions = [];
-let goals = [];
-let debts = [];
-let budgetsData = {};
-let assetsData = {};
+let transactions = []; let goals = []; let debts = [];
+let budgetsData = {}; let assetsData = {};
 
-// TAMBAHAN UNTUK WEDDING PLANNER
 let weddingData = {
-    budget: [], // {id, name, target, real, notes, subItems: []}
-    vendors: [], // {id, name, service, status} -> status: DP, Lunas, Tanya
-    guests: [] // {id, name, city, type, count, isInvited, isAttending}
+    budget: [], vendors: [], guests: [] 
 };
 
-let currentGuestSort = 'newest'; // Variabel untuk fitur Urutkan Tamu
+let currentGuestSort = 'newest';
 
 let nowDt = new Date();
 let defaultYM = nowDt.getFullYear() + "-" + String(nowDt.getMonth() + 1).padStart(2, '0');
@@ -87,7 +77,7 @@ function getAssetsFor(ym) { return assetsData[ym] || []; }
 function getBudgetsFor(ym) { return budgetsData[ym] || []; }
 let assets = [];
 
-// ================= FUNGSI AUTENTIKASI (GOOGLE LOGIN) =================
+// ================= FUNGSI AUTENTIKASI =================
 auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user.displayName || user.email.split('@')[0];
@@ -111,18 +101,11 @@ auth.onAuthStateChanged((user) => {
 
 function login(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch((error) => {
-    alert("Gagal login bro: " + error.message);
-  });
+  auth.signInWithPopup(provider).catch((error) => alert("Gagal login bro: " + error.message));
 }
 
-function logout() { 
-  auth.signOut().then(() => {
-    location.reload();
-  }); 
-}
+function logout() { auth.signOut().then(() => location.reload()); }
 
-// ================= FUNGSI LOAD & SAVE KE FIRESTORE CLOUD =================
 function loadDataFromFirebase() {
   db.collection("usersData").doc(currentUid).get().then((doc) => {
     if (doc.exists) {
@@ -132,22 +115,14 @@ function loadDataFromFirebase() {
       debts = data.debts || [];
       budgetsData = data.budgetsData || {};
       assetsData = data.assetsData || {};
-      
-      if(data.weddingData) {
-          weddingData = data.weddingData;
-      }
+      if(data.weddingData) weddingData = data.weddingData;
+      if(data.userProfile) userProfile = data.userProfile;
     }
-    
     assets = getAssetsFor(defaultYM);
     
     document.getElementById("app").innerHTML = mainApp();
-    setTimeout(() => {
-        showPage('dashboard');
-        update();
-    }, 100);
-
+    setTimeout(() => { showPage('dashboard'); update(); }, 100);
   }).catch((error) => {
-    console.error("Error loading data:", error);
     alert("Gagal narik data dari server bro!");
   });
 }
@@ -155,16 +130,9 @@ function loadDataFromFirebase() {
 function save(){
   if(!currentUid) return;
   db.collection("usersData").doc(currentUid).set({
-    transactions: transactions,
-    goals: goals,
-    debts: debts,
-    budgetsData: budgetsData,
-    assetsData: assetsData,
-    weddingData: weddingData, 
+    transactions, goals, debts, budgetsData, assetsData, weddingData, userProfile, 
     lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).catch((error) => {
-    console.error("Gagal nyimpen bro: ", error);
-  });
+  }, { merge: true });
 }
 
 function mainApp(){
@@ -175,15 +143,28 @@ return `
   </div>
   <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-chart-pie"></i> Dashboard</button>
   <button id="nav-aset" onclick="showPage('aset')"><i class="fas fa-gem"></i> Aset & Portofolio</button>
-  <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran Bulanan</button>
-  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi Mutasi</button>
+  <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran</button>
+  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Mutasi</button>
   <button id="nav-target" onclick="showPage('target')"><i class="fas fa-bullseye"></i> Target & Impian</button>
-  <button id="nav-wedding" onclick="showPage('wedding')"><i class="fas fa-ring" style="color: #f472b6;"></i> Wedding Planner</button>
   <button id="nav-hutang" onclick="showPage('hutang')"><i class="fas fa-hand-holding-usd"></i> Hutang/Cicilan</button>
-  <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  <button id="nav-wedding" onclick="showPage('wedding')"><i class="fas fa-ring" style="color: #f472b6;"></i> Wedding Planner</button>
+  
+  <button id="nav-kalkulator" onclick="showPage('kalkulator')"><i class="fas fa-calculator" style="color: #0ea5e9;"></i> Kalkulator Saham</button>
+  <button id="nav-laporan" onclick="showPage('laporan')"><i class="fas fa-chart-line" style="color: #10b981;"></i> Laporan Cashflow</button>
+  
+  <button id="nav-profil" onclick="showPage('profil')" style="margin-top: auto; margin-bottom: 20px;"><i class="fas fa-user-circle"></i> Profil Saya</button>
 </div>
 
-<div class="main-content">
+<div class="main-content" style="position: relative;">
+
+<div id="notifPanel" class="notif-panel">
+    <div class="notif-header">
+        <span><i class="fas fa-bell" style="color:var(--warning);"></i> Notifikasi</span>
+        <i class="fas fa-times" style="color:#94a3b8; cursor:pointer;" onclick="toggleNotif()"></i>
+    </div>
+    <div id="notifBody" class="notif-body">
+        </div>
+</div>
 
 <div id="dashboard" class="page">
   <div class="mobile-only-header">
@@ -191,11 +172,14 @@ return `
         <img src="logo.png" style="width:35px; height:35px; border-radius:8px; object-fit:cover;">
         <strong style="font-size:1.2rem; color:#1e293b;">Pro-Tama Apps</strong>
      </div>
-     <i class="far fa-bell" style="font-size:1.4rem; color:#64748b;"></i>
+     <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
   </div>
 
   <div class="header-with-picker" style="border-bottom: none; margin-bottom: 5px;">
-     <h2 class="header-title">Halo, ${currentUser}! 👋</h2>
+     <h2 class="header-title">Halo, ${userProfile.fullname || currentUser}! 👋</h2>
+     <div style="display:none;" id="desktopBellWrap">
+        <i class="fas fa-bell" style="font-size:1.5rem; color:#64748b; cursor:pointer; transition:0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#64748b'" onclick="toggleNotif()"></i>
+     </div>
   </div>
 
   <div class="mobile-banner">
@@ -210,8 +194,8 @@ return `
      <div class="menu-btn" onclick="showPage('target')"><div class="icon-box" style="background:#f3e8ff; color:#9333ea;"><i class="fas fa-bullseye"></i></div><span>Target</span></div>
      <div class="menu-btn" onclick="showPage('wedding')"><div class="icon-box" style="background:#fce7f3; color:#db2777;"><i class="fas fa-ring"></i></div><span>Wedding</span></div>
      <div class="menu-btn" onclick="showPage('hutang')"><div class="icon-box" style="background:#fee2e2; color:#dc2626;"><i class="fas fa-hand-holding-usd"></i></div><span>Hutang</span></div>
-     <div class="menu-btn" onclick="alert('Fitur Kartu Tamu Digital segera hadir bro!')"><div class="icon-box" style="background:#f1f5f9; color:#475569;"><i class="fas fa-id-card"></i></div><span>Tamu</span></div>
-     <div class="menu-btn" onclick="alert('Panic Button ditekan!')"><div class="icon-box" style="background:#ffedd5; color:#ef4444;"><i class="fas fa-exclamation-triangle"></i></div><span>SOS</span></div>
+     <div class="menu-btn" onclick="showPage('kalkulator')"><div class="icon-box" style="background:#e0e7ff; color:#7c3aed;"><i class="fas fa-calculator"></i></div><span>Saham</span></div>
+     <div class="menu-btn" onclick="showPage('laporan')"><div class="icon-box" style="background:#ccfbf1; color:#0d9488;"><i class="fas fa-chart-line"></i></div><span>Laporan</span></div>
   </div>
   
   <div style="margin-bottom: 15px; display:flex; justify-content:space-between; align-items:center;">
@@ -252,6 +236,108 @@ return `
   </div>
 </div>
 
+<div id="profil" class="page" style="display:none;">
+  <div class="header-with-picker">
+    <h2 class="header-title">Profil Saya</h2>
+  </div>
+  <div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <i class="fas fa-user-circle" style="font-size: 5rem; color: #cbd5e1; margin-bottom: 10px;"></i>
+        <h3 style="margin:0; color:#1e293b;">${currentUser}</h3>
+        <p style="color:#64748b; font-size:0.9rem; margin-top:5px;">Akun Google Tertaut</p>
+    </div>
+    
+    <div class="form-group" style="flex-direction: column; align-items: stretch; gap: 15px;">
+        <div style="display:flex; flex-direction:column; gap:5px;">
+            <label style="font-size:0.85rem; font-weight:700; color:#475569; text-transform:uppercase;">Nama Lengkap</label>
+            <input type="text" id="profName" placeholder="Masukkan nama lengkap..." value="${userProfile.fullname || ''}">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+            <label style="font-size:0.85rem; font-weight:700; color:#475569; text-transform:uppercase;">No. Handphone / WhatsApp</label>
+            <input type="text" id="profPhone" placeholder="0812xxxxxx" value="${userProfile.phone || ''}">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+            <label style="font-size:0.85rem; font-weight:700; color:#475569; text-transform:uppercase;">Kota / Domisili</label>
+            <input type="text" id="profCity" placeholder="Serang, Bekasi, dll" value="${userProfile.city || ''}">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+            <label style="font-size:0.85rem; font-weight:700; color:#475569; text-transform:uppercase;">Instansi / Satker Kerja</label>
+            <input type="text" id="profJob" placeholder="Nama kantor/tempat kerja..." value="${userProfile.job || ''}">
+        </div>
+        
+        <button class="action" style="margin-top: 15px;" onclick="saveProfile()"><i class="fas fa-save"></i> Simpan Profil</button>
+    </div>
+    
+    <hr style="border:none; border-top:1px dashed #e2e8f0; margin: 30px 0;">
+    
+    <button class="btn-danger" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar (Logout) Akun</button>
+  </div>
+</div>
+
+<div id="kalkulator" class="page" style="display:none;">
+  <div class="header-with-picker">
+    <h2 class="header-title">Kalkulator Saham (Average Down)</h2>
+  </div>
+  <div class="card" style="max-width: 800px; margin: 0 auto; background: #f0f9ff; border-color: #bae6fd;">
+      <h3 style="color:#0284c7; margin-bottom: 20px;"><i class="fas fa-calculator"></i> Hitung Posisi Average Baru</h3>
+      
+      <div style="display:flex; gap: 20px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 300px; display:flex; flex-direction:column; gap: 15px;">
+              <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0f2fe;">
+                  <span style="font-size:0.8rem; font-weight:bold; color:#64748b;">PEMBELIAN AWAL (PORTOFOLIO SAAT INI)</span>
+                  <div style="display:flex; gap:10px; margin-top:10px;">
+                      <input type="number" id="calcLot1" placeholder="Jumlah Lot" style="flex:1;">
+                      <input type="number" id="calcPrice1" placeholder="Harga Beli (Rp)" style="flex:1;">
+                  </div>
+              </div>
+              <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0f2fe;">
+                  <span style="font-size:0.8rem; font-weight:bold; color:#64748b;">RENCANA PEMBELIAN BARU (TOP UP)</span>
+                  <div style="display:flex; gap:10px; margin-top:10px;">
+                      <input type="number" id="calcLot2" placeholder="Jumlah Lot" style="flex:1;">
+                      <input type="number" id="calcPrice2" placeholder="Harga Target (Rp)" style="flex:1;">
+                  </div>
+              </div>
+              <button class="action" onclick="calculateAvg()"><i class="fas fa-magic"></i> Hitung Sekarang</button>
+          </div>
+          
+          <div style="flex: 1; min-width: 300px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display:flex; flex-direction:column; justify-content:center;">
+              <div style="margin-bottom: 15px;">
+                  <span style="font-size:0.85rem; color:#64748b; font-weight:600; text-transform:uppercase;">Harga Average Baru</span>
+                  <h2 id="resAvg" style="margin:0; font-size:2.2rem; color:#0ea5e9;">Rp 0</h2>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                  <div>
+                      <span style="font-size:0.75rem; color:#64748b; font-weight:600;">Total Lot Akhir</span>
+                      <div id="resLot" style="font-size:1.1rem; font-weight:bold; color:#1e293b;">0 Lot</div>
+                  </div>
+                  <div style="text-align:right;">
+                      <span style="font-size:0.75rem; color:#64748b; font-weight:600;">Total Dana Dibutuhkan (Top Up)</span>
+                      <div id="resFunds" style="font-size:1.1rem; font-weight:bold; color:#ef4444;">Rp 0</div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<div id="laporan" class="page" style="display:none;">
+  <div class="header-with-picker">
+    <h2 class="header-title">Laporan Analytics</h2>
+    <div class="month-picker-capsule" onclick="try{document.getElementById('lapMonthFilter').showPicker()}catch(e){}">
+      <i class="fas fa-calendar-alt"></i> <span id="lapMonthLabel">Pilih Bulan</span>
+      <input type="month" id="lapMonthFilter" onchange="renderLaporan()" oninput="renderLaporan()">
+    </div>
+  </div>
+  
+  <div class="grid-3" id="laporanSummary">
+      </div>
+  
+  <div class="card" style="margin-top: 20px;">
+      <h3 style="margin-bottom: 15px; color:#475569;">Top 5 Pengeluaran Terbesar Bulan Ini</h3>
+      <div id="topExpenses" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+</div>
+
 <div id="transaksi" class="page" style="display:none;">
   <div class="header-with-picker">
     <h2 class="header-title">Mutasi Keuangan</h2>
@@ -267,15 +353,9 @@ return `
       </select>
       <select id="walletSelect" style="flex: 1;"><option value="">-- Rekening Sumber --</option></select>
       <select id="assetTargetSelect" style="flex: 1; display: none;"><option value="">-- Target Aset --</option></select>
-      
-      <select id="trxCategory" style="flex: 1;" onchange="handleTrxCategoryChange()">
-        </select>
-        
-      <select id="trxSubCategory" style="flex: 1; display: none;">
-      </select>
-
+      <select id="trxCategory" style="flex: 1;" onchange="handleTrxCategoryChange()"></select>
+      <select id="trxSubCategory" style="flex: 1; display: none;"></select>
       <input type="text" id="customTrxCategory" placeholder="Ketik kategori baru..." style="flex: 1; display: none;">
-
       <input type="number" id="amount" placeholder="Nominal (Rp)">
       <input type="text" id="desc" placeholder="Keterangan">
       <input type="date" id="date" onchange="updateDropdowns()">
@@ -298,7 +378,6 @@ return `
       <input type="month" id="budgetMonthFilter" onchange="update()" oninput="update()">
     </div>
   </div>
-  
   <div id="budgetStatusCard" class="card" style="background: #f0f9ff; border: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
     <div style="flex: 1; min-width: 250px;">
       <h3 id="budgetCardTitle" style="color: var(--primary-dark); margin-bottom: 5px;">Budgeting</h3>
@@ -308,13 +387,10 @@ return `
       <h2 id="budgetVsLiquid" style="margin: 0; color: var(--text); font-size: 1.8rem;">Rp 0 / Rp 0</h2>
     </div>
   </div>
-
   <div class="card">
     <div class="form-group">
-      <select id="budgetCategory" style="flex: 1;" onchange="handleBudgetCategoryChange()">
-        </select>
+      <select id="budgetCategory" style="flex: 1;" onchange="handleBudgetCategoryChange()"></select>
       <input type="text" id="customBudgetCategory" placeholder="Ketik kategori baru..." style="flex: 1; display: none;">
-      
       <input type="number" id="budgetAmount" placeholder="Batas Maksimal (Rp)" style="flex: 1;">
       <button class="action" onclick="addBudget()"><i class="fas fa-plus"></i> Set Anggaran</button>
     </div>
@@ -330,7 +406,6 @@ return `
       <input type="month" id="assetMonthFilter" onchange="update()" oninput="update()">
     </div>
   </div>
-
   <div class="card">
     <div class="form-group">
       <select id="assetType" style="flex: 0.5; min-width: 200px;" onchange="handleAssetTypeChange()">
@@ -341,15 +416,12 @@ return `
         <option value="nonbergerak">Aset Tetap 🏠</option>
       </select>
       <input id="assetName" placeholder="Nama (Misal: Saham INET, Seabank)">
-      
       <input type="number" id="assetLot" placeholder="Jml Lot" style="display:none; flex: 0.5;">
       <input type="number" id="assetAvg" placeholder="Avg Beli (Rp)" step="any" style="display:none; flex: 0.5;">
-      
       <input type="number" id="assetValue" placeholder="Nilai Awal / Saldo (Rp)" step="any">
       <button class="action" onclick="addAsset()"><i class="fas fa-plus"></i> Tambah Aset</button>
     </div>
   </div>
-  
   <div style="margin-bottom: 15px; padding: 0 10px;">
     <h3 style="margin: 0; color: #475569; font-size: 1.1rem;">Daftar Aset & Portofolio</h3>
   </div>
@@ -377,13 +449,11 @@ return `
         <i class="fas fa-ring" style="color: #f472b6;"></i> Wedding Planner
     </h2>
   </div>
-  
   <div class="wedding-tab">
       <button id="wed-tab-budget" class="active" onclick="switchWedTab('budget')">Budgeting</button>
       <button id="wed-tab-vendor" onclick="switchWedTab('vendor')">Vendor Tracker</button>
       <button id="wed-tab-guest" onclick="switchWedTab('guest')">Guest List</button>
   </div>
-
  <div id="wed-content-budget" class="wed-content">
       <div class="card" style="background: #eff6ff; border-color: #bfdbfe; margin-bottom: 15px;">
          <h3 style="margin:0; color:#1d4ed8; display:flex; justify-content:space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -391,7 +461,6 @@ return `
              <strong id="wedMaxBudget" style="font-size: 1.5rem;">Rp 0</strong>
          </h3>
       </div>
-
       <div class="card">
         <div class="form-group">
           <input id="wedBudgetItem" placeholder="Item (Catering, Mas Kawin, dll)" style="flex: 1;">
@@ -400,7 +469,6 @@ return `
           <button class="action" onclick="addWedBudget()"><i class="fas fa-plus"></i> Tambah</button>
         </div>
       </div>
-      
       <div id="wedBudgetContainer"></div>
   </div>
   
@@ -493,6 +561,7 @@ return `
       </div>
   </div>
 </div>
+
 <div id="hutang" class="page" style="display:none;">
   <div class="header-with-picker">
     <h2 class="header-title">Manajemen Hutang & Cicilan</h2>
@@ -521,15 +590,11 @@ return `
         <h3 style="margin:0; font-size:1.3rem; color: #1e293b;">Pilih Sumber Dana</h3>
         <button onclick="closeSourceModal()" style="background: none; border: none; font-size: 1.2rem; color: #94a3b8; cursor: pointer;"><i class="fas fa-times"></i></button>
     </div>
-    
     <label style="display:flex; align-items:center; gap:12px; margin-bottom:20px; font-weight:700; padding: 15px; border-radius: 8px; background: #f0f9ff; border:1px solid #bae6fd; cursor:pointer;">
       <input type="checkbox" id="selectAllSources" style="width:20px; height:20px; margin:0; flex:none; cursor: pointer;" onchange="toggleSelectAllSources()">
       <span style="color:var(--primary-dark); font-size: 1.05rem;">Pilih Semua Aset</span>
     </label>
-    
-    <div id="sourceCheckboxes" style="overflow-y:auto; flex:1; padding-right:5px; display: flex; flex-direction: column; gap: 10px;">
-      </div>
-    
+    <div id="sourceCheckboxes" style="overflow-y:auto; flex:1; padding-right:5px; display: flex; flex-direction: column; gap: 10px;"></div>
     <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:25px; padding-top:20px; border-top:1px solid var(--border);">
       <button class="btn-danger" style="padding:12px 24px; font-weight: 600;" onclick="closeSourceModal()">Batal</button>
       <button class="btn-success" style="padding:12px 24px; font-weight: 600; background: var(--primary);" onclick="saveSourceSelection()">Simpan Pilihan</button>
@@ -538,38 +603,200 @@ return `
 </div>
 
 </div>
+
 <div class="bottom-nav">
   <div class="nav-item active" id="botnav-dashboard" onclick="showPage('dashboard')"><i class="fas fa-home"></i><span>Beranda</span></div>
-  <div class="nav-item" id="botnav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-file-alt"></i><span>Transaksi</span></div>
-  <div class="nav-item" id="botnav-wedding" onclick="showPage('wedding')"><i class="fas fa-ring"></i><span>Wedding</span></div>
-  <div class="nav-item" onclick="logout()"><i class="fas fa-user-circle"></i><span>Profil</span></div>
+  <div class="nav-item" id="botnav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-file-invoice"></i><span>Transaksi</span></div>
+  <div class="nav-item" id="botnav-profil" onclick="showPage('profil')"><i class="fas fa-user-circle"></i><span>Profil</span></div>
 </div>
+
 `;
 }
 
+// ================= FUNGSI NAVIGASI & MENU =================
 function showPage(p){
   document.querySelectorAll(".page").forEach(x => x.style.display="none");
   document.getElementById(p).style.display="block";
   
-  // Ubah active state di Sidebar (Desktop)
   document.querySelectorAll(".sidebar button").forEach(btn => btn.classList.remove("active"));
   if(document.getElementById("nav-" + p)) document.getElementById("nav-" + p).classList.add("active");
   
-  // Ubah active state di Bottom Nav (Mobile)
   document.querySelectorAll(".bottom-nav .nav-item").forEach(btn => btn.classList.remove("active"));
   if(document.getElementById("botnav-" + p)) document.getElementById("botnav-" + p).classList.add("active");
   
   if (window.innerWidth <= 768) {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('mobileOverlay');
-    if(sidebar && overlay) {
-      sidebar.classList.remove('open');
-      overlay.style.display = 'none';
-    }
+    if(sidebar && overlay) { sidebar.classList.remove('open'); overlay.style.display = 'none'; }
   }
   
-  if (p === 'wedding') { renderWedding(); }
+  if (p === 'wedding') renderWedding();
+  if (p === 'laporan') renderLaporan();
   update();
+}
+
+// ================= FUNGSI PROFIL =================
+function saveProfile() {
+    userProfile.fullname = document.getElementById('profName').value;
+    userProfile.phone = document.getElementById('profPhone').value;
+    userProfile.city = document.getElementById('profCity').value;
+    userProfile.job = document.getElementById('profJob').value;
+    save();
+    alert('Profil berhasil disimpan!');
+    
+    // Auto-update nama di Header
+    let h2 = document.querySelector('.header-title');
+    if(h2) h2.innerHTML = `Halo, ${userProfile.fullname || currentUser}! 👋`;
+}
+
+// ================= FUNGSI KALKULATOR SAHAM =================
+function calculateAvg() {
+    let lot1 = parseFloat(document.getElementById('calcLot1').value) || 0;
+    let price1 = parseFloat(document.getElementById('calcPrice1').value) || 0;
+    let lot2 = parseFloat(document.getElementById('calcLot2').value) || 0;
+    let price2 = parseFloat(document.getElementById('calcPrice2').value) || 0;
+
+    if(lot1===0 || price1===0 || lot2===0 || price2===0) {
+        return alert("Isi semua data modal awal dan rencana top-up bro!");
+    }
+
+    let totalLot = lot1 + lot2;
+    let totalValue = (lot1 * price1) + (lot2 * price2);
+    let avgNew = totalValue / totalLot;
+    let requiredFunds = lot2 * price2 * 100; // Harga x 100 lembar per lot
+
+    document.getElementById('resAvg').innerText = formatRp(avgNew);
+    document.getElementById('resLot').innerText = totalLot + " Lot";
+    document.getElementById('resFunds').innerText = formatRp(requiredFunds);
+}
+
+// ================= FUNGSI LAPORAN ANALYTICS =================
+function renderLaporan() {
+    let lapFilter = document.getElementById("lapMonthFilter");
+    if (!lapFilter.value) lapFilter.value = defaultYM;
+    let ym = lapFilter.value;
+    
+    let monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+    let d = new Date(ym + "-01");
+    document.getElementById("lapMonthLabel").innerText = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+
+    let inc = 0, exp = 0;
+    let catExp = {};
+
+    transactions.forEach(t => {
+        if(t.date.startsWith(ym)) {
+            if(t.type === 'income') inc += t.amount;
+            else if(t.type === 'expense') {
+                exp += t.amount;
+                let cName = t.category || "Lainnya";
+                catExp[cName] = (catExp[cName] || 0) + t.amount;
+            }
+        }
+    });
+
+    let net = inc - exp;
+    let netColor = net >= 0 ? 'text-success' : 'text-danger';
+
+    document.getElementById('laporanSummary').innerHTML = `
+        <div class="card" style="border-left: 4px solid #10b981;">
+            <h3 style="color:#10b981;"><i class="fas fa-arrow-down"></i> Total Pemasukan</h3>
+            <h2>${formatRp(inc)}</h2>
+        </div>
+        <div class="card" style="border-left: 4px solid #ef4444;">
+            <h3 style="color:#ef4444;"><i class="fas fa-arrow-up"></i> Total Pengeluaran</h3>
+            <h2>${formatRp(exp)}</h2>
+        </div>
+        <div class="card" style="background:#f8fafc; border: 1px solid #cbd5e1;">
+            <h3 style="color:#475569;"><i class="fas fa-wallet"></i> Net Cashflow</h3>
+            <h2 class="${netColor}">${net >= 0 ? '+' : ''}${formatRp(net)}</h2>
+        </div>
+    `;
+
+    // Render Top 5 Expenses
+    let sortedCats = Object.keys(catExp).map(k => { return {name: k, amount: catExp[k]} }).sort((a,b) => b.amount - a.amount).slice(0,5);
+    
+    let topHTML = '';
+    if(sortedCats.length === 0) topHTML = '<div style="color:#94a3b8; font-size:0.9rem;">Belum ada pengeluaran di bulan ini.</div>';
+    else {
+        sortedCats.forEach(item => {
+            let pct = ((item.amount / exp) * 100).toFixed(1);
+            topHTML += `
+                <div style="display:flex; justify-content:space-between; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #f59e0b;">
+                    <div><strong style="color:#1e293b; font-size:0.95rem;">${item.name}</strong><div style="font-size:0.8rem; color:#64748b;">${pct}% dari total pengeluaran</div></div>
+                    <div style="font-weight:700; color:#ef4444;">${formatRp(item.amount)}</div>
+                </div>
+            `;
+        });
+    }
+    document.getElementById('topExpenses').innerHTML = topHTML;
+}
+
+// ================= FUNGSI NOTIFIKASI LONCENG =================
+function toggleNotif() {
+    const el = document.getElementById('notifPanel');
+    
+    // Tampilkan tombol lonceng di header desktop jika layarnya besar
+    if(window.innerWidth > 768) {
+        document.getElementById('desktopBellWrap').style.display = 'block';
+    }
+    
+    if(el.style.display === 'block') {
+        el.style.display = 'none';
+    } else {
+        renderNotifs();
+        el.style.display = 'block';
+    }
+}
+
+function renderNotifs() {
+    let html = "";
+    let today = new Date();
+    let currentDay = today.getDate();
+    let ym = defaultYM;
+    
+    // 1. Cek Pemasukan Terakhir (Bulan ini)
+    let recentIncomes = transactions.filter(t => t.type === 'income' && t.date.startsWith(ym)).sort((a,b) => new Date(b.date) - new Date(a.date));
+    if(recentIncomes.length > 0) {
+        html += `<div class="notif-item success"><i class="fas fa-check-circle" style="color:#22c55e;"></i><div><strong>Pemasukan Masuk!</strong><br><span style="color:#64748b;">${recentIncomes[0].desc} sebesar ${formatRp(recentIncomes[0].amount)} udah mendarat di rekening.</span></div></div>`;
+    }
+
+    // 2. Cek Hutang/Cicilan Jatuh Tempo <= 7 hari
+    debts.filter(d => d.remaining > 0).forEach(d => {
+        let dueDay = parseInt(d.date.split('-')[2]);
+        if(!isNaN(dueDay)) {
+            let diff = dueDay - currentDay;
+            let isPaid = transactions.some(t => t.type === 'expense' && t.desc.toLowerCase().includes(d.name.toLowerCase()) && t.date.startsWith(ym));
+            
+            if(!isPaid) {
+                if(diff === 0 || diff < 0) {
+                    html += `<div class="notif-item danger"><i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><div><strong>Cicilan Jatuh Tempo!</strong><br><span style="color:#64748b;">Segera bayar ${d.name} (${formatRp(d.remaining)}).</span></div></div>`;
+                } else if(diff > 0 && diff <= 5) {
+                    html += `<div class="notif-item warning"><i class="fas fa-clock" style="color:#eab308;"></i><div><strong>H-${diff} Jatuh Tempo</strong><br><span style="color:#64748b;">Siapin dana buat bayar ${d.name}.</span></div></div>`;
+                }
+            }
+        }
+    });
+
+    // 3. Cek Budget Over > 80%
+    let currentBudgets = getBudgetsFor(ym);
+    let spentThisMonth = {};
+    transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense').forEach(t => {
+        spentThisMonth[t.category] = (spentThisMonth[t.category] || 0) + t.amount;
+    });
+
+    currentBudgets.forEach(b => {
+        let spent = spentThisMonth[b.category] || 0;
+        let pct = (spent / b.amount) * 100;
+        if(pct >= 100) {
+            html += `<div class="notif-item danger"><i class="fas fa-times-circle" style="color:#ef4444;"></i><div><strong>Overbudget: ${b.category}</strong><br><span style="color:#64748b;">Pengeluaran lo udah tembus 100% dari target!</span></div></div>`;
+        } else if(pct >= 80) {
+            html += `<div class="notif-item warning"><i class="fas fa-exclamation-triangle" style="color:#eab308;"></i><div><strong>Warning Budget: ${b.category}</strong><br><span style="color:#64748b;">Pengeluaran udah ${pct.toFixed(0)}%. Ngerem dikit bro!</span></div></div>`;
+        }
+    });
+
+    if(html === "") html = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:0.85rem;">Belum ada notifikasi baru bro. Santai dulu! ☕</div>`;
+    
+    document.getElementById('notifBody').innerHTML = html;
 }
 
 // ==========================================
@@ -590,7 +817,6 @@ function addWedBudget() {
     
     if(!name || isNaN(target)) return alert("Isi nama item dan alokasi budgetnya bro!");
     
-    // --- FITUR CEK LIMIT MAKSIMAL BUDGET NIKAH ---
     let wedGoal = goals.find(g => g.name.toLowerCase().includes('nikah') || g.name.toLowerCase().includes('wedding'));
     let maxBudget = wedGoal ? wedGoal.target : 0;
     
@@ -600,22 +826,18 @@ function addWedBudget() {
             return alert(`Gagal! Total target item (${formatRp(currentTotalTarget + target)}) melebihi Patokan Maksimal (${formatRp(maxBudget)}) bro! Naikkan dulu target di menu Impian.`);
         }
     }
-    // ----------------------------------------------
     
     weddingData.budget.push({ id: Date.now(), name: name, target: target, real: 0, notes: notes, subItems: [] });
     
     document.getElementById('wedBudgetItem').value = '';
     document.getElementById('wedBudgetTarget').value = '';
     document.getElementById('wedBudgetNotes').value = '';
-    
     save(); renderWedding();
 }
 
 function updateWedBudgetReal(id) {
     let item = weddingData.budget.find(b => b.id === id);
-    if (item.subItems && item.subItems.length > 0) {
-        return alert("Realisasi dihitung otomatis dari total Sub-Item bro! Update realisasi di masing-masing sub-item ya.");
-    }
+    if (item.subItems && item.subItems.length > 0) return alert("Realisasi dihitung otomatis dari total Sub-Item bro! Update realisasi di masing-masing sub-item ya.");
     let newReal = prompt(`Update Realisasi Biaya untuk ${item.name} (Rp):`, item.real);
     if(newReal === null || newReal.trim() === "") return;
     newReal = parseInt(newReal.replace(/\./g, '').replace(/,/g, ''));
@@ -641,33 +863,26 @@ function addWedSubItem(id) {
     let amount = parseInt(amountInput ? amountInput.replace(/\./g, '').replace(/,/g, '') : 0);
     if(isNaN(amount) || amount <= 0) return alert("Nominal tidak valid!");
 
-    // --- FITUR CEK LIMIT MAKSIMAL SUB-ITEM ---
     if(!item.subItems) item.subItems = [];
     let currentSubTotal = item.subItems.reduce((sum, sub) => sum + sub.target, 0);
     if (currentSubTotal + amount > item.target) {
         return alert(`Gagal! Total Target Sub-Item (${formatRp(currentSubTotal + amount)}) melebihi Target Induk ${item.name} (${formatRp(item.target)}) bro!`);
     }
-    // ------------------------------------------
 
     let notes = prompt(`Keterangan / Link Vendor untuk '${name}' (Boleh dikosongkan):`);
-    
     item.subItems.push({ id: Date.now(), name: name.trim(), target: amount, real: 0, notes: notes || "" });
-    
     save(); renderWedding();
 }
 
 function updateWedSubItemReal(itemId, subId) {
     let item = weddingData.budget.find(b => b.id === itemId);
     let sub = item.subItems.find(s => s.id === subId);
-    
     let newReal = prompt(`Update Realisasi Biaya untuk ${sub.name} (Rp):`, sub.real || 0);
     if(newReal === null || newReal.trim() === "") return;
     newReal = parseInt(newReal.replace(/\./g, '').replace(/,/g, ''));
     if(isNaN(newReal)) return alert("Nominal nggak valid bro!");
-    
     sub.real = newReal;
     item.real = item.subItems.reduce((acc, curr) => acc + (curr.real || 0), 0);
-    
     save(); renderWedding();
 }
 
@@ -683,33 +898,24 @@ function deleteWedSubItem(itemId, subId) {
 function editWedBudgetNotes(id) {
     let item = weddingData.budget.find(b => b.id === id);
     let newNotes = prompt(`Update Keterangan/Link Vendor untuk ${item.name}:`, item.notes || "");
-    if (newNotes !== null) {
-        item.notes = newNotes;
-        save(); renderWedding();
-    }
+    if (newNotes !== null) { item.notes = newNotes; save(); renderWedding(); }
 }
 
 function editWedSubItemNotes(itemId, subId) {
     let item = weddingData.budget.find(b => b.id === itemId);
     let sub = item.subItems.find(s => s.id === subId);
     let newNotes = prompt(`Update Keterangan/Link Vendor untuk ${sub.name}:`, sub.notes || "");
-    if (newNotes !== null) {
-        sub.notes = newNotes;
-        save(); renderWedding();
-    }
+    if (newNotes !== null) { sub.notes = newNotes; save(); renderWedding(); }
 }
 
 function addWedVendor() {
     let name = document.getElementById('wedVendorName').value;
     let service = document.getElementById('wedVendorService').value;
     let status = document.getElementById('wedVendorStatus').value;
-    
     if(!name || !service) return alert("Lengkapi nama vendor dan layanannya bro!");
-    
     weddingData.vendors.push({ id: Date.now(), name: name, service: service, status: status });
     document.getElementById('wedVendorName').value = '';
     document.getElementById('wedVendorService').value = '';
-    
     save(); renderWedding();
 }
 
@@ -721,24 +927,21 @@ function toggleWedVendorStatus(id) {
 }
 
 function deleteWedVendor(id) {
-    if(confirm("Hapus vendor ini?")) {
-        weddingData.vendors = weddingData.vendors.filter(v => v.id !== id);
-        save(); renderWedding();
-    }
+    if(confirm("Hapus vendor ini?")) { weddingData.vendors = weddingData.vendors.filter(v => v.id !== id); save(); renderWedding(); }
 }
 
 function addWedGuest() {
     let name = document.getElementById('wedGuestName').value;
-    let city = document.getElementById('wedGuestCity').value || '-'; // AMBIL DATA KOTA
+    let city = document.getElementById('wedGuestCity').value || '-'; 
     let type = document.getElementById('wedGuestType').value;
     let count = parseInt(document.getElementById('wedGuestCount').value);
     
     if(!name || isNaN(count)) return alert("Lengkapi nama dan jumlah tamu bro!");
     
-    weddingData.guests.push({ id: Date.now(), name: name, city: city, type: type, count: count, isInvited: false, isAttending: true }); // SIMPAN KOTA
+    weddingData.guests.push({ id: Date.now(), name: name, city: city, type: type, count: count, isInvited: false, isAttending: true }); 
     
     document.getElementById('wedGuestName').value = '';
-    document.getElementById('wedGuestCity').value = ''; // RESET KOTA
+    document.getElementById('wedGuestCity').value = ''; 
     document.getElementById('wedGuestType').value = 'Keluarga Pria';
     document.getElementById('wedGuestCount').value = '1';
     
@@ -759,75 +962,54 @@ function toggleWedGuestAttend(id) {
 }
 
 function deleteWedGuest(id) {
-    if(confirm("Hapus tamu ini?")) {
-        weddingData.guests = weddingData.guests.filter(g => g.id !== id);
-        save(); renderWedding();
-    }
+    if(confirm("Hapus tamu ini?")) { weddingData.guests = weddingData.guests.filter(g => g.id !== id); save(); renderWedding(); }
 }
 
 function editWedGuest(id) {
-    // Tombol Edit kuning sekarang fokus buat pindah-pindah jenis tamu aja
     let guest = weddingData.guests.find(g => g.id === id);
     if (!guest) return;
-
     let newType = prompt("Pindah ke Jenis (Keluarga Pria / Keluarga Wanita / VIP / Reguler):", guest.type || 'Reguler');
     if (newType === null) return;
-    
     const validTypes = ['VIP', 'Keluarga Pria', 'Keluarga Wanita', 'Reguler'];
-    if (!validTypes.includes(newType.trim())) {
-        return alert("Gagal! Jenis harus: VIP, Keluarga Pria, Keluarga Wanita, atau Reguler.");
-    }
-
+    if (!validTypes.includes(newType.trim())) return alert("Gagal! Jenis harus: VIP, Keluarga Pria, Keluarga Wanita, atau Reguler.");
     guest.type = newType.trim();
     save(); renderWedding();
 }
 
-// Fungsi Baru buat Double Click (Klik 2x)
 function inlineEditGuest(id, field) {
     let guest = weddingData.guests.find(g => g.id === id);
     if (!guest) return;
 
     if (field === 'name') {
         let newName = prompt("Edit Nama Tamu:", guest.name);
-        if (newName !== null && newName.trim() !== "") {
-            guest.name = newName.trim();
-            save(); renderWedding();
-        }
+        if (newName !== null && newName.trim() !== "") { guest.name = newName.trim(); save(); renderWedding(); }
     } else if (field === 'city') {
         let newCity = prompt("Edit Kota / Domisili:", guest.city || '-');
-        if (newCity !== null) {
-            guest.city = newCity.trim();
-            save(); renderWedding();
-        }
+        if (newCity !== null) { guest.city = newCity.trim(); save(); renderWedding(); }
     } else if (field === 'count') {
         let newCountStr = prompt(`Edit Jumlah (Pax) untuk ${guest.name}:`, guest.count);
         if (newCountStr !== null) {
             let newCount = parseInt(newCountStr);
-            if (!isNaN(newCount) && newCount > 0) {
-                guest.count = newCount;
-                save(); renderWedding();
-            } else {
-                alert("Jumlah (Pax) nggak valid bro!");
-            }
+            if (!isNaN(newCount) && newCount > 0) { guest.count = newCount; save(); renderWedding(); } 
+            else alert("Jumlah (Pax) nggak valid bro!");
         }
     }
 }
 
 function exportGuestsToCSV() {
     if(weddingData.guests.length === 0) return alert("Belum ada data tamu buat di-download bro!");
-    
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Nama Tamu,Kota/Domisili,Tipe Tamu,Jumlah (Pax),Status Undangan,Kehadiran\n"; // HEADER KOTA
+    csvContent += "Nama Tamu,Kota/Domisili,Tipe Tamu,Jumlah (Pax),Status Undangan,Kehadiran\n"; 
     
     weddingData.guests.forEach(g => {
         let name = g.name.replace(/,/g, " "); 
-        let city = (g.city || '-').replace(/,/g, " "); // KOTA EXCEL
+        let city = (g.city || '-').replace(/,/g, " "); 
         let type = g.type || 'Reguler';
         let count = g.count;
         let invited = g.isInvited ? "Terkirim" : "Belum Terkirim";
         let attend = (g.isAttending !== false) ? "Hadir" : "Batal/Ragu";
         
-        let row = `${name},${city},${type},${count},${invited},${attend}`; // ROW KOTA
+        let row = `${name},${city},${type},${count},${invited},${attend}`; 
         csvContent += row + "\n";
     });
     
@@ -840,10 +1022,7 @@ function exportGuestsToCSV() {
     document.body.removeChild(link);
 }
 
-function changeGuestSort(val) {
-    currentGuestSort = val;
-    renderWedding();
-}
+function changeGuestSort(val) { currentGuestSort = val; renderWedding(); }
 
 function renderWedding() {
     let wedGoal = goals.find(g => g.name.toLowerCase().includes('nikah') || g.name.toLowerCase().includes('wedding'));
@@ -851,12 +1030,9 @@ function renderWedding() {
     let maxBudgetEl = document.getElementById('wedMaxBudget');
     if (maxBudgetEl) maxBudgetEl.innerText = maxBudget > 0 ? formatRp(maxBudget) : "Set Target 'Nikah' di menu Impian";
 
-    // 1. Render Budget
     const budgetContainer = document.getElementById('wedBudgetContainer');
     if(budgetContainer) {
-        let budgetHTML = '';
-        let totalAlokasi = 0; let totalRealisasi = 0;
-
+        let budgetHTML = ''; let totalAlokasi = 0; let totalRealisasi = 0;
         const formatCatatan = (text) => {
             if (!text) return "";
             let urlRegex = /((https?:\/\/|www\.)[^\s]+)/g;
@@ -874,7 +1050,6 @@ function renderWedding() {
 
         weddingData.budget.forEach((b, index) => {
             let themeColor = colorPalette[index % colorPalette.length];
-            
             totalAlokasi += b.target; totalRealisasi += b.real;
             let isWarning = b.real > b.target;
             let realColor = isWarning ? 'color: var(--danger); font-weight:bold;' : 'color: var(--success);';
@@ -929,13 +1104,11 @@ function renderWedding() {
                         </h3>
                         ${notesHTML}
                     </div>
-                    
                     <div style="display:flex; align-items:center; gap: 15px; flex-wrap: wrap;">
                         <div style="text-align: right; background: ${themeColor}10; padding: 8px 15px; border-radius: 8px; border: 1px solid ${themeColor}30;">
                             <div style="font-size:0.8rem; color:#64748b; margin-bottom: 4px; text-transform: uppercase; font-weight:700;">Target <span style="color:#1e293b; font-size:0.9rem; display:block;">${formatRp(b.target)}</span></div>
                             <div style="font-size:0.8rem; color:#64748b; text-transform: uppercase; font-weight:700;">Terpakai <span style="${realColor} font-size:0.9rem; display:block;">${formatRp(b.real)}</span></div>
                         </div>
-                        
                         <div style="display:flex; flex-direction:column; gap: 5px;">
                             <div style="display:flex; gap: 5px;">
                                 <button style="flex:1; padding: 6px 10px; background: ${themeColor}; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight:600;" onclick="addWedSubItem(${b.id})" title="Tambah Sub Item"><i class="fas fa-plus"></i> Sub Item</button>
@@ -965,7 +1138,6 @@ function renderWedding() {
                 </div>
             </div>
         `;
-        
         budgetContainer.innerHTML = budgetHTML;
     }
 
@@ -975,17 +1147,12 @@ function renderWedding() {
         weddingData.vendors.forEach(v => {
             let statusBtnClass = v.status === 'Lunas' ? 'btn-success' : (v.status === 'DP' ? 'btn-warning' : 'action');
             let statusBtnStyle = v.status === 'Tanya' ? 'background:#e2e8f0; color:#475569;' : '';
-            
             vendorTbody.innerHTML += `
                 <tr>
                     <td><strong style="color:#1e293b;">${v.name}</strong></td>
                     <td style="color:#475569;">${v.service}</td>
-                    <td>
-                        <button class="${statusBtnClass}" style="padding: 4px 10px; font-size:0.8rem; ${statusBtnStyle}" onclick="toggleWedVendorStatus(${v.id})">${v.status}</button>
-                    </td>
-                    <td style="text-align:center;">
-                        <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedVendor(${v.id})"><i class="fas fa-trash"></i></button>
-                    </td>
+                    <td><button class="${statusBtnClass}" style="padding: 4px 10px; font-size:0.8rem; ${statusBtnStyle}" onclick="toggleWedVendorStatus(${v.id})">${v.status}</button></td>
+                    <td style="text-align:center;"><button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedVendor(${v.id})"><i class="fas fa-trash"></i></button></td>
                 </tr>
             `;
         });
@@ -996,7 +1163,7 @@ function renderWedding() {
     const tbodyWanita = document.getElementById('wedGuestTbodyWanita');
     const tbodyReguler = document.getElementById('wedGuestTbodyReguler');
     const totalGuestsEl = document.getElementById('wedTotalGuests');
-    const sortSelectEl = document.getElementById('guestSortSelect'); // BACA SELECT SORT
+    const sortSelectEl = document.getElementById('guestSortSelect');
     
     if(tbodyVIP && tbodyReguler && tbodyPria && tbodyWanita && totalGuestsEl) {
         tbodyVIP.innerHTML = ''; tbodyReguler.innerHTML = '';
@@ -1007,30 +1174,20 @@ function renderWedding() {
 
         if (sortSelectEl) sortSelectEl.value = currentGuestSort;
 
-        // FUNGSI SORTING TAMU
         let sortedGuests = [...weddingData.guests];
-        if (currentGuestSort === 'name') {
-            sortedGuests.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (currentGuestSort === 'city') {
-            sortedGuests.sort((a, b) => (a.city || '').localeCompare(b.city || ''));
-        } // Kalau newest, biarin aja susunan aslinya
+        if (currentGuestSort === 'name') sortedGuests.sort((a, b) => a.name.localeCompare(b.name));
+        else if (currentGuestSort === 'city') sortedGuests.sort((a, b) => (a.city || '').localeCompare(b.city || ''));
 
         sortedGuests.forEach(g => {
-            let gType = g.type || 'Reguler';
-            let isAttend = g.isAttending !== false;
-
+            let gType = g.type || 'Reguler'; let isAttend = g.isAttending !== false;
             totalPax += g.count;
-            if (gType === 'VIP') totalVIP += g.count;
-            else if (gType === 'Keluarga Pria') totalPria += g.count;
-            else if (gType === 'Keluarga Wanita') totalWanita += g.count;
-            else totalReguler += g.count;
+            if (gType === 'VIP') totalVIP += g.count; else if (gType === 'Keluarga Pria') totalPria += g.count;
+            else if (gType === 'Keluarga Wanita') totalWanita += g.count; else totalReguler += g.count;
 
             if (isAttend) {
                 hadirPax += g.count;
-                if (gType === 'VIP') hadirVIP += g.count;
-                else if (gType === 'Keluarga Pria') hadirPria += g.count;
-                else if (gType === 'Keluarga Wanita') hadirWanita += g.count;
-                else hadirReguler += g.count;
+                if (gType === 'VIP') hadirVIP += g.count; else if (gType === 'Keluarga Pria') hadirPria += g.count;
+                else if (gType === 'Keluarga Wanita') hadirWanita += g.count; else hadirReguler += g.count;
             }
 
             let checkIcon = g.isInvited ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.2rem;"></i>' : '<i class="far fa-circle" style="color:#cbd5e1; font-size:1.2rem;"></i>';
@@ -1042,7 +1199,6 @@ function renderWedding() {
             else if(gType === 'Keluarga Wanita') typeBadge = '<span style="background:#fce7f3; color:#9d174d; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">WANITA</span>';
             else typeBadge = '<span style="background:#e2e8f0; color:#475569; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-left:8px;">Reguler</span>';
             
-            // RENDER BARIS TABEL DENGAN SENSOR KLIK 2X
             let rowHTML = `
                 <tr style="opacity: ${isAttend ? '1' : '0.5'}; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                     <td ondblclick="inlineEditGuest(${g.id}, 'name')" title="Klik 2x untuk edit Nama" style="cursor:pointer;"><strong style="color:#1e293b;">${g.name}</strong>${typeBadge}</td>
@@ -1067,7 +1223,6 @@ function renderWedding() {
             else tbodyReguler.innerHTML += rowHTML;
         });
         
-        // UPDATE COLSPAN JADI 6 (KARENA NAMBAH KOLOM KOTA)
         if(tbodyPria.innerHTML === '') tbodyPria.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Pria</td></tr>';
         if(tbodyWanita.innerHTML === '') tbodyWanita.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada Keluarga Wanita</td></tr>';
         if(tbodyVIP.innerHTML === '') tbodyVIP.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; font-size:0.9rem;">Belum ada tamu VIP</td></tr>';
@@ -1095,8 +1250,6 @@ function handleTypeChange() {
   let customTrxCat = document.getElementById("customTrxCategory");
   
   assetTarget.style.display = (type === 'beli_aset' || type === 'jual_aset' || type === 'transfer') ? "block" : "none";
-  
-  // Kategori selalu tampil buat Pemasukan & Pengeluaran
   trxCat.style.display = (type === 'income' || type === 'expense') ? "block" : "none";
   
   if (type !== 'income' && type !== 'expense') customTrxCat.style.display = "none";
@@ -1115,8 +1268,6 @@ function handleTrxCategoryChange() {
     subCatSel.style.display = 'none';
   } else {
     customCat.style.display = 'none';
-    
-    // Tampilkan dropdown Sub Kategori jika ada
     let type = document.getElementById("type").value;
     if(type === 'expense') {
         let trxDate = document.getElementById("date").value || defaultYM;
@@ -1125,18 +1276,10 @@ function handleTrxCategoryChange() {
         
         if (budget && budget.subBudgets && budget.subBudgets.length > 0) {
             subCatSel.innerHTML = '<option value="">-- Pilih Sub Kategori (Opsional) --</option>';
-            budget.subBudgets.forEach(sub => {
-                subCatSel.innerHTML += `<option value="${sub.name}">${sub.name}</option>`;
-            });
+            budget.subBudgets.forEach(sub => { subCatSel.innerHTML += `<option value="${sub.name}">${sub.name}</option>`; });
             subCatSel.style.display = 'block';
-        } else {
-            subCatSel.style.display = 'none';
-            subCatSel.value = '';
-        }
-    } else {
-        subCatSel.style.display = 'none';
-        subCatSel.value = '';
-    }
+        } else { subCatSel.style.display = 'none'; subCatSel.value = ''; }
+    } else { subCatSel.style.display = 'none'; subCatSel.value = ''; }
   }
 }
 
@@ -1152,13 +1295,9 @@ function handleAssetTypeChange() {
   let valInput = document.getElementById("assetValue");
   
   if (type === 'saham') {
-    lotInput.style.display = "block";
-    avgInput.style.display = "block";
-    valInput.placeholder = "Harga Saat Ini / Lembar (Rp)";
+    lotInput.style.display = "block"; avgInput.style.display = "block"; valInput.placeholder = "Harga Saat Ini / Lembar (Rp)";
   } else {
-    lotInput.style.display = "none";
-    avgInput.style.display = "none";
-    valInput.placeholder = "Nilai Awal / Saldo (Rp)";
+    lotInput.style.display = "none"; avgInput.style.display = "none"; valInput.placeholder = "Nilai Awal / Saldo (Rp)";
   }
 }
 
@@ -1179,33 +1318,24 @@ function updateDropdowns() {
       if(a.type === 'rekening') {
         walletSel.innerHTML += `<option value="${i}">${a.name} (${formatRp(a.value)})</option>`;
         if(type.value === 'transfer') assetSel.innerHTML += `<option value="${i}">${a.name}</option>`;
-      } else {
-        if(type.value !== 'transfer') assetSel.innerHTML += `<option value="${i}">${a.name}</option>`;
-      }
+      } else { if(type.value !== 'transfer') assetSel.innerHTML += `<option value="${i}">${a.name}</option>`; }
     });
   }
 
   let defaultExpenseCats = ["Kebutuhan Pokok", "Transportasi", "Cicilan / Tagihan", "Hiburan / Ngedate"];
   let defaultIncomeCats = ["Gaji Pokok", "Tunjangan / Bonus", "Dividen Saham", "Hasil Jual Aset", "Pendapatan Lain"];
-  
-  let extraExpenseCats = [];
-  let extraIncomeCats = [];
+  let extraExpenseCats = []; let extraIncomeCats = [];
   
   transactions.forEach(t => { 
     if(t.category && t.category !== "Tanpa Kategori" && t.category !== "Lainnya") { 
-      if(t.type === 'expense' && !defaultExpenseCats.includes(t.category) && !extraExpenseCats.includes(t.category)) {
-        extraExpenseCats.push(t.category);
-      } else if (t.type === 'income' && !defaultIncomeCats.includes(t.category) && !extraIncomeCats.includes(t.category)) {
-        extraIncomeCats.push(t.category);
-      }
+      if(t.type === 'expense' && !defaultExpenseCats.includes(t.category) && !extraExpenseCats.includes(t.category)) extraExpenseCats.push(t.category);
+      else if (t.type === 'income' && !defaultIncomeCats.includes(t.category) && !extraIncomeCats.includes(t.category)) extraIncomeCats.push(t.category);
     } 
   });
   
   Object.values(budgetsData).forEach(monthlyBdg => {
     monthlyBdg.forEach(b => { 
-      if(!defaultExpenseCats.includes(b.category) && !extraExpenseCats.includes(b.category)) { 
-        extraExpenseCats.push(b.category); 
-      } 
+      if(!defaultExpenseCats.includes(b.category) && !extraExpenseCats.includes(b.category)) extraExpenseCats.push(b.category); 
     });
   });
 
@@ -1213,7 +1343,6 @@ function updateDropdowns() {
   if(trxCatSel && type) {
     let currentTrxCat = trxCatSel.value;
     trxCatSel.innerHTML = '<option value="Tanpa Kategori">-- Pilih Kategori --</option>';
-    
     if (type.value === 'income') {
         defaultIncomeCats.forEach(c => trxCatSel.innerHTML += `<option value="${c}">${c}</option>`);
         extraIncomeCats.forEach(c => trxCatSel.innerHTML += `<option value="${c}">${c}</option>`);
@@ -1221,9 +1350,7 @@ function updateDropdowns() {
         defaultExpenseCats.forEach(c => trxCatSel.innerHTML += `<option value="${c}">${c}</option>`);
         extraExpenseCats.forEach(c => trxCatSel.innerHTML += `<option value="${c}">${c}</option>`);
     }
-    
     trxCatSel.innerHTML += '<option value="Lainnya">Lainnya (Ketik Sendiri)</option>';
-    
     let opts = Array.from(trxCatSel.options).map(o => o.value);
     if(opts.includes(currentTrxCat)) trxCatSel.value = currentTrxCat;
   }
@@ -1235,18 +1362,15 @@ function updateDropdowns() {
     defaultExpenseCats.forEach(c => bdgCatSel.innerHTML += `<option value="${c}">${c}</option>`);
     extraExpenseCats.forEach(c => bdgCatSel.innerHTML += `<option value="${c}">${c}</option>`);
     bdgCatSel.innerHTML += '<option value="Lainnya">Lainnya (Ketik Sendiri)</option>';
-    
     let opts = Array.from(bdgCatSel.options).map(o => o.value);
     if(opts.includes(currentBdgCat)) bdgCatSel.value = currentBdgCat;
   }
-  
   handleTrxCategoryChange();
 }
 
 function openSourceModal(mode, index) {
   currentSourceMode = mode;
   editingGoalIndex = index;
-  
   let cbContainer = document.getElementById("sourceCheckboxes");
   cbContainer.innerHTML = "";
   
@@ -1255,11 +1379,9 @@ function openSourceModal(mode, index) {
   let allChecked = true;
   
   let currentMonthAssets = getAssetsFor(defaultYM);
-
   currentMonthAssets.forEach(a => {
     let isChecked = isAllLiquid ? (a.type === 'rekening') : selected.includes(a.name); 
     if(!isChecked) allChecked = false;
-    
     cbContainer.innerHTML += `
       <label style="display:flex; align-items:center; gap:15px; padding:12px 16px; background:#ffffff; border-radius:10px; border:1px solid #cbd5e1; cursor:pointer; transition: all 0.2s ease;">
         <input type="checkbox" class="source-cb" value="${a.name}" ${isChecked ? 'checked' : ''} style="width:20px; height:20px; margin:0; flex:none; cursor:pointer;" onchange="checkIndividualSource()">
@@ -1289,7 +1411,6 @@ function checkIndividualSource() {
 function saveSourceSelection() {
   let selected = [];
   document.querySelectorAll(".source-cb:checked").forEach(cb => selected.push(cb.value));
-  
   if(selected.length === 0) return alert("Pilih minimal 1 sumber dana bro!");
   
   if(currentSourceMode === 'add') {
@@ -1304,9 +1425,7 @@ function saveSourceSelection() {
   closeSourceModal();
 }
 
-function closeSourceModal() {
-  document.getElementById("sourceModal").style.display = "none";
-}
+function closeSourceModal() { document.getElementById("sourceModal").style.display = "none"; }
 
 function addTransaction(){
   let amountVal = parseInt(document.getElementById("amount").value);
@@ -1329,10 +1448,8 @@ function addTransaction(){
   walletIdx = parseInt(walletIdx);
 
   let trxYM = date.substring(0, 7);
-  if(!assetsData[trxYM]) {
-    alert("Aset di bulan " + trxYM + " masih kosong. Buka menu Aset Portofolio, pilih bulan tersebut, lalu salin asetnya dulu bro!");
-    return;
-  }
+  if(!assetsData[trxYM]) return alert("Aset di bulan " + trxYM + " masih kosong. Buka menu Aset Portofolio, pilih bulan tersebut, lalu salin asetnya dulu bro!");
+  
   let trxAssets = assetsData[trxYM];
 
   if(type === "income") {
@@ -1360,33 +1477,20 @@ function addTransaction(){
   }
 
   let finalCategory = (type === 'expense' || type === 'income') ? category : null;
-  
-  transactions.push({
-      id: Date.now(), 
-      amount: amountVal, 
-      desc, date, type, 
-      walletName: trxAssets[walletIdx].name, 
-      category: finalCategory,
-      subCategory: subCategory
-  });
+  transactions.push({ id: Date.now(), amount: amountVal, desc, date, type, walletName: trxAssets[walletIdx].name, category: finalCategory, subCategory: subCategory });
   
   document.getElementById("amount").value = "";
   document.getElementById("desc").value = "";
   if(document.getElementById("trxCategory")) document.getElementById("trxCategory").value = "Tanpa Kategori";
   document.getElementById("customTrxCategory").value = "";
   document.getElementById("customTrxCategory").style.display = "none";
-  if(document.getElementById("trxSubCategory")) {
-      document.getElementById("trxSubCategory").value = "";
-      document.getElementById("trxSubCategory").style.display = "none";
-  }
+  if(document.getElementById("trxSubCategory")) { document.getElementById("trxSubCategory").value = ""; document.getElementById("trxSubCategory").style.display = "none"; }
   
   save(); update();
 }
 
 function deleteTransaction(index) {
-  if(confirm("Hapus catatan transaksi ini? (Aset harus direvisi manual biar sinkron)")) {
-    transactions.splice(index, 1); save(); update();
-  }
+  if(confirm("Hapus catatan transaksi ini? (Aset harus direvisi manual biar sinkron)")) { transactions.splice(index, 1); save(); update(); }
 }
 
 function addBudget() {
@@ -1395,7 +1499,6 @@ function addBudget() {
     cat = document.getElementById("customBudgetCategory").value;
     if (!cat) return alert("Isi nama kategori barunya bro!");
   }
-
   let amount = parseInt(document.getElementById("budgetAmount").value);
   if(!amount || isNaN(amount)) return alert("Isi nominal budget maksimal bro!");
   
@@ -1404,11 +1507,8 @@ function addBudget() {
   if(!budgetsData[budgetYM]) budgetsData[budgetYM] = [];
   
   let existing = budgetsData[budgetYM].findIndex(b => b.category === cat);
-  if(existing !== -1) {
-    budgetsData[budgetYM][existing].amount = amount;
-  } else {
-    budgetsData[budgetYM].push({category: cat, amount: amount});
-  }
+  if(existing !== -1) budgetsData[budgetYM][existing].amount = amount;
+  else budgetsData[budgetYM].push({category: cat, amount: amount});
   
   document.getElementById("budgetAmount").value = "";
   document.getElementById("budgetCategory").value = "Kebutuhan Pokok";
@@ -1418,37 +1518,26 @@ function addBudget() {
 }
 
 function deleteBudget(ym, index) {
-  if(confirm("Hapus anggaran untuk kategori ini?")) {
-    budgetsData[ym].splice(index, 1); 
-    save(); update();
-  }
+  if(confirm("Hapus anggaran untuk kategori ini?")) { budgetsData[ym].splice(index, 1); save(); update(); }
 }
 
 function addSubBudget(ym, index) {
   let name = prompt("Nama Sub Kategori (misal: Makan, Bensin):");
   if(!name || name.trim() === "") return;
-  
   let amountInput = prompt(`Nominal budget maksimal untuk '${name}' (Rp):`);
   let amount = parseInt(amountInput ? amountInput.replace(/\./g, '').replace(/,/g, '') : 0);
-  
   if(isNaN(amount) || amount <= 0) return alert("Nominal tidak valid!");
   
   if(!budgetsData[ym][index].subBudgets) budgetsData[ym][index].subBudgets = [];
-  
   let currentSubTotal = budgetsData[ym][index].subBudgets.reduce((acc, curr) => acc + curr.amount, 0);
-  if(currentSubTotal + amount > budgetsData[ym][index].amount) {
-      return alert(`Gagal! Total Sub-Budget (${formatRp(currentSubTotal + amount)}) melebihi Batas Maksimal Kategori Utama (${formatRp(budgetsData[ym][index].amount)}).`);
-  }
+  if(currentSubTotal + amount > budgetsData[ym][index].amount) return alert(`Gagal! Total Sub-Budget (${formatRp(currentSubTotal + amount)}) melebihi Batas Maksimal Kategori Utama (${formatRp(budgetsData[ym][index].amount)}).`);
 
   budgetsData[ym][index].subBudgets.push({name: name.trim(), amount: amount});
   save(); update();
 }
 
 function deleteSubBudget(ym, bIdx, subIdx) {
-  if(confirm("Hapus sub kategori ini?")) {
-      budgetsData[ym][bIdx].subBudgets.splice(subIdx, 1);
-      save(); update();
-  }
+  if(confirm("Hapus sub kategori ini?")) { budgetsData[ym][bIdx].subBudgets.splice(subIdx, 1); save(); update(); }
 }
 
 function copyPreviousMonthBudgets() {
@@ -1469,16 +1558,13 @@ function addAsset(){
   let type = document.getElementById("assetType").value;
   
   if(!name || isNaN(value)) return alert("Isi nama dan nominal!");
-  
   let newData = {name, value, type};
   
   if (type === 'saham') {
     let lot = parseInt(document.getElementById("assetLot").value);
     let avg = parseFloat(document.getElementById("assetAvg").value);
     if(isNaN(lot) || isNaN(avg)) return alert("Isi Jumlah Lot dan Average Harga Beli untuk saham bro!");
-    newData.lot = lot;
-    newData.avg = avg;
-    newData.value = value * lot * 100;
+    newData.lot = lot; newData.avg = avg; newData.value = value * lot * 100;
   }
   
   let assetYM = document.getElementById("assetMonthFilter") ? document.getElementById("assetMonthFilter").value : defaultYM;
@@ -1486,12 +1572,10 @@ function addAsset(){
   if(!assetsData[assetYM]) assetsData[assetYM] = [];
   
   assetsData[assetYM].push(newData);
-  
   document.getElementById("assetName").value = "";
   document.getElementById("assetValue").value = "";
   if(document.getElementById("assetLot")) document.getElementById("assetLot").value = "";
   if(document.getElementById("assetAvg")) document.getElementById("assetAvg").value = "";
-  
   save(); update();
 }
 
@@ -1504,11 +1588,9 @@ function updateStockValue(i) {
   if (asset.type === 'saham' && asset.lot) {
       let currentPrice = asset.value / (asset.lot * 100);
       let newPrice = prompt(`Update harga saham ${asset.name} (per lembar).\n\nHarga saat ini: Rp ${currentPrice}\nLot dimiliki: ${asset.lot} lot\nAvg beli: Rp ${asset.avg || 0}`, currentPrice);
-      
       if (newPrice === null || newPrice.trim() === "") return;
       newPrice = parseFloat(newPrice.replace(/,/g, '.'));
       if (isNaN(newPrice) || newPrice < 0) return alert("Harga gak valid bro!");
-      
       asset.value = newPrice * asset.lot * 100;
   } else {
       let newVal = prompt(`Update nominal terbaru untuk ${asset.name} (Rp):`, asset.value);
@@ -1517,7 +1599,6 @@ function updateStockValue(i) {
       if (isNaN(newVal) || newVal < 0) return alert("Nominal gak valid bro!");
       asset.value = newVal;
   }
-  
   save(); update();
 }
 
@@ -1545,22 +1626,17 @@ function copyPreviousMonthAssets() {
 function addGoal(){
   let name = document.getElementById("goalName").value; 
   let target = parseInt(document.getElementById("goalValue").value);
-  
   if(!name || isNaN(target)) return alert("Isi nama dan nominal target!");
   
   goals.push({name, target, source: tempSelectedSources}); 
-  
   document.getElementById("goalName").value = "";
   document.getElementById("goalValue").value = "";
   tempSelectedSources = ['all_liquid'];
   document.getElementById("btnSelectSource").innerHTML = `<i class="fas fa-layer-group"></i> Semua Saldo Kas`;
-  
   save(); update();
 }
 
-function editGoalSource(i) {
-  openSourceModal('edit', i);
-}
+function editGoalSource(i) { openSourceModal('edit', i); }
 
 function editGoal(i) {
   let newName = prompt("Ubah nama target:", goals[i].name); if (!newName) return;
@@ -1578,12 +1654,9 @@ function addDebt(){
   let date = document.getElementById("debtDate").value || new Date().toISOString().split('T')[0];
   
   if(!name || isNaN(amountVal)) return alert("Isi nama dan nominal hutang!");
-  
   debts.push({name, total:amountVal, remaining:amountVal, date});
-  
   document.getElementById("debtName").value = "";
   document.getElementById("debtAmount").value = "";
-  
   save(); update();
 }
 
@@ -1611,13 +1684,11 @@ function payDebt(i){
 
   let rekOptions = reks.map((r, index) => `${index + 1}. ${r.name} (Saldo: ${formatRp(r.val)})`).join("\n");
   let rekChoice = prompt(`Pilih sumber dana (masukkan angkanya aja):\n${rekOptions}`, "1");
-  
   if(rekChoice === null) return; 
   rekChoice = parseInt(rekChoice);
   if(isNaN(rekChoice) || rekChoice < 1 || rekChoice > reks.length) return alert("Pilihan rekening gak valid bro!");
 
   let selectedRekIdx = reks[rekChoice - 1].idx;
-
   if(currentMonthAssets[selectedRekIdx].value < bayar) return alert(`Waduh, saldo di ${currentMonthAssets[selectedRekIdx].name} ga cukup buat bayar!`);
 
   currentMonthAssets[selectedRekIdx].value -= bayar;
@@ -1635,31 +1706,23 @@ function deleteDebt(index) { if(confirm("Hapus catatan hutang?")) { debts.splice
 function toggleAccordion(element) {
   element.nextElementSibling.classList.toggle('active');
   let icon = element.querySelector('.fa-chevron-down, .fa-chevron-up');
-  if(icon.classList.contains('fa-chevron-down')){
-    icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
-  } else {
-    icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-  }
+  if(icon.classList.contains('fa-chevron-down')){ icon.classList.replace('fa-chevron-down', 'fa-chevron-up'); } 
+  else { icon.classList.replace('fa-chevron-up', 'fa-chevron-down'); }
 }
 
 function triggerAnim(id, diff, invertColor = false) {
   let el = document.getElementById(id);
   if(!el) return;
-  
   el.className = "anim-float"; 
   void el.offsetWidth; 
-  
   let sign = diff > 0 ? "+ " : "- ";
   el.innerText = sign + formatRp(Math.abs(diff));
-  
   let isGood = diff > 0;
   if (invertColor) isGood = diff < 0; 
-  
   el.classList.add(isGood ? "anim-up" : "anim-down");
 }
 
 let barChart, donutChart;
-
 function getMonthlyData(range){
   let now=new Date(), data={};
   for(let i=range-1;i>=0;i--){
@@ -1679,7 +1742,6 @@ function getMonthlyData(range){
 
 function renderMonthlyChart(range){
   let dataObj = getMonthlyData(range); let labels = Object.keys(dataObj);
-  
   document.querySelectorAll('.chart-controls button').forEach(btn => btn.classList.remove('active'));
   document.querySelector(`.chart-controls button[onclick="renderMonthlyChart(${range})"]`).classList.add('active');
 
@@ -1698,65 +1760,44 @@ function update(){
   const reminderContainer = document.getElementById("debtReminderContainer");
   if(reminderContainer) {
       let reminderHTML = "";
-      let today = new Date();
-      let currentDay = today.getDate();
+      let today = new Date(); let currentDay = today.getDate();
       let currentMonthPrefix = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0');
-      
       let activeDebts = debts.filter(d => d.remaining > 0);
       
       if(activeDebts.length > 0) {
-          let tempHTML = `<div class="reminder-card">`;
-          tempHTML += `<div class="reminder-title"><i class="fas fa-bell" style="color: var(--warning);"></i> Status Cicilan Bulanan</div>`;
-          
+          let tempHTML = `<div class="reminder-card"><div class="reminder-title"><i class="fas fa-bell" style="color: var(--warning);"></i> Status Cicilan Bulanan</div>`;
           let monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
           
           activeDebts.forEach(d => {
               let parts = d.date.split('-');
-              let dueYear = parts[0];
-              let dueMonth = parseInt(parts[1]) - 1;
-              let dueDay = parseInt(parts[2]);
-              
+              let dueYear = parts[0]; let dueMonth = parseInt(parts[1]) - 1; let dueDay = parseInt(parts[2]);
               let lunasStr = isNaN(dueMonth) ? "Belum Diatur" : monthNames[dueMonth] + " " + dueYear;
               let warningText = "";
               
               let isPaidThisMonth = transactions.some(t => t.type === 'expense' && t.desc.toLowerCase().includes(d.name.toLowerCase()) && t.date.startsWith(currentMonthPrefix));
 
-              if (isPaidThisMonth) {
-                  warningText = `<span style="color: var(--success); font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #dcfce7; padding: 2px 8px; border-radius: 4px;">(Sudah Dibayar Bulan Ini ✓)</span>`;
-              } else if (!isNaN(dueDay)) {
+              if (isPaidThisMonth) warningText = `<span style="color: var(--success); font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #dcfce7; padding: 2px 8px; border-radius: 4px;">(Sudah Dibayar Bulan Ini ✓)</span>`;
+              else if (!isNaN(dueDay)) {
                   let diff = dueDay - currentDay;
-                  if (diff === 0) {
-                      warningText = `<span style="color: var(--danger); font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">(HARI INI JATUH TEMPO!)</span>`;
-                  } else if (diff > 0 && diff <= 7) {
-                      warningText = `<span style="color: var(--danger); font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">(H-${diff} Jatuh Tempo)</span>`;
-                  } else if (diff < 0) {
-                      warningText = `<span style="color: #b91c1c; font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #fef08a; padding: 2px 8px; border-radius: 4px;">(Lewat ${Math.abs(diff)} hari)</span>`;
-                  } else {
-                      warningText = `<span style="color: var(--primary-dark); font-weight: 600; font-size: 0.85rem; margin-left: 10px; background: #eff6ff; padding: 2px 8px; border-radius: 4px;">(Aman, ${diff} hari lagi)</span>`;
-                  }
+                  if (diff === 0) warningText = `<span style="color: var(--danger); font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">(HARI INI JATUH TEMPO!)</span>`;
+                  else if (diff > 0 && diff <= 7) warningText = `<span style="color: var(--danger); font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #fee2e2; padding: 2px 8px; border-radius: 4px;">(H-${diff} Jatuh Tempo)</span>`;
+                  else if (diff < 0) warningText = `<span style="color: #b91c1c; font-weight: 700; font-size: 0.85rem; margin-left: 10px; background: #fef08a; padding: 2px 8px; border-radius: 4px;">(Lewat ${Math.abs(diff)} hari)</span>`;
+                  else warningText = `<span style="color: var(--primary-dark); font-weight: 600; font-size: 0.85rem; margin-left: 10px; background: #eff6ff; padding: 2px 8px; border-radius: 4px;">(Aman, ${diff} hari lagi)</span>`;
               }
-                  
               tempHTML += `<div class="reminder-item"><i class="fas fa-chevron-right"></i> <span><strong>${d.name}</strong> - Tgl <strong>${isNaN(dueDay) ? '-' : dueDay}</strong> <span style="color:#64748b; font-size: 0.85rem;">(Lunas: ${lunasStr})</span> ${warningText}</span></div>`;
           });
-          
           tempHTML += `</div>`;
           reminderHTML = tempHTML;
       }
       reminderContainer.innerHTML = reminderHTML;
   }
   
-  let budgetFilter = document.getElementById("budgetMonthFilter");
-  let assetFilter = document.getElementById("assetMonthFilter");
-  
+  let budgetFilter = document.getElementById("budgetMonthFilter"); let assetFilter = document.getElementById("assetMonthFilter");
   if (budgetFilter && !budgetFilter.value) budgetFilter.value = defaultYM;
   if (assetFilter && !assetFilter.value) assetFilter.value = defaultYM;
   
   let budgetYM = budgetFilter ? budgetFilter.value : defaultYM;
   let assetYM = assetFilter ? assetFilter.value : defaultYM;
-
-  let targetDate = new Date(budgetYM + "-01");
-  let targetMonth = targetDate.getMonth();
-  let targetYear = targetDate.getFullYear();
 
   let assetTargetDate = new Date(assetYM + "-01");
   let assetTargetMonth = assetTargetDate.getMonth();
@@ -1765,24 +1806,15 @@ function update(){
   let curAssets = getAssetsFor(defaultYM); 
   let dispAssets = getAssetsFor(assetYM); 
   let currentBudgets = getBudgetsFor(budgetYM); 
-  
   assets = curAssets; 
 
   let balance = 0; let totalAssetValue = 0;
   let kategori = { 'Rekening Bank': 0, 'Saham': 0, 'Emas': 0, 'Aset Bergerak': 0, 'Aset Tetap': 0 };
   const assetTypeMap = { 'rekening': 'Rekening Bank', 'saham': 'Saham', 'emas': 'Emas', 'bergerak': 'Aset Bergerak', 'nonbergerak': 'Aset Tetap' };
-
   const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
   
-  if(document.getElementById("budgetMonthLabel")) {
-    let bDt = new Date(budgetYM + "-01");
-    document.getElementById("budgetMonthLabel").innerText = `${monthNames[bDt.getMonth()]} ${bDt.getFullYear()}`;
-  }
-  
-  if(document.getElementById("assetMonthLabel")) {
-    let aDt = new Date(assetYM + "-01");
-    document.getElementById("assetMonthLabel").innerText = `${monthNames[aDt.getMonth()]} ${aDt.getFullYear()}`;
-  }
+  if(document.getElementById("budgetMonthLabel")) { let bDt = new Date(budgetYM + "-01"); document.getElementById("budgetMonthLabel").innerText = `${monthNames[bDt.getMonth()]} ${bDt.getFullYear()}`; }
+  if(document.getElementById("assetMonthLabel")) { let aDt = new Date(assetYM + "-01"); document.getElementById("assetMonthLabel").innerText = `${monthNames[aDt.getMonth()]} ${aDt.getFullYear()}`; }
 
   curAssets.forEach(a => {
     if(a.type === 'rekening') balance += a.value;
@@ -1793,19 +1825,11 @@ function update(){
   let totalDebt = 0; debts.forEach(d => totalDebt += d.remaining);
   let wealth = balance + totalAssetValue - totalDebt;
 
-  if (lastBalance !== null && lastBalance !== balance) {
-    triggerAnim("balanceAnim", balance - lastBalance);
-  }
-  if (lastWealth !== null && lastWealth !== wealth) {
-    triggerAnim("wealthAnim", wealth - lastWealth);
-  }
-  if (lastDebt !== null && lastDebt !== totalDebt) {
-    triggerAnim("debtAnim", totalDebt - lastDebt, true); 
-  }
+  if (lastBalance !== null && lastBalance !== balance) triggerAnim("balanceAnim", balance - lastBalance);
+  if (lastWealth !== null && lastWealth !== wealth) triggerAnim("wealthAnim", wealth - lastWealth);
+  if (lastDebt !== null && lastDebt !== totalDebt) triggerAnim("debtAnim", totalDebt - lastDebt, true); 
   
-  lastBalance = balance;
-  lastWealth = wealth;
-  lastDebt = totalDebt;
+  lastBalance = balance; lastWealth = wealth; lastDebt = totalDebt;
 
   if(document.getElementById("balance")) document.getElementById("balance").innerText = balance.toLocaleString('id-ID');
   if(document.getElementById("wealth")) document.getElementById("wealth").innerText = wealth.toLocaleString('id-ID');
@@ -1816,12 +1840,9 @@ function update(){
     trxList.innerHTML = "";
     [...transactions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 15).forEach((t, i) => {
       let originalIndex = transactions.findIndex(orig => orig.id === t.id);
-      
       let fullCatName = t.category || "";
       if (t.category && t.subCategory) fullCatName = `${t.category} - ${t.subCategory}`;
-      
       let catLabel = fullCatName ? `<span style="background:#e2e8f0; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600; margin-left:8px; display:inline-block; color:#475569;">${fullCatName}</span>` : "";
-      
       let typeIcon = t.type === 'income' ? '<i class="fas fa-arrow-down text-success"></i>' : (t.type === 'expense' ? '<i class="fas fa-arrow-up text-danger"></i>' : '<i class="fas fa-exchange-alt text-primary"></i>');
       
       trxList.innerHTML += `<tr><td style="color:#64748b;">${t.date}</td><td>${typeIcon}</td><td><strong style="color:#1e293b;">${t.desc}</strong>${catLabel}<br><small style="color:#94a3b8;">${t.walletName}</small></td><td style="font-weight:600; color:#1e293b;">${formatRp(t.amount)}</td><td style="text-align: center;"><button class="btn-danger" style="padding: 6px 10px;" onclick="deleteTransaction(${originalIndex})"><i class="fas fa-trash"></i></button></td></tr>`;
@@ -1833,67 +1854,35 @@ function update(){
   const assetListContainer = document.getElementById("assetListContainer");
   if(assetListContainer) {
     assetListContainer.innerHTML = "";
-    
     if(dispAssets.length === 0) {
       assetListContainer.innerHTML = `
         <div style="text-align:center; padding: 50px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
-          <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-             <i class="fas fa-box-open" style="font-size: 1.5rem; color: #94a3b8;"></i>
-          </div>
+          <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;"><i class="fas fa-box-open" style="font-size: 1.5rem; color: #94a3b8;"></i></div>
           <h3 style="margin: 0 0 5px; color:#334155;">Aset Kosong</h3>
           <p style="color:#64748b; font-size: 0.95rem; margin-bottom:20px;">Belum ada pencatatan aset untuk bulan <b>${monthNames[assetTargetMonth]} ${assetTargetYear}</b>.</p>
-          <button class="action" style="margin: 0 auto; background: var(--success); box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);" onclick="copyPreviousMonthAssets()">
-            <i class="fas fa-copy"></i> Salin Aset Bulan Sebelumnya
-          </button>
+          <button class="action" style="margin: 0 auto; background: var(--success); box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);" onclick="copyPreviousMonthAssets()"><i class="fas fa-copy"></i> Salin Aset Bulan Sebelumnya</button>
         </div>
       `;
     } else {
       let groupedAssets = {};
-      dispAssets.forEach((a, i) => {
-        let catName = assetTypeMap[a.type];
-        if(!groupedAssets[catName]) groupedAssets[catName] = [];
-        groupedAssets[catName].push({...a, originalIndex: i});
-      });
+      dispAssets.forEach((a, i) => { let catName = assetTypeMap[a.type]; if(!groupedAssets[catName]) groupedAssets[catName] = []; groupedAssets[catName].push({...a, originalIndex: i}); });
 
       for (let cat in groupedAssets) {
         let catTotal = groupedAssets[cat].reduce((sum, item) => sum + item.value, 0);
         let catIcon = cat === 'Saham' ? 'fa-chart-line' : cat === 'Emas' ? 'fa-coins' : cat === 'Rekening Bank' ? 'fa-wallet' : 'fa-box';
         
-        let groupHTML = `
-          <div class="accordion-header" onclick="toggleAccordion(this)">
-            <span style="font-size: 0.95rem; font-weight: 700; color: #334155; display: flex; align-items: center;"><i class="fas ${catIcon} text-primary" style="margin-right:12px; font-size: 1.1rem;"></i> ${cat.toUpperCase()}</span>
-            <span style="font-weight: 600;">${formatRp(catTotal)} <i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left:12px; color:#94a3b8;"></i></span>
-          </div>
-          <div class="accordion-content">
-            <table style="margin-top: 0;">
-              <tbody>
-        `;
+        let groupHTML = `<div class="accordion-header" onclick="toggleAccordion(this)"><span style="font-size: 0.95rem; font-weight: 700; color: #334155; display: flex; align-items: center;"><i class="fas ${catIcon} text-primary" style="margin-right:12px; font-size: 1.1rem;"></i> ${cat.toUpperCase()}</span><span style="font-weight: 600;">${formatRp(catTotal)} <i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left:12px; color:#94a3b8;"></i></span></div><div class="accordion-content"><table style="margin-top: 0;"><tbody>`;
 
         groupedAssets[cat].forEach(a => {
           let stockInfo = "";
-          
           if (a.type === 'saham' && a.lot && a.avg) {
-             let modal = a.lot * 100 * a.avg;
-             let profitLoss = a.value - modal;
-             let pct = ((profitLoss / modal) * 100).toFixed(2);
-             let colorClass = profitLoss >= 0 ? 'text-success' : 'text-danger';
-             let sign = profitLoss >= 0 ? '+' : '';
-             
-             stockInfo = `<br><small style="color:#64748b; font-size:0.8rem;">${a.lot} Lot | Avg: ${formatRp(a.avg)}</small>
-                          <div class="${colorClass}" style="font-size: 0.8rem; font-weight:700;">${sign}${formatRp(profitLoss)} (${sign}${pct}%)</div>`;
+             let modal = a.lot * 100 * a.avg; let profitLoss = a.value - modal;
+             let pct = ((profitLoss / modal) * 100).toFixed(2); let colorClass = profitLoss >= 0 ? 'text-success' : 'text-danger'; let sign = profitLoss >= 0 ? '+' : '';
+             stockInfo = `<br><small style="color:#64748b; font-size:0.8rem;">${a.lot} Lot | Avg: ${formatRp(a.avg)}</small><div class="${colorClass}" style="font-size: 0.8rem; font-weight:700;">${sign}${formatRp(profitLoss)} (${sign}${pct}%)</div>`;
           }
-          
-          groupHTML += `<tr style="border-bottom: 1px solid #f1f5f9;">
-            <td style="padding: 12px 15px;"><strong style="color: #1e293b; font-size:0.95rem;">${a.name}</strong>${stockInfo}</td>
-            <td style="padding: 12px 15px; font-weight: 500; color: #475569;">${formatRp(a.value)}</td>
-            <td style="padding: 12px 15px; text-align: right;">
-              <button class="btn-warning" style="padding: 6px 10px; margin-right: 5px;" onclick="updateStockValue(${a.originalIndex})" title="Edit Harga"><i class="fas fa-edit"></i></button>
-              <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteAsset(${a.originalIndex})"><i class="fas fa-trash"></i></button>
-            </td>
-          </tr>`;
+          groupHTML += `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 12px 15px;"><strong style="color: #1e293b; font-size:0.95rem;">${a.name}</strong>${stockInfo}</td><td style="padding: 12px 15px; font-weight: 500; color: #475569;">${formatRp(a.value)}</td><td style="padding: 12px 15px; text-align: right;"><button class="btn-warning" style="padding: 6px 10px; margin-right: 5px;" onclick="updateStockValue(${a.originalIndex})" title="Edit Harga"><i class="fas fa-edit"></i></button><button class="btn-danger" style="padding: 6px 10px;" onclick="deleteAsset(${a.originalIndex})"><i class="fas fa-trash"></i></button></td></tr>`;
         });
-        groupHTML += `</tbody></table></div>`;
-        assetListContainer.innerHTML += groupHTML;
+        groupHTML += `</tbody></table></div>`; assetListContainer.innerHTML += groupHTML;
       }
     }
   }
@@ -1903,16 +1892,7 @@ function update(){
     debtList.innerHTML = "";
     debts.forEach((d, i) => {
       let status = d.remaining === 0 ? '<span class="text-success" style="font-weight:700; background: #dcfce7; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;"><i class="fas fa-check-circle"></i> Lunas</span>' : `<span style="font-weight:600; color:#1e293b;">${formatRp(d.remaining)}</span>`;
-      debtList.innerHTML += `<tr>
-        <td><strong style="color:#1e293b;">${d.name}</strong><br><small style="color:#64748b"><i class="far fa-calendar-alt"></i> Jatuh Tempo: ${d.date}</small></td>
-        <td style="color:#475569;">${formatRp(d.total)}</td>
-        <td>${status}</td>
-        <td style="display:flex; gap:8px;">
-          ${d.remaining > 0 ? `<button class="btn-success" style="padding: 6px 12px; font-weight: 600;" onclick="payDebt(${i})"><i class="fas fa-money-bill-wave"></i> Bayar</button>` : ''}
-          <button class="btn-warning" style="padding: 6px 10px;" onclick="editDebt(${i})"><i class="fas fa-edit"></i></button>
-          <button class="btn-danger" style="padding: 6px 10px;" onclick="deleteDebt(${i})"><i class="fas fa-trash"></i></button>
-        </td>
-      </tr>`;
+      debtList.innerHTML += `<tr><td><strong style="color:#1e293b;">${d.name}</strong><br><small style="color:#64748b"><i class="far fa-calendar-alt"></i> Jatuh Tempo: ${d.date}</small></td><td style="color:#475569;">${formatRp(d.total)}</td><td>${status}</td><td style="display:flex; gap:8px;">${d.remaining > 0 ? `<button class="btn-success" style="padding: 6px 12px; font-weight: 600;" onclick="payDebt(${i})"><i class="fas fa-money-bill-wave"></i> Bayar</button>` : ''}<button class="btn-warning" style="padding: 6px 10px;" onclick="editDebt(${i})"><i class="fas fa-edit"></i></button><button class="btn-danger" style="padding: 6px 10px;" onclick="deleteDebt(${i})"><i class="fas fa-trash"></i></button></td></tr>`;
     });
   }
 
@@ -1920,28 +1900,15 @@ function update(){
   if(goalList) {
     goalList.innerHTML = "";
     goals.forEach((g, i) => {
-      
-      let currentAmount = 0;
-      let sourceLabel = "";
-
+      let currentAmount = 0; let sourceLabel = "";
       let srcList = Array.isArray(g.source) ? g.source : [g.source || 'all_liquid'];
 
       if (srcList.includes('all_liquid')) {
-         currentAmount = balance;
-         sourceLabel = "Semua Saldo Kas (Rekening)";
+         currentAmount = balance; sourceLabel = "Semua Saldo Kas (Rekening)";
       } else {
          let validNames = [];
-         srcList.forEach(srcName => {
-            let assetMatch = curAssets.find(a => a.name === srcName);
-            if(assetMatch) {
-               currentAmount += assetMatch.value;
-               validNames.push(srcName);
-            }
-         });
-         
-         if(validNames.length === 0) sourceLabel = "Aset udah dihapus";
-         else if(validNames.length <= 2) sourceLabel = validNames.join(" + ");
-         else sourceLabel = validNames.length + " Sumber Gabungan";
+         srcList.forEach(srcName => { let assetMatch = curAssets.find(a => a.name === srcName); if(assetMatch) { currentAmount += assetMatch.value; validNames.push(srcName); } });
+         if(validNames.length === 0) sourceLabel = "Aset udah dihapus"; else if(validNames.length <= 2) sourceLabel = validNames.join(" + "); else sourceLabel = validNames.length + " Sumber Gabungan";
       }
 
       let percent = Math.min((currentAmount / g.target) * 100, 100).toFixed(1); 
@@ -1951,27 +1918,12 @@ function update(){
         <div class="card" style="margin-bottom: 0; padding: 20px; border-color: ${isAchieved ? '#86efac' : 'var(--border)'}; background: ${isAchieved ? '#f0fdf4' : '#ffffff'};">
           <div class="progress-header" style="align-items: center; margin-bottom: 12px;">
             <strong style="font-size: 1.1rem; color: #1e293b;">${g.name}</strong>
-            <div style="display:flex; gap:6px;">
-              <button style="padding: 4px 8px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#0284c7'" onmouseout="this.style.background='#0ea5e9'" onclick="editGoalSource(${i})" title="Ganti/Tambah Sumber Dana"><i class="fas fa-coins"></i></button>
-              <button class="btn-warning" style="padding: 4px 8px; border-radius: 6px;" onclick="editGoal(${i})" title="Edit Nama & Nominal"><i class="fas fa-edit"></i></button>
-              <button class="btn-danger" style="padding: 4px 8px; border-radius: 6px;" onclick="deleteGoal(${i})" title="Hapus Target"><i class="fas fa-times"></i></button>
-            </div>
+            <div style="display:flex; gap:6px;"><button style="padding: 4px 8px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#0284c7'" onmouseout="this.style.background='#0ea5e9'" onclick="editGoalSource(${i})" title="Ganti/Tambah Sumber Dana"><i class="fas fa-coins"></i></button><button class="btn-warning" style="padding: 4px 8px; border-radius: 6px;" onclick="editGoal(${i})" title="Edit Nama & Nominal"><i class="fas fa-edit"></i></button><button class="btn-danger" style="padding: 4px 8px; border-radius: 6px;" onclick="deleteGoal(${i})" title="Hapus Target"><i class="fas fa-times"></i></button></div>
           </div>
-          <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">
-            Sumber: <strong style="color: #475569;">${sourceLabel}</strong>
-          </div>
-          <div style="font-size: 0.95rem; color: #1e293b; margin-bottom: 12px;">
-            Terkumpul: <strong>${formatRp(Math.min(currentAmount, g.target))}</strong> <span style="color:#94a3b8; font-size:0.85rem;">/ ${formatRp(g.target)}</span>
-          </div>
-          <div class="progress" style="margin-bottom: 10px; height: 12px; background: #e2e8f0;">
-            <div class="progress-bar" style="width:${percent}%; background: ${isAchieved ? 'var(--success)' : 'var(--primary)'}"></div>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 700; font-size: 0.9rem; color: ${isAchieved ? 'var(--success)' : 'var(--primary)'}">
-              ${percent}% ${isAchieved ? 'Tercapai' : ''}
-            </span>
-            ${isAchieved ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.4rem;"></i>' : ''}
-          </div>
+          <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Sumber: <strong style="color: #475569;">${sourceLabel}</strong></div>
+          <div style="font-size: 0.95rem; color: #1e293b; margin-bottom: 12px;">Terkumpul: <strong>${formatRp(Math.min(currentAmount, g.target))}</strong> <span style="color:#94a3b8; font-size:0.85rem;">/ ${formatRp(g.target)}</span></div>
+          <div class="progress" style="margin-bottom: 10px; height: 12px; background: #e2e8f0;"><div class="progress-bar" style="width:${percent}%; background: ${isAchieved ? 'var(--success)' : 'var(--primary)'}"></div></div>
+          <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 700; font-size: 0.9rem; color: ${isAchieved ? 'var(--success)' : 'var(--primary)'}">${percent}% ${isAchieved ? 'Tercapai' : ''}</span>${isAchieved ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.4rem;"></i>' : ''}</div>
         </div>
       `;
     });
@@ -1981,18 +1933,14 @@ function update(){
     if(donutChart) donutChart.destroy();
     let chartData = [kategori['Rekening Bank'], kategori['Saham'], kategori['Emas'], kategori['Aset Bergerak'], kategori['Aset Tetap']];
     let chartLabels = ['Rekening Bank', 'Saham', 'Emas', 'Aset Bergerak', 'Aset Tetap'];
-    
     let filteredData = []; let filteredLabels = [];
-    for(let i=0; i<chartData.length; i++){
-      if(chartData[i] > 0) { filteredData.push(chartData[i]); filteredLabels.push(chartLabels[i]); }
-    }
+    for(let i=0; i<chartData.length; i++){ if(chartData[i] > 0) { filteredData.push(chartData[i]); filteredLabels.push(chartLabels[i]); } }
     if(filteredData.length === 0) { filteredData = [1]; filteredLabels = ["Belum ada aset"]; }
 
     donutChart = new Chart(document.getElementById("donutChart"),{
       type: 'doughnut', data: { labels: filteredLabels, datasets: [{ data: filteredData, backgroundColor: ['#0ea5e9', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'], borderWidth: 0 }] },
       options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } } }
     });
-    
     renderMonthlyChart(12);
   }
 }
@@ -2002,111 +1950,52 @@ function renderBudgetList(list, ym) {
   if(!container) return;
   container.innerHTML = "";
   
-  let bMonthAssets = getAssetsFor(ym);
-  let cash = 0;
-  bMonthAssets.forEach(a => { if(a.type === 'rekening') cash += a.value; });
+  let bMonthAssets = getAssetsFor(ym); let cash = 0; bMonthAssets.forEach(a => { if(a.type === 'rekening') cash += a.value; });
 
   if (list.length === 0) {
     const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    let [year, month] = ym.split('-');
-    let mName = monthNames[parseInt(month) - 1];
+    let [year, month] = ym.split('-'); let mName = monthNames[parseInt(month) - 1];
 
-    container.innerHTML = `
-      <div style="grid-column: span 2; text-align:center; padding: 50px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
-        <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
-           <i class="fas fa-clipboard-list" style="font-size: 1.5rem; color: #94a3b8;"></i>
-        </div>
-        <h3 style="margin: 0 0 5px; color:#334155;">Anggaran Kosong</h3>
-        <p style="color:#64748b; font-size: 0.95rem; margin-bottom:20px;">Belum ada rencana pengeluaran untuk bulan <b>${mName} ${year}</b>.</p>
-        <button class="action" style="margin: 0 auto; background: var(--success); box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);" onclick="copyPreviousMonthBudgets()">
-          <i class="fas fa-copy"></i> Salin Data Bulan Sebelumnya
-        </button>
-      </div>
-    `;
-    const statusCard = document.getElementById("budgetStatusCard");
-    const budgetVsLiquid = document.getElementById("budgetVsLiquid");
+    container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding: 50px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;"><div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;"><i class="fas fa-clipboard-list" style="font-size: 1.5rem; color: #94a3b8;"></i></div><h3 style="margin: 0 0 5px; color:#334155;">Anggaran Kosong</h3><p style="color:#64748b; font-size: 0.95rem; margin-bottom:20px;">Belum ada rencana pengeluaran untuk bulan <b>${mName} ${year}</b>.</p><button class="action" style="margin: 0 auto; background: var(--success); box-shadow: 0 4px 6px rgba(34, 197, 94, 0.2);" onclick="copyPreviousMonthBudgets()"><i class="fas fa-copy"></i> Salin Data Bulan Sebelumnya</button></div>`;
+    const statusCard = document.getElementById("budgetStatusCard"); const budgetVsLiquid = document.getElementById("budgetVsLiquid");
     if(statusCard && budgetVsLiquid){
       budgetVsLiquid.innerHTML = `<span style="color:var(--success)">Rp 0</span> <small style="color:#94a3b8">/ ${formatRp(cash)}</small>`;
-      statusCard.style.backgroundColor = '#f0fdf4';
-      statusCard.style.borderColor = '#bbf7d0';
+      statusCard.style.backgroundColor = '#f0fdf4'; statusCard.style.borderColor = '#bbf7d0';
       document.getElementById("budgetCardTitle").innerText = "Sisa Rencana Perlu Dana";
     }
     return;
   }
   
   let spentThisMonth = {};
-  transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense').forEach(t => {
-    spentThisMonth[t.category] = (spentThisMonth[t.category] || 0) + t.amount;
-  });
+  transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense').forEach(t => { spentThisMonth[t.category] = (spentThisMonth[t.category] || 0) + t.amount; });
 
   let totalRemainingPlanning = 0;
-  
   list.forEach((b, i) => {
     let spent = spentThisMonth[b.category] || 0;
     let remainingCategory = Math.max(0, b.amount - spent);
     totalRemainingPlanning += remainingCategory;
     
     let percent = Math.min((spent / b.amount) * 100, 100).toFixed(1);
-    let isWarning = percent > 80;
-    let isDanger = percent >= 100;
-    let isDone = spent >= b.amount;
+    let isWarning = percent > 80; let isDanger = percent >= 100; let isDone = spent >= b.amount;
     
-    let barColor = isDanger ? 'var(--danger)' : (isWarning ? 'var(--warning)' : 'var(--primary)');
-    if(isDone) barColor = 'var(--success)';
-    let bgLightColor = isDanger ? '#fee2e2' : (isWarning ? '#fef08a' : '#f1f5f9');
-    let borderCardColor = isDanger ? '#fca5a5' : 'var(--border)';
+    let barColor = isDanger ? 'var(--danger)' : (isWarning ? 'var(--warning)' : 'var(--primary)'); if(isDone) barColor = 'var(--success)';
+    let bgLightColor = isDanger ? '#fee2e2' : (isWarning ? '#fef08a' : '#f1f5f9'); let borderCardColor = isDanger ? '#fca5a5' : 'var(--border)';
     
     let subHTML = '';
     if(b.subBudgets && b.subBudgets.length > 0) {
         subHTML += `<div style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 12px;">`;
         b.subBudgets.forEach((sub, subIdx) => {
             let subSpent = transactions.filter(t => t.date.startsWith(ym) && t.type === 'expense' && t.category === b.category && t.subCategory === sub.name).reduce((acc, t) => acc + t.amount, 0);
-            let subPercent = Math.min((subSpent / sub.amount) * 100, 100).toFixed(1);
-            let subIsDanger = subSpent > sub.amount;
-            let subColorCode = subIsDanger ? 'var(--danger)' : '#0ea5e9';
-            
-            subHTML += `
-                <div style="display:flex; justify-content:space-between; font-size: 0.85rem; margin-bottom: 6px; color:#475569;">
-                    <span style="display:flex; align-items:center;">
-                        <i class="fas fa-level-up-alt fa-rotate-90" style="margin-right:8px; color:#cbd5e1;"></i> 
-                        ${sub.name} 
-                        <button onclick="deleteSubBudget('${ym}', ${i}, ${subIdx})" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0;margin-left:8px;" title="Hapus Sub"><i class="fas fa-times"></i></button>
-                    </span>
-                    <strong style="color:${subIsDanger ? 'var(--danger)' : '#1e293b'}">${formatRp(subSpent)} <span style="color:#94a3b8; font-weight:400; font-size:0.75rem;">/ ${formatRp(sub.amount)}</span></strong>
-                </div>
-                <div class="progress" style="height: 6px; margin-bottom: 12px; background: ${subIsDanger ? '#fee2e2' : '#e0f2fe'};">
-                    <div class="progress-bar" style="width:${subPercent}%; background: ${subColorCode}"></div>
-                </div>
-            `;
+            let subPercent = Math.min((subSpent / sub.amount) * 100, 100).toFixed(1); let subIsDanger = subSpent > sub.amount; let subColorCode = subIsDanger ? 'var(--danger)' : '#0ea5e9';
+            subHTML += `<div style="display:flex; justify-content:space-between; font-size: 0.85rem; margin-bottom: 6px; color:#475569;"><span style="display:flex; align-items:center;"><i class="fas fa-level-up-alt fa-rotate-90" style="margin-right:8px; color:#cbd5e1;"></i> ${sub.name} <button onclick="deleteSubBudget('${ym}', ${i}, ${subIdx})" style="background:none;border:none;color:#ef4444;cursor:pointer;padding:0;margin-left:8px;" title="Hapus Sub"><i class="fas fa-times"></i></button></span><strong style="color:${subIsDanger ? 'var(--danger)' : '#1e293b'}">${formatRp(subSpent)} <span style="color:#94a3b8; font-weight:400; font-size:0.75rem;">/ ${formatRp(sub.amount)}</span></strong></div><div class="progress" style="height: 6px; margin-bottom: 12px; background: ${subIsDanger ? '#fee2e2' : '#e0f2fe'};"><div class="progress-bar" style="width:${subPercent}%; background: ${subColorCode}"></div></div>`;
         });
         subHTML += `</div>`;
     }
     
-    container.innerHTML += `
-      <div class="card" style="margin-bottom: 0; border: 1px solid ${borderCardColor}; border-left: 5px solid ${isDone ? 'var(--success)' : 'var(--primary)'}">
-        <div class="progress-header" style="align-items: center; margin-bottom: 12px;">
-          <strong style="font-size: 1.05rem; color: #1e293b;">${b.category} ${isDone ? '<span class="budget-badge badge-paid">✓ Terpenuhi</span>' : ''}</strong>
-          <div style="display:flex; gap:8px;">
-            <button style="padding: 4px 8px; background: #e0f2fe; color: #0ea5e9; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display:flex; align-items:center; gap:4px;" onclick="addSubBudget('${ym}', ${i})"><i class="fas fa-plus"></i> Sub</button>
-            <button class="btn-danger" style="padding: 4px 8px; background: transparent; color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#cbd5e1'" onclick="deleteBudget('${ym}', ${i})"><i class="fas fa-trash"></i></button>
-          </div>
-        </div>
-        <div style="font-size: 0.95rem; color: #475569; margin-bottom: 12px;">
-          Terpakai: <strong style="color:#1e293b;">${formatRp(spent)}</strong> <span style="color:#94a3b8; font-size:0.85rem;">/ ${formatRp(b.amount)}</span>
-        </div>
-        <div class="progress" style="margin-bottom: 8px; background: ${bgLightColor};">
-          <div class="progress-bar" style="width:${percent}%; background: ${barColor}"></div>
-        </div>
-        <div style="text-align: right; font-weight: 700; font-size: 0.85rem; color: ${barColor}">
-          ${percent}% ${isDanger ? ' (Over Budget!)' : ''}
-        </div>
-        ${subHTML}
-      </div>
-    `;
+    container.innerHTML += `<div class="card" style="margin-bottom: 0; border: 1px solid ${borderCardColor}; border-left: 5px solid ${isDone ? 'var(--success)' : 'var(--primary)'}"><div class="progress-header" style="align-items: center; margin-bottom: 12px;"><strong style="font-size: 1.05rem; color: #1e293b;">${b.category} ${isDone ? '<span class="budget-badge badge-paid">✓ Terpenuhi</span>' : ''}</strong><div style="display:flex; gap:8px;"><button style="padding: 4px 8px; background: #e0f2fe; color: #0ea5e9; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display:flex; align-items:center; gap:4px;" onclick="addSubBudget('${ym}', ${i})"><i class="fas fa-plus"></i> Sub</button><button class="btn-danger" style="padding: 4px 8px; background: transparent; color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='#cbd5e1'" onclick="deleteBudget('${ym}', ${i})"><i class="fas fa-trash"></i></button></div></div><div style="font-size: 0.95rem; color: #475569; margin-bottom: 12px;">Terpakai: <strong style="color:#1e293b;">${formatRp(spent)}</strong> <span style="color:#94a3b8; font-size:0.85rem;">/ ${formatRp(b.amount)}</span></div><div class="progress" style="margin-bottom: 8px; background: ${bgLightColor};"><div class="progress-bar" style="width:${percent}%; background: ${barColor}"></div></div><div style="text-align: right; font-weight: 700; font-size: 0.85rem; color: ${barColor}">${percent}% ${isDanger ? ' (Over Budget!)' : ''}</div>${subHTML}</div>`;
   });
   
-  const statusCard = document.getElementById("budgetStatusCard");
-  const budgetVsLiquid = document.getElementById("budgetVsLiquid");
+  const statusCard = document.getElementById("budgetStatusCard"); const budgetVsLiquid = document.getElementById("budgetVsLiquid");
   if(statusCard && budgetVsLiquid){
     budgetVsLiquid.innerHTML = `<span style="color:${totalRemainingPlanning > cash ? 'var(--danger)' : 'var(--success)'}">${formatRp(totalRemainingPlanning)}</span> <small style="color:#94a3b8">/ ${formatRp(cash)}</small>`;
     statusCard.style.backgroundColor = totalRemainingPlanning > cash ? '#fff1f2' : '#f0fdf4';

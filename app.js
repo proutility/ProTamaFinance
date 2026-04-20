@@ -1,6 +1,10 @@
 // ========================================================
 // Fungsi Tombol Menu HP (Buka/Tutup Sidebar)
 // ========================================================
+// Fungsi Mode Fokus (Desktop)
+function toggleDesktopSidebar() {
+    document.body.classList.toggle('sidebar-collapsed');
+}
 function toggleSidebar() {
   const sidebar = document.querySelector('.sidebar');
   const overlay = document.getElementById('mobileOverlay');
@@ -137,21 +141,12 @@ function save(){
 
 function mainApp(){
 return `
-<div class="sidebar">
+<div class="sidebar" id="desktopSidebar">
   <div class="sidebar-header">
     <img src="logo.png" alt="Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 8px;"> Pro-Tama Finance
   </div>
-  <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-chart-pie"></i> Dashboard</button>
-  <button id="nav-aset" onclick="showPage('aset')"><i class="fas fa-gem"></i> Aset & Portofolio</button>
-  <button id="nav-anggaran" onclick="showPage('anggaran')"><i class="fas fa-clipboard-list"></i> Anggaran</button>
-  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Mutasi</button>
-  <button id="nav-target" onclick="showPage('target')"><i class="fas fa-bullseye"></i> Target & Impian</button>
-  <button id="nav-hutang" onclick="showPage('hutang')"><i class="fas fa-hand-holding-usd"></i> Hutang/Cicilan</button>
-  <button id="nav-wedding" onclick="showPage('wedding')"><i class="fas fa-ring" style="color: #f472b6;"></i> Wedding Planner</button>
-  
-  <button id="nav-kalkulator" onclick="showPage('kalkulator')"><i class="fas fa-calculator" style="color: #0ea5e9;"></i> Kalkulator Saham</button>
-  <button id="nav-laporan" onclick="showPage('laporan')"><i class="fas fa-chart-line" style="color: #10b981;"></i> Laporan Cashflow</button>
-  
+  <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-home"></i> Dashboard</button>
+  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi / Mutasi</button>
   <button id="nav-profil" onclick="showPage('profil')" style="margin-top: auto; margin-bottom: 20px;"><i class="fas fa-user-circle"></i> Profil Saya</button>
 </div>
 
@@ -176,7 +171,10 @@ return `
   </div>
 
   <div class="header-with-picker" style="border-bottom: none; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-     <h2 class="header-title" style="margin: 0;">Halo, ${userProfile.fullname || currentUser}! 👋</h2>
+     <div style="display: flex; align-items: center; gap: 15px;">
+         <i class="fas fa-bars desktop-menu-btn" onclick="toggleDesktopSidebar()" style="font-size: 1.4rem; color: #475569; cursor: pointer;" title="Mode Fokus (Tutup Sidebar)"></i>
+         <h2 class="header-title" style="margin: 0;">Halo, ${userProfile.fullname || currentUser}! 👋</h2>
+     </div>
      
      <div class="desktop-bell" onclick="toggleNotif()">
         <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning);"></i>

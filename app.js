@@ -280,50 +280,54 @@ return `
 </div>
 
 <div id="kalkulator" class="page" style="display:none;">
-  <div class="header-with-picker">
-    <h2 class="header-title">Kalkulator Saham (Average Down)</h2>
-  </div>
-  <div class="card" style="max-width: 800px; margin: 0 auto; background: #f0f9ff; border-color: #bae6fd;">
-      <h3 style="color:#0284c7; margin-bottom: 20px;"><i class="fas fa-calculator"></i> Hitung Posisi Average Baru</h3>
+    <div class="card" style="max-width:800px; margin:0 auto; background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px;">
+      <h3 style="color:#0ea5e9; margin-top: 0; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-calculator"></i> Average Down Calculator
+      </h3>
       
-      <div style="display:flex; gap: 20px; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 300px; display:flex; flex-direction:column; gap: 15px;">
-              <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0f2fe;">
-                  <span style="font-size:0.8rem; font-weight:bold; color:#64748b;">PEMBELIAN AWAL (PORTOFOLIO SAAT INI)</span>
-                  <div style="display:flex; gap:10px; margin-top:10px;">
-                      <input type="number" id="calcLot1" placeholder="Jumlah Lot" style="flex:1;">
-                      <input type="number" id="calcPrice1" placeholder="Harga Beli (Rp)" style="flex:1;">
-                  </div>
+      <div style="display:flex; gap:30px; flex-wrap:wrap;">
+        
+        <div style="flex:1; min-width: 250px; display: flex; flex-direction: column; gap: 15px;">
+          <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+              <label style="font-size: 0.8rem; font-weight: 700; color: #64748b;">POSISI AWAL SAAT INI</label>
+              <div style="display:flex; gap:10px; margin-top: 10px;">
+                  <input type="number" id="calcLot1" placeholder="Jumlah Lot" style="flex: 1; width: 100%;">
+                  <input type="number" id="calcPrice1" placeholder="Harga Beli (Rp)" style="flex: 1; width: 100%;">
               </div>
-              <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0f2fe;">
-                  <span style="font-size:0.8rem; font-weight:bold; color:#64748b;">RENCANA PEMBELIAN BARU (TOP UP)</span>
-                  <div style="display:flex; gap:10px; margin-top:10px;">
-                      <input type="number" id="calcLot2" placeholder="Jumlah Lot" style="flex:1;">
-                      <input type="number" id="calcPrice2" placeholder="Harga Target (Rp)" style="flex:1;">
-                  </div>
-              </div>
-              <button class="action" onclick="calculateAvg()"><i class="fas fa-magic"></i> Hitung Sekarang</button>
           </div>
           
-          <div style="flex: 1; min-width: 300px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display:flex; flex-direction:column; justify-content:center;">
-              <div style="margin-bottom: 15px;">
-                  <span style="font-size:0.85rem; color:#64748b; font-weight:600; text-transform:uppercase;">Harga Average Baru</span>
-                  <h2 id="resAvg" style="margin:0; font-size:2.2rem; color:#0ea5e9;">Rp 0</h2>
-              </div>
-              <div style="display:flex; justify-content:space-between; border-top: 1px solid #f1f5f9; padding-top: 15px;">
-                  <div>
-                      <span style="font-size:0.75rem; color:#64748b; font-weight:600;">Total Lot Akhir</span>
-                      <div id="resLot" style="font-size:1.1rem; font-weight:bold; color:#1e293b;">0 Lot</div>
-                  </div>
-                  <div style="text-align:right;">
-                      <span style="font-size:0.75rem; color:#64748b; font-weight:600;">Total Dana Dibutuhkan (Top Up)</span>
-                      <div id="resFunds" style="font-size:1.1rem; font-weight:bold; color:#ef4444;">Rp 0</div>
-                  </div>
+          <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+              <label style="font-size: 0.8rem; font-weight: 700; color: #64748b;">RENCANA TOP UP</label>
+              <div style="display:flex; gap:10px; margin-top: 10px;">
+                  <input type="number" id="calcLot2" placeholder="Jumlah Lot" style="flex: 1; width: 100%;">
+                  <input type="number" id="calcPrice2" placeholder="Harga Target (Rp)" style="flex: 1; width: 100%;">
               </div>
           </div>
+          
+          <button class="action" onclick="calculateAvg()" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; margin-top: 5px;">
+            <i class="fas fa-magic"></i> Hitung Sekarang
+          </button>
+        </div>
+        
+        <div style="flex:1; min-width: 250px; background:#ffffff; padding:25px; border-radius:12px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+          <span style="font-size: 0.85rem; color:#64748b; font-weight: 700; text-transform: uppercase;">Average Baru Anda</span>
+          <h2 id="resAvg" style="color:#0ea5e9; font-size: 2.4rem; margin: 5px 0 25px 0;">Rp 0</h2>
+          
+          <div style="display: flex; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+              <div>
+                  <span style="font-size: 0.75rem; color:#64748b; font-weight: 600;">TOTAL LOT</span>
+                  <div id="resLot" style="font-weight:bold; font-size: 1.1rem; color: #1e293b; margin-top: 4px;">0 Lot</div>
+              </div>
+              <div style="text-align: right;">
+                  <span style="font-size: 0.75rem; color:#64748b; font-weight: 600;">MODAL TAMBAHAN</span>
+                  <div id="resFunds" style="color:#ef4444; font-weight:bold; font-size: 1.1rem; margin-top: 4px;">Rp 0</div>
+              </div>
+          </div>
+        </div>
+
       </div>
+    </div>
   </div>
-</div>
 
 <div id="laporan" class="page" style="display:none;">
   <div class="header-with-picker">

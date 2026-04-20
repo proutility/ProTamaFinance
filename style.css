@@ -386,4 +386,5 @@ body.sidebar-collapsed .main-content {
 /* Sembunyikan ikon garis 3 ini di HP karena HP udah punya UI Bottom Nav */
 @media (max-width: 768px) {
     .desktop-menu-btn { display: none !important; }
+    .desktop-global-header { display: none !important; }
 }

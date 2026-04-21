@@ -544,7 +544,7 @@ return `
       </div>
       <div class="card" style="overflow-x: auto;">
         <table id="wedVendorList" style="min-width: 100%;">
-          <thead><tr><th>Nama Vendor</th><th>Layanan</th><th>Status</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
+          <thead><tr><th>Nama Vendor</th><th>Layanan</th><th>Plus / Minus</th><th>Status</th><th style="width: 100px; text-align: center;">Aksi</th></tr></thead>
           <tbody id="wedVendorTbody"></tbody>
         </table>
       </div>
@@ -993,6 +993,17 @@ function addWedVendor() {
     document.getElementById('wedVendorService').value = '';
     save(); renderWedding();
 }
+window.editWedVendorNotes = function(id) {
+    let vendor = weddingData.vendors.find(v => v.id === id);
+    if (!vendor) return;
+    
+    let newNotes = prompt("Masukkan Plus / Minus untuk " + vendor.name + ":", vendor.plusminus || "");
+    if (newNotes !== null) {
+        vendor.plusminus = newNotes.trim();
+        save();
+        renderWedding();
+    }
+};
 
 function toggleWedVendorStatus(id) {
     let vendor = weddingData.vendors.find(v => v.id === id);
@@ -1222,10 +1233,19 @@ function renderWedding() {
         weddingData.vendors.forEach(v => {
             let statusBtnClass = v.status === 'Lunas' ? 'btn-success' : (v.status === 'DP' ? 'btn-warning' : 'action');
             let statusBtnStyle = v.status === 'Tanya' ? 'background:#e2e8f0; color:#475569;' : '';
+            
+            // Siapin teks untuk kolom plus/minus
+            let plusMinusText = v.plusminus ? v.plusminus : '<em style="color:#cbd5e1; font-size:0.8rem;"><i class="fas fa-edit"></i> Klik 2x buat isi</em>';
+
             vendorTbody.innerHTML += `
                 <tr>
                     <td><strong style="color:#1e293b;">${v.name}</strong></td>
                     <td style="color:#475569;">${v.service}</td>
+                    
+                    <td ondblclick="editWedVendorNotes(${v.id})" title="Klik 2x untuk edit" style="cursor:pointer; color:#64748b; font-size:0.9rem;">
+                        ${plusMinusText}
+                    </td>
+                    
                     <td><button class="${statusBtnClass}" style="padding: 4px 10px; font-size:0.8rem; ${statusBtnStyle}" onclick="toggleWedVendorStatus(${v.id})">${v.status}</button></td>
                     <td style="text-align:center;"><button class="btn-danger" style="padding: 6px 10px;" onclick="deleteWedVendor(${v.id})"><i class="fas fa-trash"></i></button></td>
                 </tr>

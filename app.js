@@ -1,4 +1,20 @@
 // ========================================================
+// Fungsi Tombol Menu HP (Buka/Tutup Sidebar)
+// ========================================================
+// Fungsi Mode Fokus (Desktop)
+function toggleDesktopSidebar() {
+    document.body.classList.toggle('sidebar-collapsed');
+}
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mobileOverlay');
+  if(sidebar && overlay) {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+  }
+}
+
+// ========================================================
 // KONFIGURASI FIREBASE CLOUD
 // ========================================================
 const firebaseConfig = {
@@ -40,15 +56,25 @@ window.alert = function(message) {
 // ================= VARIABEL GLOBAL =================
 let currentUser = null;
 let currentUid = null;
+
 let userProfile = { fullname: '', phone: '', city: '', job: '' };
+
 let tempSelectedSources = ['all_liquid'];
 let currentSourceMode = 'add';
 let editingGoalIndex = -1;
+
 let lastBalance = null; let lastWealth = null; let lastDebt = null;
+
 let transactions = []; let goals = []; let debts = [];
 let budgetsData = {}; let assetsData = {};
-let weddingData = { budget: [], vendors: [], guests: [] };
+
+let weddingData = {
+    budget: [], vendors: [], guests: [] 
+};
+
 let currentGuestSort = 'newest';
+
+// FITUR BARU: Variabel untuk Sembunyikan Saldo
 let isBalanceHidden = false;
 
 let nowDt = new Date();
@@ -59,6 +85,7 @@ function getBudgetsFor(ym) { return budgetsData[ym] || []; }
 let assets = [];
 
 // ================= FUNGSI BANTUAN =================
+// FITUR BARU: Fungsi mendapatkan ucapan berdasarkan jam
 function getGreeting() {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 11) return "Selamat Pagi";
@@ -84,28 +111,35 @@ auth.onAuthStateChanged((user) => {
     document.getElementById("app").innerHTML = `
       <div class="login-wrap">
         <div class="login-container">
+          
           <div class="login-left">
             <img src="logo.png" alt="Logo" style="width: 75px; height: 75px; object-fit: cover; border-radius: 18px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
             <h1 style="margin: 0 0 10px 0; color: #1e293b; font-size: 2.2rem; line-height: 1.2;">Pro-Tama Finance</h1>
             <p style="color:#64748b; font-size: 1.05rem; margin-bottom: 20px; line-height: 1.5;">Platform manajemen keuangan & aset yang terintegrasi untuk masa depan yang lebih tertata.</p>
+            
             <div class="login-features">
                 <div class="feature-item"><i class="fas fa-chart-pie"></i> <span>Pantau Cashflow & Aset Real-time</span></div>
                 <div class="feature-item"><i class="fas fa-ring" style="color: #ec4899; background: #fdf2f8;"></i> <span>Wedding Planner Terintegrasi</span></div>
                 <div class="feature-item"><i class="fas fa-calculator" style="color: #8b5cf6; background: #f5f3ff;"></i> <span>Kalkulator Saham Pintar</span></div>
             </div>
           </div>
+          
           <div class="login-right">
             <div style="text-align:center; margin-bottom: 40px;">
                 <h2 style="margin:0 0 8px 0; color: #1e293b; font-size: 1.8rem;">Selamat Datang! 👋</h2>
                 <p style="color:#64748b; margin:0; font-size: 0.95rem;">Silakan masuk untuk mengakses dashboard.</p>
             </div>
+            
             <button class="login-btn-google" onclick="login()">
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:24px;"> Lanjutkan dengan Google
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:24px;"> 
+              Lanjutkan dengan Google
             </button>
+            
             <div style="margin-top: 40px; text-align: center; color: #94a3b8; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
                 <i class="fas fa-shield-alt"></i> Secured by Google Firebase
             </div>
           </div>
+
         </div>
       </div>
     `;
@@ -123,12 +157,16 @@ function loadDataFromFirebase() {
   db.collection("usersData").doc(currentUid).get().then((doc) => {
     if (doc.exists) {
       let data = doc.data();
-      transactions = data.transactions || []; goals = data.goals || []; debts = data.debts || [];
-      budgetsData = data.budgetsData || {}; assetsData = data.assetsData || {};
+      transactions = data.transactions || [];
+      goals = data.goals || [];
+      debts = data.debts || [];
+      budgetsData = data.budgetsData || {};
+      assetsData = data.assetsData || {};
       if(data.weddingData) weddingData = data.weddingData;
       if(data.userProfile) userProfile = data.userProfile;
     }
     assets = getAssetsFor(defaultYM);
+    
     document.getElementById("app").innerHTML = mainApp();
     setTimeout(() => { showPage('dashboard'); update(); }, 100);
   }).catch((error) => {
@@ -146,37 +184,69 @@ function save(){
 
 function mainApp(){
 return `
-<div class="main-content">
+<div class="sidebar" id="desktopSidebar">
+  <div class="sidebar-header">
+    <img src="logo.png" alt="Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 8px;"> Pro-Tama Finance
+  </div>
+  
+  <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-home"></i> Dashboard</button>
+  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi / Mutasi</button>
+  
+  <div style="margin-top: auto; display: flex; flex-direction: column; width: 100%;">
+    <button id="nav-profil" onclick="showPage('profil')"><i class="fas fa-user-circle"></i> Profil Saya</button>
+    <button class="logout-btn" onclick="logout()" style="color: #ef4444; border-top: 1px solid #334155; border-radius: 0 0 16px 16px; padding: 12px 20px; background: transparent; text-align: left; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'"><i class="fas fa-sign-out-alt"></i> Logout Akun</button>
+  </div>
+</div>
+
+<div class="main-content" style="position: relative;">
 
 <div id="notifPanel" class="notif-panel">
     <div class="notif-header">
         <span><i class="fas fa-bell" style="color:var(--warning);"></i> Notifikasi</span>
         <i class="fas fa-times" style="color:#94a3b8; cursor:pointer;" onclick="toggleNotif()"></i>
     </div>
-    <div id="notifBody" class="notif-body"></div>
+    <div id="notifBody" class="notif-body">
+        </div>
 </div>
 
-<div class="global-header">
+<div class="mobile-only-header">
+   <div style="display:flex; align-items:center; gap:10px;">
+      <img src="logo.png" style="width:35px; height:35px; border-radius:8px; object-fit:cover;">
+      <strong style="font-size:1.2rem; color:#1e293b;">Pro-Tama Apps</strong>
+   </div>
+   <div style="display:flex; align-items:center; gap:15px;">
+       <i class="fas fa-eye toggle-eye-icon" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleHideBalance()" title="Sembunyikan/Tampilkan Saldo"></i>
+       <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
+   </div>
+</div>
+
+<div class="desktop-global-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
      <div style="display: flex; align-items: center; gap: 15px;">
          <img src="logo.png" style="width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.08);" alt="Logo">
-         <div id="headerTitleArea">
-             <h2 id="headerGreeting" class="hide-on-mobile" style="margin: 0; font-size: 1.25rem; color: #1e293b; display: block;">${getGreeting()}, ${userProfile.fullname || currentUser}! ${getGreetingIcon()}</h2>
-             <button id="globalBackBtn" class="btn-back" onclick="showPage('dashboard')" style="display: none;"><i class="fas fa-arrow-left"></i> Kembali</button>
-         </div>
+         
+         <h2 id="headerGreeting" class="header-title" style="margin: 0; font-size: 1.4rem; color: #1e293b;">${getGreeting()}, ${userProfile.fullname || currentUser}! ${getGreetingIcon()}</h2>
+         
+         <button id="globalBackBtn" onclick="showPage('dashboard')" style="display: none; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; align-items: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+             <i class="fas fa-arrow-left"></i> Kembali
+         </button>
      </div>
      
      <div style="display: flex; align-items: center; gap: 10px;">
-        <div class="header-icon-btn" onclick="toggleHideBalance()" title="Sembunyikan/Tampilkan Saldo">
-           <i class="fas fa-eye toggle-eye-icon" style="font-size:1.1rem; color:#94a3b8;"></i>
+        <div onclick="toggleHideBalance()" style="display: flex; align-items: center; justify-content: center; background: white; padding: 10px 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Sembunyikan/Tampilkan Saldo" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+           <i class="fas fa-eye toggle-eye-icon" style="font-size:1.2rem; color:#94a3b8;"></i>
         </div>
-        <div class="header-icon-btn" onclick="toggleNotif()" title="Notifikasi">
-           <i class="fas fa-bell" style="font-size:1.1rem; color:var(--warning);"></i>
+        
+        <div class="desktop-bell" onclick="toggleNotif()" style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+           <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning);"></i>
+           <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Notifikasi</span>
         </div>
-        <div class="header-icon-btn" onclick="showPage('profil')" title="Profil Saya">
+
+        <div onclick="showPage('profil')" style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
            <i class="fas fa-user-circle" style="font-size:1.2rem; color:var(--primary);"></i>
+           <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Profil</span>
         </div>
      </div>
-</div>
+  </div>
 
 <div id="dashboard" class="page">
   <div class="mobile-banner">
@@ -266,6 +336,7 @@ return `
     </div>
     
     <hr style="border:none; border-top:1px dashed #e2e8f0; margin: 30px 0;">
+    
     <button class="btn-danger" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar (Logout) Akun</button>
   </div>
 </div>
@@ -446,13 +517,11 @@ return `
         <i class="fas fa-ring" style="color: #f472b6;"></i> Wedding Planner
     </h2>
   </div>
-  
   <div class="wedding-tab">
       <button id="wed-tab-budget" class="active" onclick="switchWedTab('budget')">Budgeting</button>
       <button id="wed-tab-vendor" onclick="switchWedTab('vendor')">Vendor Tracker</button>
       <button id="wed-tab-guest" onclick="switchWedTab('guest')">Guest List</button>
   </div>
-
  <div id="wed-content-budget" class="wed-content">
       <div class="card" style="background: #eff6ff; border-color: #bfdbfe; margin-bottom: 15px;">
          <h3 style="margin:0; color:#1d4ed8; display:flex; justify-content:space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -614,9 +683,22 @@ return `
 
 // ================= FUNGSI NAVIGASI & MENU (UPDATE) =================
 function showPage(p){
-  // Sembunyikan semua halaman
   document.querySelectorAll(".page").forEach(x => x.style.display="none");
   document.getElementById(p).style.display="block";
+  
+  // Update UI Sidebar Desktop (Dibiarkan jika dipanggil)
+  document.querySelectorAll(".sidebar button").forEach(btn => btn.classList.remove("active"));
+  if(document.getElementById("nav-" + p)) document.getElementById("nav-" + p).classList.add("active");
+  
+  // Update UI Bottom Nav (khusus HP)
+  document.querySelectorAll(".bottom-nav .nav-item").forEach(btn => btn.classList.remove("active"));
+  if(document.getElementById("botnav-" + p)) document.getElementById("botnav-" + p).classList.add("active");
+  
+  if (window.innerWidth <= 768) {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    if(sidebar && overlay) { sidebar.classList.remove('open'); overlay.style.display = 'none'; }
+  }
   
   // Logika Tombol Kembali di Header
   let backBtn = document.getElementById("globalBackBtn");
@@ -628,13 +710,9 @@ function showPage(p){
           greetingTxt.style.display = 'block';
       } else {
           backBtn.style.display = 'flex';
-          greetingTxt.style.display = 'none'; // Sembunyiin sapaan biar tombol kembali leluasa
+          greetingTxt.style.display = 'none'; // Sembunyikan sapaan saat tombol kembali muncul
       }
   }
-  
-  // Update UI Bottom Nav (khusus HP)
-  document.querySelectorAll(".bottom-nav .nav-item").forEach(btn => btn.classList.remove("active"));
-  if(document.getElementById("botnav-" + p)) document.getElementById("botnav-" + p).classList.add("active");
   
   if (p === 'wedding') renderWedding();
   if (p === 'laporan') renderLaporan();
@@ -1243,27 +1321,27 @@ function renderWedding() {
 
 // FITUR BARU: Format Hide/Show Saldo
 const formatRp = (angka) => {
-  if(isBalanceHidden) return "***.***";
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(angka);
+    if(isBalanceHidden) return "***.***";
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(angka);
 };
 
 // FITUR BARU: Toggle Hide Balance
 function toggleHideBalance() {
-  isBalanceHidden = !isBalanceHidden;
-  let eyeIcons = document.querySelectorAll(".toggle-eye-icon");
-  
-  eyeIcons.forEach(icon => {
-      if(isBalanceHidden) {
-          icon.classList.remove("fa-eye");
-          icon.classList.add("fa-eye-slash");
-          icon.style.color = "#3b82f6";
-      } else {
-          icon.classList.remove("fa-eye-slash");
-          icon.classList.add("fa-eye");
-          icon.style.color = "#94a3b8";
-      }
-  });
-  update();
+    isBalanceHidden = !isBalanceHidden;
+    let eyeIcons = document.querySelectorAll(".toggle-eye-icon");
+    
+    eyeIcons.forEach(icon => {
+        if(isBalanceHidden) {
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+            icon.style.color = "#3b82f6";
+        } else {
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+            icon.style.color = "#94a3b8";
+        }
+    });
+    update();
 }
 
 function handleTypeChange() {

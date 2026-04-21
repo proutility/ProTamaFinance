@@ -184,21 +184,11 @@ function save(){
 
 function mainApp(){
 return `
-<div class="sidebar" id="desktopSidebar">
-  <div class="sidebar-header">
-    <img src="logo.png" alt="Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: 8px;"> Pro-Tama Finance
-  </div>
-  
-  <button id="nav-dashboard" onclick="showPage('dashboard')" class="active"><i class="fas fa-home"></i> Dashboard</button>
-  <button id="nav-transaksi" onclick="showPage('transaksi')"><i class="fas fa-exchange-alt"></i> Transaksi / Mutasi</button>
-  
-  <div style="margin-top: auto; display: flex; flex-direction: column; width: 100%;">
-    <button id="nav-profil" onclick="showPage('profil')"><i class="fas fa-user-circle"></i> Profil Saya</button>
-    <button class="logout-btn" onclick="logout()" style="color: #ef4444; border-top: 1px solid #334155; border-radius: 0 0 16px 16px; padding: 12px 20px; background: transparent; text-align: left; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'"><i class="fas fa-sign-out-alt"></i> Logout Akun</button>
-  </div>
-</div>
+<div class="main-content" style="position: relative; width: 100%; max-width: 100%; margin: 0 auto; padding-bottom: 50px;">
 
-<div class="main-content" style="position: relative;">
+<button class="hide-on-mobile" onclick="logout()" style="position: fixed; bottom: 30px; left: 30px; background: white; color: #ef4444; border: 1px solid #fecaca; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); z-index: 9999; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;" onmouseover="this.style.background='#fef2f2'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='white'; this.style.transform='translateY(0)';">
+    <i class="fas fa-sign-out-alt" style="font-size: 1.2rem;"></i> Logout Akun
+</button>
 
 <div id="notifPanel" class="notif-panel">
     <div class="notif-header">
@@ -214,34 +204,36 @@ return `
       <img src="logo.png" style="width:35px; height:35px; border-radius:8px; object-fit:cover;">
       <strong style="font-size:1.2rem; color:#1e293b;">Pro-Tama Apps</strong>
    </div>
-   <div style="display:flex; align-items:center; gap:15px;">
-       <i class="fas fa-eye toggle-eye-icon" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleHideBalance()" title="Sembunyikan/Tampilkan Saldo"></i>
-       <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
-   </div>
+   <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
 </div>
 
 <div class="desktop-global-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
+     
      <div style="display: flex; align-items: center; gap: 15px;">
-         <img src="logo.png" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 4px rgba(0,0,0,0.08);" alt="Logo">
+         <img src="logo.png" style="width: 42px; height: 42px; border-radius: 10px; object-fit: cover; box-shadow: 0 2px 6px rgba(0,0,0,0.08);" alt="Logo">
          
-         <div onclick="showPage('profil')" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-             <i class="fas fa-user-circle" style="font-size:1.4rem; color:var(--primary);"></i>
+         <div onclick="showPage('profil')" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+             <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--primary);"></i>
          </div>
 
          <h2 id="headerGreeting" class="header-title" style="margin: 0; font-size: 1.4rem; color: #1e293b; display: block;">${getGreeting()}, ${userProfile.fullname || currentUser}! ${getGreetingIcon()}</h2>
      </div>
      
-     <div style="display: flex; align-items: center; gap: 15px;">
-        <button id="globalBackBtn" onclick="showPage('dashboard')" style="display: none; background: #3b82f6; color: white; border: none; padding: 8px 18px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.2s; align-items: center; gap: 8px; font-size: 0.9rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <i class="fas fa-chevron-left" style="font-size: 0.8rem;"></i> Dashboard
+     <div style="display: flex; align-items: center; gap: 12px;">
+        
+        <button id="globalBackBtn" onclick="showPage('dashboard')" style="display: none; background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.2s; align-items: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            <i class="fas fa-chevron-left" style="font-size: 0.85rem;"></i> Kembali
         </button>
 
-        <i class="fas fa-eye toggle-eye-icon" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleHideBalance()" title="Sembunyikan/Tampilkan Saldo"></i>
+        <div onclick="toggleHideBalance()" style="display: flex; align-items: center; justify-content: center; background: white; padding: 10px 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Sembunyikan/Tampilkan Saldo" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+           <i class="fas fa-eye toggle-eye-icon" style="font-size:1.2rem; color:#94a3b8;"></i>
+        </div>
         
         <div class="desktop-bell" onclick="toggleNotif()" style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
            <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning);"></i>
            <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Notifikasi</span>
         </div>
+
      </div>
   </div>
 
@@ -334,7 +326,7 @@ return `
     
     <hr style="border:none; border-top:1px dashed #e2e8f0; margin: 30px 0;">
     
-    <button class="btn-danger" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar (Logout) Akun</button>
+    <button class="btn-danger" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 8px;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
   </div>
 </div>
 
@@ -680,15 +672,13 @@ return `
 
 // ================= FUNGSI NAVIGASI & MENU (UPDATE) =================
 function showPage(p){
-  // Sembunyikan semua halaman
   document.querySelectorAll(".page").forEach(x => x.style.display="none");
   document.getElementById(p).style.display="block";
   
-  // Update UI Bottom Nav (khusus HP)
   document.querySelectorAll(".bottom-nav .nav-item").forEach(btn => btn.classList.remove("active"));
   if(document.getElementById("botnav-" + p)) document.getElementById("botnav-" + p).classList.add("active");
   
-  // Logika Tombol Kembali di Header
+  // Logic Sapaan & Tombol Kembali
   let backBtn = document.getElementById("globalBackBtn");
   let greetingTxt = document.getElementById("headerGreeting");
   
@@ -698,8 +688,14 @@ function showPage(p){
           greetingTxt.style.display = 'block';
       } else {
           backBtn.style.display = 'flex';
-          greetingTxt.style.display = 'none'; // Sembunyikan sapaan saat tombol kembali muncul
+          greetingTxt.style.display = 'none';
       }
+  }
+
+  if (window.innerWidth <= 768) {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    if(sidebar && overlay) { sidebar.classList.remove('open'); overlay.style.display = 'none'; }
   }
   
   if (p === 'wedding') renderWedding();

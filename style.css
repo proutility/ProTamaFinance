@@ -511,7 +511,7 @@ body.sidebar-collapsed .main-content {
 @media (min-width: 769px) {
     .main-content {
         padding: 30px 40px !important;
-        margin-left: 260px !important; /* Jarak disamain sama lebar sidebar */
+        margin-left: 0 !important; max-width: 1200px !important; margin: 0 auto;
         transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         max-width: 100% !important; /* Lepas batas biar bisa beneran mentok layar */
     }

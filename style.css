@@ -6,6 +6,24 @@
 
 body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
+/* ========================================================= */
+/* FITUR BARU: SCROLLBAR ESTETIK ALA MAC/IOS                 */
+/* ========================================================= */
+::-webkit-scrollbar {
+    width: 8px; /* Lebar scrollbar vertikal */
+    height: 8px; /* Tinggi scrollbar horizontal (misal di tabel) */
+}
+::-webkit-scrollbar-track {
+    background: transparent; /* Background track dibikin transparan biar clean */
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* Warna abu-abu kalem */
+    border-radius: 10px; /* Ujungnya melengkung */
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* Warnanya sedikit gelap pas di-hover */
+}
+
 /* --- SIDEBAR --- */
 .sidebar { background: var(--sidebar); color: white; width: 250px; display: flex; flex-direction: column; padding: 20px 0; box-shadow: 4px 0 10px rgba(0,0,0,0.05); z-index: 1000; flex-shrink: 0;}
 .sidebar-header { padding: 0 20px 20px; font-size: 1.2rem; font-weight: 700; border-bottom: 1px solid #1e293b; margin-bottom: 20px; color: white; display: flex; align-items: center; gap: 10px; }

@@ -1727,6 +1727,30 @@ function deleteAsset(index) {
     save(); update(); 
   } 
 }
+window.inlineEditStock = (i, field) => {
+  let ym = getEl("assetMonthFilter")?.value || defaultYM, a = assetsData[ym][i];
+  if (field === 'lot') {
+    let n = prompt("Edit Jumlah Lot untuk " + a.name + ":", a.lot);
+    if (n) {
+      n = parseInt(n.replace(/\D/g,''));
+      if (!isNaN(n) && n > 0) {
+        let curPrice = a.value / (a.lot * 100); // Ambil harga pasar saat ini per lembar
+        a.lot = n;
+        a.value = curPrice * n * 100; // Sesuaikan total saldo berdasarkan lot baru
+        save(); update();
+      }
+    }
+  } else if (field === 'avg') {
+    let n = prompt("Edit Average Harga Beli (Rp) untuk " + a.name + ":", a.avg);
+    if (n) {
+      n = parseFloat(n.replace(/,/g,'.'));
+      if (!isNaN(n) && n > 0) {
+        a.avg = n;
+        save(); update();
+      }
+    }
+  }
+};
 
 function copyPreviousMonthAssets() {
   let currentYM = document.getElementById("assetMonthFilter") ? document.getElementById("assetMonthFilter").value : defaultYM;
@@ -2013,7 +2037,7 @@ function update(){
              let avgDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(a.avg);
              let plDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(profitLoss);
              
-             stockInfo = `<br><small style="color:#64748b; font-size:0.8rem;">${a.lot} Lot | Avg: ${avgDisplay}</small><div class="${colorClass}" style="font-size: 0.8rem; font-weight:700;">${sign}${plDisplay} (${sign}${pct}%)</div>`;
+             stockInfo = `<br><small><span ondblclick="inlineEditStock(${a.originalIndex}, 'lot')" style="cursor:pointer; border-bottom:1px dashed #cbd5e1;" title="Klik 2x Edit Lot">${a.lot} Lot</span> | Avg: <span ondblclick="inlineEditStock(${a.originalIndex}, 'avg')" style="cursor:pointer; border-bottom:1px dashed #cbd5e1;" title="Klik 2x Edit Avg">${avgDisplay}</span></small><div class="${colorClass}" style="font-size: 0.8rem; font-weight:700;">${sign}${plDisplay} (${sign}${pct}%)</div>`;
           }
           groupHTML += `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 12px 15px;"><strong style="color: #1e293b; font-size:0.95rem;">${a.name}</strong>${stockInfo}</td><td style="padding: 12px 15px; font-weight: 500; color: #475569;">${valDisplay}</td><td style="padding: 12px 15px; text-align: right;"><button class="btn-warning" style="padding: 6px 10px; margin-right: 5px;" onclick="updateStockValue(${a.originalIndex})" title="Edit Harga"><i class="fas fa-edit"></i></button><button class="btn-danger" style="padding: 6px 10px;" onclick="deleteAsset(${a.originalIndex})"><i class="fas fa-trash"></i></button></td></tr>`;
         });

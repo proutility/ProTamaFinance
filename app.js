@@ -239,7 +239,7 @@ return `
 
 <div id="dashboard" class="page">
   <div class="mobile-banner">
-     <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Banner">
+     <img src="banner.png" alt="Banner">
      <div class="mobile-banner-text">Dashboard Pro-Tama Finance</div>
   </div>
 

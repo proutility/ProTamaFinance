@@ -240,6 +240,7 @@ return `
 <div id="dashboard" class="page">
   <div class="mobile-banner">
      <img src="baner.png" alt="Banner">
+     <div class="mobile-banner-text">Dashboard Pro-Tama Finance</div>
   </div>
 
   <div class="mobile-menu-grid">

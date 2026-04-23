@@ -240,7 +240,6 @@ return `
 <div id="dashboard" class="page">
   <div class="mobile-banner">
      <img src="baner.png" alt="Banner">
-     <div class="mobile-banner-text">Dashboard Pro-Tama Finance</div>
   </div>
 
   <div class="mobile-menu-grid">
@@ -355,7 +354,7 @@ return `
           </div>
           
           <button class="action" onclick="calculateAvg()" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; margin-top: 5px;">
-            <i class="fas fa-magic"></i> Hitung Sekarang
+            <i class="fas fa-magic"></i> Hitung Average
           </button>
         </div>
         
@@ -371,6 +370,50 @@ return `
               <div style="text-align: right;">
                   <span style="font-size: 0.75rem; color:#64748b; font-weight: 600;">MODAL TAMBAHAN</span>
                   <div id="resFunds" style="color:#ef4444; font-weight:bold; font-size: 1.1rem; margin-top: 4px;">Rp 0</div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:800px; margin:20px auto 0 auto; background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px;">
+      <h3 style="color:#10b981; margin-top: 0; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-chart-line"></i> Profit / Loss Calculator (TP & SL)
+      </h3>
+      
+      <div style="display:flex; gap:30px; flex-wrap:wrap;">
+        <div style="flex:1; min-width: 250px; display: flex; flex-direction: column; gap: 15px;">
+          <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1;">
+              <label style="font-size: 0.8rem; font-weight: 700; color: #64748b;">SIMULASI TRANSAKSI</label>
+              <div style="display:flex; gap:10px; margin-top: 10px;">
+                  <input type="number" id="calcLotPL" placeholder="Jumlah Lot" style="flex: 1; width: 100%;">
+                  <input type="number" id="calcBuyPrice" placeholder="Harga Beli (Rp)" style="flex: 1; width: 100%;">
+              </div>
+              <div style="margin-top: 10px;">
+                  <input type="number" id="calcSellPrice" placeholder="Harga Jual / Target (Rp)" style="width: 100%;">
+              </div>
+          </div>
+          
+          <button class="btn-success" onclick="calculatePL()" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; margin-top: 5px; font-weight: 600;">
+            <i class="fas fa-bullseye"></i> Hitung Profit / Loss
+          </button>
+        </div>
+        
+        <div style="flex:1; min-width: 250px; background:#ffffff; padding:25px; border-radius:12px; border: 1px solid #cbd5e1; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+          <span style="font-size: 0.85rem; color:#64748b; font-weight: 700; text-transform: uppercase;">Estimasi Profit / Loss</span>
+          <div style="display: flex; align-items: baseline; gap: 10px; margin: 5px 0 25px 0;">
+              <h2 id="resPLNominal" style="color:#1e293b; font-size: 2.2rem; margin: 0;">Rp 0</h2>
+              <span id="resPLPercent" style="font-size: 1.1rem; font-weight: 700; padding: 4px 10px; border-radius: 8px; background: #e2e8f0; color: #475569;">0.00%</span>
+          </div>
+          
+          <div style="display: flex; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+              <div>
+                  <span style="font-size: 0.75rem; color:#64748b; font-weight: 600;">MODAL AWAL</span>
+                  <div id="resModalAwal" style="font-weight:bold; font-size: 1rem; color: #475569; margin-top: 4px;">Rp 0</div>
+              </div>
+              <div style="text-align: right;">
+                  <span style="font-size: 0.75rem; color:#64748b; font-weight: 600;">TOTAL UANG KEMBALI</span>
+                  <div id="resTotalReturn" style="color:#0ea5e9; font-weight:bold; font-size: 1.1rem; margin-top: 4px;">Rp 0</div>
               </div>
           </div>
         </div>
@@ -757,6 +800,48 @@ function calculateAvg() {
     document.getElementById('resAvg').innerText = formatRp(avgNew);
     document.getElementById('resLot').innerText = totalLot + " Lot";
     document.getElementById('resFunds').innerText = formatRp(requiredFunds);
+}
+
+// ================= FUNGSI KALKULATOR PROFIT / LOSS =================
+function calculatePL() {
+    let lot = parseFloat(document.getElementById('calcLotPL').value) || 0;
+    let buyPrice = parseFloat(document.getElementById('calcBuyPrice').value) || 0;
+    let sellPrice = parseFloat(document.getElementById('calcSellPrice').value) || 0;
+
+    if(lot === 0 || buyPrice === 0 || sellPrice === 0) {
+        return alert("Isi jumlah lot, harga beli, dan harga jual/targetnya bro!");
+    }
+
+    let modalAwal = lot * 100 * buyPrice;
+    let totalReturn = lot * 100 * sellPrice;
+    let profitLossNominal = totalReturn - modalAwal;
+    let profitLossPercent = (profitLossNominal / modalAwal) * 100;
+
+    let plNominalEl = document.getElementById('resPLNominal');
+    let plPercentEl = document.getElementById('resPLPercent');
+    
+    // Format Tampilan
+    document.getElementById('resModalAwal').innerText = formatRp(modalAwal);
+    document.getElementById('resTotalReturn').innerText = formatRp(totalReturn);
+    
+    let sign = profitLossNominal > 0 ? '+' : '';
+    plNominalEl.innerText = sign + formatRp(profitLossNominal);
+    plPercentEl.innerText = sign + profitLossPercent.toFixed(2) + '%';
+
+    // Kasih Warna Kaya Stockbit (Hijau Cuan, Merah Boncos)
+    if(profitLossNominal > 0) {
+        plNominalEl.style.color = '#10b981'; // Hijau
+        plPercentEl.style.color = '#10b981';
+        plPercentEl.style.backgroundColor = '#dcfce7';
+    } else if (profitLossNominal < 0) {
+        plNominalEl.style.color = '#ef4444'; // Merah
+        plPercentEl.style.color = '#ef4444';
+        plPercentEl.style.backgroundColor = '#fee2e2';
+    } else {
+        plNominalEl.style.color = '#1e293b'; // Abu-abu Netral
+        plPercentEl.style.color = '#475569';
+        plPercentEl.style.backgroundColor = '#e2e8f0';
+    }
 }
 
 // ================= FUNGSI LAPORAN ANALYTICS =================

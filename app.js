@@ -304,9 +304,10 @@ return `
       <div class="chart-container" style="display: flex; justify-content: center;"><canvas id="donutChart"></canvas></div>
     </div>
   </div>
+  
+  <div id="financialHealthContainer" style="margin-top: 25px; margin-bottom: 10px;"></div>
+  
 </div>
-
-<div id="financialHealthContainer" style="margin-top: 25px;"></div>
 
 <div id="profil" class="page" style="display:none;">
   <div class="header-with-picker">

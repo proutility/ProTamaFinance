@@ -1065,6 +1065,7 @@ function renderLaporan() {
         });
     }
     document.getElementById('topExpenses').innerHTML = topHTML;
+}
 
 // ================= FUNGSI NOTIFIKASI LONCENG =================
 function toggleNotif() {

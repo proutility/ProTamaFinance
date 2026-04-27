@@ -2816,53 +2816,55 @@ let currentPinMode = ""; // Tambahan variabel buat deteksi layar PIN aktif
 function renderPinScreen(mode) {
     currentPinMode = mode; 
     
-    let title = mode === 'setup' ? "Buat PIN Keamanan" : "Masukkan PIN Anda";
-    let subtitle = mode === 'setup' ? "Buat 6 digit PIN untuk mengunci aplikasi Pro-Tama Finance Anda." : "Aplikasi terkunci. Masukkan 6 digit PIN Anda.";
+    let title = mode === 'setup' ? "Set PIN Keamanan" : "Masukkan PIN";
+    let subtitle = mode === 'setup' ? "Buat 6 digit PIN untuk melindungi data keuangan Anda." : "Aplikasi terkunci. Silakan masukkan 6 digit PIN.";
     
     if (mode === 'setup_confirm') {
         title = "Konfirmasi PIN";
         subtitle = "Masukkan kembali 6 digit PIN yang baru saja dibuat.";
     }
 
-    // Animasi Titik PIN (Rings to Glowing Dots)
+    // Animasi Titik PIN (Premium Neon Glow)
     let dots = '';
     for(let i=0; i<6; i++) {
         let active = i < currentPinInput.length 
-            ? 'background: #3b82f6; border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); transform: scale(1.1);' 
-            : 'background: transparent; border-color: #475569;';
-        dots += `<div style="width: 16px; height: 16px; border-radius: 50%; border: 2px solid; ${active} transition: all 0.2s ease;"></div>`;
+            ? 'background: #38bdf8; border-color: #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.8), 0 0 24px rgba(56, 189, 248, 0.4); transform: scale(1.15);' 
+            : 'background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.15);';
+        dots += `<div style="width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid; ${active} transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>`;
     }
 
     let html = `
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1e293b, #020617); overflow: hidden;">
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; background: #080f1e; overflow: hidden;">
         
-        <div style="position: absolute; top: -150px; left: -150px; width: 400px; height: 400px; background: rgba(59, 130, 246, 0.15); filter: blur(100px); border-radius: 50%;"></div>
-        <div style="position: absolute; bottom: -150px; right: -150px; width: 400px; height: 400px; background: rgba(139, 92, 246, 0.1); filter: blur(100px); border-radius: 50%;"></div>
+        <div style="position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0) 70%); filter: blur(80px); border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(0,0,0,0) 70%); filter: blur(80px); border-radius: 50%;"></div>
 
-        <div style="background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 32px; padding: 50px 40px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; max-width: 420px; width: 90%; position: relative; z-index: 10; animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); border-top: 1px solid rgba(255, 255, 255, 0.15); border-left: 1px solid rgba(255, 255, 255, 0.15); border-radius: 36px; padding: 50px 40px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; align-items: center; max-width: 380px; width: 90%; position: relative; z-index: 10; animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
 
-            <div style="text-align: center; margin-bottom: 35px;">
-                <div style="width: 65px; height: 65px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2);">
-                    <i class="fas ${mode.includes('setup') ? 'fa-key' : 'fa-lock'} " style="font-size: 2rem; color: #3b82f6;"></i>
+            <div style="text-align: center; margin-bottom: 40px;">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(59, 130, 246, 0.05)); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 18px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 8px 20px rgba(56, 189, 248, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.2); transform: rotate(10deg);">
+                    <div style="transform: rotate(-10deg);">
+                        <i class="fas ${mode.includes('setup') ? 'fa-fingerprint' : 'fa-lock'} " style="font-size: 1.8rem; color: #38bdf8;"></i>
+                    </div>
                 </div>
-                <h2 style="margin: 0 0 10px 0; color: #f8fafc; font-size: 1.5rem; font-weight: 700; letter-spacing: 0.5px;">${title}</h2>
-                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin: 0; padding: 0 10px;">${subtitle}</p>
+                <h2 style="margin: 0 0 8px 0; color: #ffffff; font-size: 1.4rem; font-weight: 600; letter-spacing: 0.5px;">${title}</h2>
+                <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.5; margin: 0; font-weight: 400;">${subtitle}</p>
             </div>
             
-            <div style="display: flex; gap: 18px; margin-bottom: 45px; height: 20px; align-items: center;">
+            <div style="display: flex; gap: 20px; margin-bottom: 45px; height: 20px; align-items: center;">
                 ${dots}
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 280px;">
-                ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="handlePinPress('${n}', '${mode}')" style="width: 70px; height: 70px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.03); font-size: 1.8rem; font-weight: 500; color: #f8fafc; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">${n}</button>`).join('')}
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 260px;">
+                ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="handlePinPress('${n}', '${mode}')" style="width: 72px; height: 72px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); font-size: 1.8rem; font-weight: 300; color: #ffffff; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.15)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.06)';" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">${n}</button>`).join('')}
                 <button style="background: transparent; border: none;"></button>
-                <button onclick="handlePinPress('0', '${mode}')" style="width: 70px; height: 70px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.03); font-size: 1.8rem; font-weight: 500; color: #f8fafc; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">0</button>
-                <button onclick="handlePinDelete('${mode}')" style="width: 70px; height: 70px; border-radius: 50%; border: none; background: transparent; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'"><i class="fas fa-backspace"></i></button>
+                <button onclick="handlePinPress('0', '${mode}')" style="width: 72px; height: 72px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); font-size: 1.8rem; font-weight: 300; color: #ffffff; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(255,255,255,0.15)';" onmouseout="this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.06)';" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">0</button>
+                <button onclick="handlePinDelete('${mode}')" style="width: 72px; height: 72px; border-radius: 50%; border: none; background: transparent; font-size: 1.4rem; color: #64748b; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#64748b'" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'"><i class="fas fa-backspace"></i></button>
             </div>
 
         </div>
 
-        <button onclick="logout()" style="margin-top: 30px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; color: #cbd5e1; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; backdrop-filter: blur(10px); position: relative; z-index: 10;" onmouseover="this.style.color='#ef4444'; this.style.background='rgba(255,255,255,0.1)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';" onmouseout="this.style.color='#cbd5e1'; this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)';"><i class="fas fa-sign-out-alt"></i> Ganti Akun</button>
+        <button onclick="logout()" style="margin-top: 35px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 12px 24px; border-radius: 24px; color: #94a3b8; font-weight: 500; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; backdrop-filter: blur(10px); position: relative; z-index: 10;" onmouseover="this.style.color='#ef4444'; this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';" onmouseout="this.style.color='#94a3b8'; this.style.background='rgba(255,255,255,0.04)'; this.style.borderColor='rgba(255,255,255,0.08)';"><i class="fas fa-sign-out-alt"></i> Ganti Akun / Logout</button>
 
     </div>
     `;
@@ -2991,4 +2993,14 @@ function sendSystemNotification(title, message) {
         }
     }
 }
+// ==========================================
+// FIX: BIKIN ICON KALENDER JADI BOLD / TEBAL
+// ==========================================
+document.head.insertAdjacentHTML("beforeend", `<style>
+  .month-picker-capsule i.fa-calendar-alt {
+      -webkit-text-stroke: 1px currentColor; /* Ini jurus bikin icon jadi bold */
+      font-size: 1.05rem;
+      margin-right: 4px;
+  }
+</style>`);
 if (document.getElementById("barChart")) setTimeout(update, 100);

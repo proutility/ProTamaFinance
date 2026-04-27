@@ -274,6 +274,7 @@ return `
   </div>
   
   <div id="debtReminderContainer"></div>
+<div id="financialHealthContainer" style="margin-bottom: 25px;"></div>
   
   <div class="grid-3" style="margin-bottom: 25px;">
     <div class="card card-saldo" style="position: relative; border: none; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);">
@@ -2273,7 +2274,72 @@ function update(){
   if(document.getElementById("totalDebtDisplay")) {
       document.getElementById("totalDebtDisplay").innerText = isBalanceHidden ? "***.***" : totalDebt.toLocaleString('id-ID');
   }
+// === FITUR BARU: SKOR KESEHATAN KEUANGAN ===
+  const healthContainer = document.getElementById("financialHealthContainer");
+  if(healthContainer) {
+      let score = 100;
+      let notes = [];
 
+      // 1. Evaluasi Rasio Hutang terhadap Aset
+      let totalHartaKotor = balance + totalAssetValue;
+      if (totalHartaKotor > 0) {
+          let rasioHutang = totalDebt / totalHartaKotor;
+          if (rasioHutang > 0.5) { score -= 35; notes.push("Hutang bahaya! Melebihi 50% dari total aset."); }
+          else if (rasioHutang > 0.3) { score -= 15; notes.push("Rasio hutang lumayan tinggi (> 30%)."); }
+          else if (rasioHutang > 0) { score -= 5; notes.push("Hutang sehat dan terkendali."); }
+          else { notes.push("Mantap! Bebas dari hutang."); }
+      } else if (totalDebt > 0) {
+          score -= 40; notes.push("Awas! Punya hutang tapi aset tercatat nol.");
+      }
+
+      // 2. Evaluasi Cashflow (Bulan Ini)
+      let incBulanIni = 0; let expBulanIni = 0;
+      let currentMonthPrefix = new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, '0');
+      transactions.filter(t => t.date.startsWith(currentMonthPrefix)).forEach(t => {
+          if(t.type === 'income') incBulanIni += t.amount;
+          if(t.type === 'expense') expBulanIni += t.amount;
+      });
+
+      if (incBulanIni > 0) {
+          let rasioPengeluaran = expBulanIni / incBulanIni;
+          if (rasioPengeluaran >= 1) { score -= 40; notes.push("Besar pasak dari tiang bulan ini (Overbudget)."); }
+          else if (rasioPengeluaran > 0.8) { score -= 20; notes.push("Pengeluaran mepet banget sama pemasukan (Sisa < 20%)."); }
+          else if (rasioPengeluaran > 0.5) { score -= 5; notes.push("Tabungan ideal bulan ini (Saving Rate 20-50%)."); }
+          else { notes.push("Saving rate luar biasa (> 50%). Pertahankan!"); }
+      } else if (expBulanIni > 0) {
+          score -= 20; notes.push("Uang keluar terus, tapi belum ada pemasukan tercatat bulan ini.");
+      } else {
+          notes.push("Belum ada mutasi tercatat di bulan ini.");
+      }
+
+      score = Math.max(0, Math.min(100, score));
+
+      // Tentukan Grade & Tema Warna
+      let grade = "A"; let iconHealth = "fa-heartbeat";
+      let colorGradient = "linear-gradient(135deg, #10b981, #047857)"; // Hijau
+      
+      if (score < 50) { grade = "D"; colorGradient = "linear-gradient(135deg, #ef4444, #b91c1c)"; iconHealth = "fa-skull-crossbones"; } // Merah
+      else if (score < 70) { grade = "C"; colorGradient = "linear-gradient(135deg, #f59e0b, #b45309)"; iconHealth = "fa-exclamation-triangle"; } // Oren
+      else if (score < 85) { grade = "B"; colorGradient = "linear-gradient(135deg, #3b82f6, #1d4ed8)"; iconHealth = "fa-stethoscope"; } // Biru
+
+      healthContainer.innerHTML = `
+          <div class="card" style="background: ${colorGradient}; color: white; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-wrap: wrap; align-items: center; gap: 20px; transition: all 0.3s ease;">
+              <div style="width: 85px; height: 85px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 900; box-shadow: inset 0 4px 6px rgba(255,255,255,0.4); text-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.5); flex-shrink: 0;">${grade}</div>
+              <div style="flex: 1; min-width: 200px;">
+                  <h3 style="margin: 0 0 8px 0; color: white; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;"><i class="fas ${iconHealth}"></i> Skor Kesehatan Keuangan</h3>
+                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                      <div style="flex: 1; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
+                          <div style="width: ${score}%; height: 100%; background: #ffffff; border-radius: 5px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                      </div>
+                      <strong style="font-size: 1.2rem; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${score} / 100</strong>
+                  </div>
+                  <ul style="margin: 0; padding-left: 20px; font-size: 0.9rem; color: rgba(255,255,255,0.95); line-height: 1.6;">
+                      ${notes.map(n => `<li>${n}</li>`).join('')}
+                  </ul>
+              </div>
+          </div>
+      `;
+  }
  const trxList = document.getElementById("trxList");
     if(trxList) {
         trxList.innerHTML = "";

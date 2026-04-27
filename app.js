@@ -2263,24 +2263,66 @@ function update(){
         
         let totalDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(catTotal);
         
-        let groupHTML = `<div class="accordion-header" onclick="toggleAccordion(this)"><span style="font-size: 0.95rem; font-weight: 700; color: #334155; display: flex; align-items: center;"><i class="fas ${catIcon} text-primary" style="margin-right:12px; font-size: 1.1rem;"></i> ${cat.toUpperCase()}</span><span style="font-weight: 600;">${totalDisplay} <i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left:12px; color:#94a3b8;"></i></span></div><div class="accordion-content"><table style="margin-top: 0;"><tbody>`;
+        // Header Accordion bergaya Card Modern
+        let groupHTML = `
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); overflow: hidden;">
+            <div class="accordion-header" onclick="toggleAccordion(this)" style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #f8fafc; border-bottom: 1px solid #e2e8f0; margin: 0;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                 <div style="width: 38px; height: 38px; background: #e0f2fe; color: #0284c7; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);">
+                    <i class="fas ${catIcon}"></i>
+                 </div>
+                 <span style="font-size: 0.95rem; font-weight: 800; color: #1e293b; letter-spacing: 0.5px;">${cat.toUpperCase()}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                 <span style="font-weight: 800; color: #0f172a; font-size: 1.1rem;">${totalDisplay}</span>
+                 <i class="fas fa-chevron-down" style="color:#94a3b8; transition: 0.3s; font-size: 0.9rem;"></i>
+              </div>
+            </div>
+            <div class="accordion-content" style="padding: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+        `;
 
         groupedAssets[cat].forEach(a => {
           let stockInfo = "";
           let valDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(a.value);
           
+          // Desain Badge untuk Saham
           if (a.type === 'saham' && a.lot && a.avg) {
              let modal = a.lot * 100 * a.avg; let profitLoss = a.value - modal;
-             let pct = ((profitLoss / modal) * 100).toFixed(2); let colorClass = profitLoss >= 0 ? 'text-success' : 'text-danger'; let sign = profitLoss >= 0 ? '+' : '';
+             let pct = ((profitLoss / modal) * 100).toFixed(2); let colorClass = profitLoss >= 0 ? '#16a34a' : '#dc2626'; let sign = profitLoss >= 0 ? '+' : '';
+             let bgClass = profitLoss >= 0 ? '#dcfce7' : '#fee2e2';
              
              let avgDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(a.avg);
              let plDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(profitLoss);
              
-             stockInfo = `<br><small><span ondblclick="inlineEditStock(${a.originalIndex}, 'lot')" style="cursor:pointer; border-bottom:1px dashed #cbd5e1;" title="Klik 2x Edit Lot">${a.lot} Lot</span> | Avg: <span ondblclick="inlineEditStock(${a.originalIndex}, 'avg')" style="cursor:pointer; border-bottom:1px dashed #cbd5e1;" title="Klik 2x Edit Avg">${avgDisplay}</span></small><div class="${colorClass}" style="font-size: 0.8rem; font-weight:700;">${sign}${plDisplay} (${sign}${pct}%)</div>`;
+             stockInfo = `
+               <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; cursor: pointer;" ondblclick="inlineEditStock(${a.originalIndex}, 'lot')" title="Klik 2x Edit Lot"><i class="fas fa-layer-group text-primary"></i> ${a.lot} Lot</span>
+                  <span style="font-size: 0.75rem; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; cursor: pointer;" ondblclick="inlineEditStock(${a.originalIndex}, 'avg')" title="Klik 2x Edit Avg"><i class="fas fa-bullseye text-primary"></i> Avg: ${avgDisplay}</span>
+                  <span style="font-size: 0.75rem; font-weight: 700; color: ${colorClass}; background: ${bgClass}; padding: 4px 8px; border-radius: 6px;">${sign}${plDisplay} (${sign}${pct}%)</span>
+               </div>
+             `;
           }
-          groupHTML += `<tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 12px 15px;"><strong style="color: #1e293b; font-size:0.95rem;">${a.name}</strong>${stockInfo}</td><td style="padding: 12px 15px; font-weight: 500; color: #475569;">${valDisplay}</td><td style="padding: 12px 15px; text-align: right;"><button class="btn-warning" style="padding: 6px 10px; margin-right: 5px;" onclick="updateStockValue(${a.originalIndex})" title="Edit Harga"><i class="fas fa-edit"></i></button><button class="btn-danger" style="padding: 6px 10px;" onclick="deleteAsset(${a.originalIndex})"><i class="fas fa-trash"></i></button></td></tr>`;
+
+          // Desain Item Aset Individual (Bukan Tabel)
+          groupHTML += `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-radius: 12px; transition: all 0.2s ease; border: 1px solid transparent; background: transparent;" onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
+                  <div style="flex: 1;">
+                      <strong style="color: #1e293b; font-size: 1.05rem; display: block; margin-bottom: 2px;">${a.name}</strong>
+                      ${stockInfo}
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 15px;">
+                      <span style="font-weight: 700; color: #475569; font-size: 1.05rem;">${valDisplay}</span>
+                      <div style="display: flex; gap: 8px;">
+                          <button style="background: #fef9c3; color: #ca8a04; border: none; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#fde047'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#fef9c3'; this.style.transform='scale(1)';" onclick="updateStockValue(${a.originalIndex})" title="Edit Harga/Nominal"><i class="fas fa-edit"></i></button>
+                          <button style="background: #fee2e2; color: #dc2626; border: none; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#fca5a5'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#fee2e2'; this.style.transform='scale(1)';" onclick="deleteAsset(${a.originalIndex})" title="Hapus Aset"><i class="fas fa-trash"></i></button>
+                      </div>
+                  </div>
+              </div>
+          `;
         });
-        groupHTML += `</tbody></table></div>`; assetListContainer.innerHTML += groupHTML;
+        groupHTML += `</div></div></div>`; 
+        assetListContainer.innerHTML += groupHTML;
       }
     }
   }

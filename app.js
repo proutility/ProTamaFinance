@@ -463,21 +463,34 @@ return `
 </div>
 
 <div id="laporan" class="page" style="display:none;">
-  <div class="header-with-picker">
+  <div class="header-with-picker" style="margin-bottom: 25px;">
     <h2 class="header-title">Laporan Analytics</h2>
-    <div class="month-picker-capsule" onclick="try{document.getElementById('lapMonthFilter').showPicker()}catch(e){}">
-      <i class="fas fa-calendar-alt"></i> <span id="lapMonthLabel">Pilih Bulan</span>
+    <div class="month-picker-capsule" onclick="try{document.getElementById('lapMonthFilter').showPicker()}catch(e){}" style="box-shadow: 0 2px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; padding: 8px 16px;">
+      <i class="fas fa-calendar-alt text-primary"></i> <span id="lapMonthLabel" style="font-weight: 600;">Pilih Bulan</span>
       <input type="month" id="lapMonthFilter" onchange="renderLaporan()" oninput="renderLaporan()">
     </div>
   </div>
-  <div class="grid-3" id="laporanSummary"></div>
-  <div class="card" style="margin-top:20px; display: flex; flex-direction: column; align-items: center;">
-      <h3 style="margin-bottom:15px; align-self: flex-start;">Alokasi Pengeluaran</h3>
-      <div class="chart-container" style="width:100%; max-width:400px; height:300px;"><canvas id="expenseDonutChart"></canvas></div>
-  </div>
-  <div class="card" style="margin-top: 20px;">
-      <h3 style="margin-bottom: 15px; color:#475569;">Top 5 Pengeluaran Terbesar Bulan Ini</h3>
-      <div id="topExpenses" style="display:flex; flex-direction:column; gap:10px;"></div>
+  
+  <div class="grid-3" id="laporanSummary" style="margin-bottom: 25px;"></div>
+  
+  <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+      <div class="card" style="flex: 1; min-width: 300px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02); padding: 25px; display: flex; flex-direction: column; align-items: center; background: white;">
+          <h3 style="margin-top: 0; margin-bottom: 25px; align-self: flex-start; color: #1e293b; font-size: 1.15rem; display: flex; align-items: center; gap: 12px;">
+              <div style="width: 38px; height: 38px; background: #f3e8ff; color: #9333ea; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);"><i class="fas fa-chart-pie"></i></div> 
+              Alokasi Pengeluaran
+          </h3>
+          <div class="chart-container" style="width:100%; max-width:350px; height:300px; position: relative;">
+              <canvas id="expenseDonutChart"></canvas>
+          </div>
+      </div>
+      
+      <div class="card" style="flex: 1.5; min-width: 320px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02); padding: 25px; background: white;">
+          <h3 style="margin-top: 0; margin-bottom: 20px; color: #1e293b; font-size: 1.15rem; display: flex; align-items: center; gap: 12px;">
+              <div style="width: 38px; height: 38px; background: #fee2e2; color: #ef4444; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);"><i class="fas fa-fire"></i></div> 
+              Top 5 Pengeluaran Terbesar
+          </h3>
+          <div id="topExpenses" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
   </div>
 </div>
 
@@ -980,17 +993,40 @@ function renderLaporan() {
     let netColor = net >= 0 ? 'text-success' : 'text-danger';
 
     document.getElementById('laporanSummary').innerHTML = `
-        <div class="card" style="border-left: 4px solid #10b981;">
-            <h3 style="color:#10b981;"><i class="fas fa-arrow-down"></i> Total Pemasukan</h3>
-            <h2>${formatRp(inc)}</h2>
+        <div class="card" style="margin-bottom: 0; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02); padding: 22px; background: #ffffff; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display: flex; align-items: center; gap: 18px;">
+                <div style="width: 52px; height: 52px; border-radius: 14px; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Pemasukan</div>
+                    <h2 style="margin: 0; color: #1e293b; font-size: 1.6rem; font-weight: 800;">${formatRp(inc)}</h2>
+                </div>
+            </div>
         </div>
-        <div class="card" style="border-left: 4px solid #ef4444;">
-            <h3 style="color:#ef4444;"><i class="fas fa-arrow-up"></i> Total Pengeluaran</h3>
-            <h2>${formatRp(exp)}</h2>
+        
+        <div class="card" style="margin-bottom: 0; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.02); padding: 22px; background: #ffffff; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display: flex; align-items: center; gap: 18px;">
+                <div style="width: 52px; height: 52px; border-radius: 14px; background: #fee2e2; color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Pengeluaran</div>
+                    <h2 style="margin: 0; color: #1e293b; font-size: 1.6rem; font-weight: 800;">${formatRp(exp)}</h2>
+                </div>
+            </div>
         </div>
-        <div class="card" style="background:#f8fafc; border: 1px solid #cbd5e1;">
-            <h3 style="color:#475569;"><i class="fas fa-wallet"></i> Net Cashflow</h3>
-            <h2 class="${netColor}">${net >= 0 ? '+' : ''}${formatRp(net)}</h2>
+        
+        <div class="card" style="margin-bottom: 0; border-radius: 16px; border: 1px solid #bae6fd; box-shadow: 0 6px 15px rgba(14, 165, 233, 0.1); padding: 22px; background: linear-gradient(135deg, #f0f9ff, #e0f2fe); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="display: flex; align-items: center; gap: 18px;">
+                <div style="width: 52px; height: 52px; border-radius: 14px; background: white; color: #0ea5e9; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; font-weight: 800; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Net Cashflow</div>
+                    <h2 style="margin: 0; color: ${net >= 0 ? '#0284c7' : '#e11d48'}; font-size: 1.6rem; font-weight: 800;">${net >= 0 ? '+' : ''}${formatRp(net)}</h2>
+                </div>
+            </div>
         </div>
     `;
 
@@ -998,20 +1034,37 @@ function renderLaporan() {
     let sortedCats = Object.keys(catExp).map(k => { return {name: k, amount: catExp[k]} }).sort((a,b) => b.amount - a.amount).slice(0,5);
     
     let topHTML = '';
-    if(sortedCats.length === 0) topHTML = '<div style="color:#94a3b8; font-size:0.9rem;">Belum ada pengeluaran di bulan ini.</div>';
-    else {
+    if(sortedCats.length === 0) {
+        topHTML = '<div style="text-align:center; padding: 40px 20px; color:#94a3b8;"><i class="fas fa-box-open" style="font-size: 2.5rem; margin-bottom: 12px; color: #cbd5e1;"></i><br>Bulan ini aman, belum ada pengeluaran!</div>';
+    } else {
         sortedCats.forEach(item => {
-            let pct = ((item.amount / exp) * 100).toFixed(1);
+            let pct = exp > 0 ? ((item.amount / exp) * 100).toFixed(1) : 0;
+            let catIcon = getCatIcon(item.name); // Panggil fungsi icon otomatis
+            
             topHTML += `
-                <div style="display:flex; justify-content:space-between; padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 3px solid #f59e0b;">
-                    <div><strong style="color:#1e293b; font-size:0.95rem;">${item.name}</strong><div style="font-size:0.8rem; color:#64748b;">${pct}% dari total pengeluaran</div></div>
-                    <div style="font-weight:700; color:#ef4444;">${formatRp(item.amount)}</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; padding: 16px 20px; background: #f8fafc; border-radius: 14px; border: 1px solid #f1f5f9; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.transform='translateX(4px)';" onmouseout="this.style.background='#f8fafc'; this.style.transform='translateX(0)';">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 42px; height: 42px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid #e2e8f0; flex-shrink: 0;">
+                            ${catIcon}
+                        </div>
+                        <div>
+                            <strong style="color:#1e293b; font-size: 1.05rem; display: block; margin-bottom: 4px;">${item.name}</strong>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 60px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                                    <div style="height: 100%; width: ${pct}%; background: #ef4444; border-radius: 3px;"></div>
+                                </div>
+                                <span style="font-size:0.75rem; color:#64748b; font-weight: 700;">${pct}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-weight:800; color:#ef4444; font-size: 1.15rem; text-align: right;">
+                        ${formatRp(item.amount)}
+                    </div>
                 </div>
             `;
         });
     }
     document.getElementById('topExpenses').innerHTML = topHTML;
-}
 
 // ================= FUNGSI NOTIFIKASI LONCENG =================
 function toggleNotif() {

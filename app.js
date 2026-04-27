@@ -574,15 +574,17 @@ return `
   <div class="header-with-picker">
     <h2 class="header-title">Target & Impian</h2>
   </div>
-  <div class="card">
-    <div class="form-group">
-      <input id="goalName" placeholder="Nama Target" style="flex: 1;">
-      <input type="number" id="goalValue" placeholder="Nominal (Rp)" style="flex: 1;">
-      <button id="btnSelectSource" class="action" style="flex: 1; background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; box-shadow: none;" onclick="openSourceModal('add')"><i class="fas fa-layer-group"></i> Semua Saldo Kas</button>
-      <button class="action" onclick="addGoal()"><i class="fas fa-plus"></i> Simpan Target</button>
+  
+  <div class="card" style="border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); padding: 25px;">
+    <div class="form-group" style="display: flex; gap: 15px; flex-wrap: wrap;">
+      <input id="goalName" placeholder="Nama Target (Misal: Biaya Nikah)" style="flex: 1.5; min-width: 200px; padding: 12px; border-radius: 10px;">
+      <input type="number" id="goalValue" placeholder="Nominal Target (Rp)" style="flex: 1; min-width: 160px; padding: 12px; border-radius: 10px;">
+      <button id="btnSelectSource" style="flex: 1; min-width: 180px; padding: 12px; border-radius: 10px; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'" onclick="openSourceModal('add')"><i class="fas fa-layer-group text-primary"></i> Semua Saldo Kas</button>
+      <button class="btn-success" style="flex: 1; min-width: 160px; border-radius: 10px; font-weight: 700; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);" onclick="addGoal()"><i class="fas fa-plus-circle"></i> Simpan Target</button>
     </div>
   </div>
-  <div class="grid-2" id="goalList"></div>
+  
+  <div class="grid-2" id="goalList" style="margin-top: 10px;"></div>
 </div>
 
 <div id="wedding" class="page" style="display:none;">
@@ -2380,37 +2382,71 @@ function update(){
   const goalList = document.getElementById("goalList");
   if(goalList) {
     goalList.innerHTML = "";
-    goals.forEach((g, i) => {
-      let currentAmount = 0; let sourceLabel = "";
-      let srcList = Array.isArray(g.source) ? g.source : [g.source || 'all_liquid'];
+    if (goals.length === 0) {
+       goalList.innerHTML = `<div style="grid-column: span 2; text-align:center; padding: 50px 20px; color:#94a3b8; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;"><i class="fas fa-bullseye" style="font-size: 3rem; margin-bottom: 15px; color: #e2e8f0;"></i><br>Belum ada target impian nih bro. Yuk mulai nabung!</div>`;
+    } else {
+        goals.forEach((g, i) => {
+          let currentAmount = 0; let sourceLabel = "";
+          let srcList = Array.isArray(g.source) ? g.source : [g.source || 'all_liquid'];
 
-      if (srcList.includes('all_liquid')) {
-         currentAmount = balance; sourceLabel = "Semua Saldo Kas (Rekening)";
-      } else {
-         let validNames = [];
-         srcList.forEach(srcName => { let assetMatch = curAssets.find(a => a.name === srcName); if(assetMatch) { currentAmount += assetMatch.value; validNames.push(srcName); } });
-         if(validNames.length === 0) sourceLabel = "Aset udah dihapus"; else if(validNames.length <= 2) sourceLabel = validNames.join(" + "); else sourceLabel = validNames.length + " Sumber Gabungan";
-      }
+          if (srcList.includes('all_liquid')) {
+             currentAmount = balance; sourceLabel = "Semua Saldo Kas";
+          } else {
+             let validNames = [];
+             srcList.forEach(srcName => { let assetMatch = curAssets.find(a => a.name === srcName); if(assetMatch) { currentAmount += assetMatch.value; validNames.push(srcName); } });
+             if(validNames.length === 0) sourceLabel = "Aset Dihapus"; else if(validNames.length <= 2) sourceLabel = validNames.join(" + "); else sourceLabel = validNames.length + " Sumber Gabungan";
+          }
 
-      let percent = Math.min((currentAmount / g.target) * 100, 100).toFixed(1); 
-      let isAchieved = currentAmount >= g.target;
-      
-      let caDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(Math.min(currentAmount, g.target));
-      let tgDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(g.target);
-      
-      goalList.innerHTML += `
-        <div class="card" style="margin-bottom: 0; padding: 20px; border-color: ${isAchieved ? '#86efac' : 'var(--border)'}; background: ${isAchieved ? '#f0fdf4' : '#ffffff'};">
-          <div class="progress-header" style="align-items: center; margin-bottom: 12px;">
-            <strong style="font-size: 1.1rem; color: #1e293b;">${g.name}</strong>
-            <div style="display:flex; gap:6px;"><button style="padding: 4px 8px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#0284c7'" onmouseout="this.style.background='#0ea5e9'" onclick="editGoalSource(${i})" title="Ganti/Tambah Sumber Dana"><i class="fas fa-coins"></i></button><button class="btn-warning" style="padding: 4px 8px; border-radius: 6px;" onclick="editGoal(${i})" title="Edit Nama & Nominal"><i class="fas fa-edit"></i></button><button class="btn-danger" style="padding: 4px 8px; border-radius: 6px;" onclick="deleteGoal(${i})" title="Hapus Target"><i class="fas fa-times"></i></button></div>
-          </div>
-          <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Sumber: <strong style="color: #475569;">${sourceLabel}</strong></div>
-          <div style="font-size: 0.95rem; color: #1e293b; margin-bottom: 12px;">Terkumpul: <strong>${caDisplay}</strong> <span style="color:#94a3b8; font-size:0.85rem;">/ ${tgDisplay}</span></div>
-          <div class="progress" style="margin-bottom: 10px; height: 12px; background: #e2e8f0;"><div class="progress-bar" style="width:${percent}%; background: ${isAchieved ? 'var(--success)' : 'var(--primary)'}"></div></div>
-          <div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 700; font-size: 0.9rem; color: ${isAchieved ? 'var(--success)' : 'var(--primary)'}">${percent}% ${isAchieved ? 'Tercapai' : ''}</span>${isAchieved ? '<i class="fas fa-check-circle" style="color:var(--success); font-size:1.4rem;"></i>' : ''}</div>
-        </div>
-      `;
-    });
+          let percentRaw = (currentAmount / g.target) * 100;
+          let percent = Math.min(percentRaw, 100).toFixed(1); 
+          let isAchieved = currentAmount >= g.target;
+          
+          let caDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(Math.min(currentAmount, g.target));
+          let tgDisplay = isBalanceHidden ? "Rp ***.***" : formatRp(g.target);
+          
+          // Styling dinamis kalo target udah 100%
+          let cardBg = isAchieved ? 'background: linear-gradient(145deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0;' : 'background: #ffffff; border: 1px solid #e2e8f0;';
+          let barColor = isAchieved ? '#16a34a' : '#3b82f6';
+          let iconColor = isAchieved ? '#16a34a' : '#0ea5e9';
+          let iconBg = isAchieved ? '#dcfce7' : '#e0f2fe';
+          
+          goalList.innerHTML += `
+            <div class="card" style="margin-bottom: 0; padding: 22px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); ${cardBg} transition: transform 0.2s ease;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+              
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                    <div style="width: 42px; height: 42px; border-radius: 12px; background: ${iconBg}; color: ${iconColor}; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">
+                        <i class="fas ${isAchieved ? 'fa-check-circle' : 'fa-bullseye'}"></i>
+                    </div>
+                    <div style="overflow: hidden;">
+                        <strong style="font-size: 1.15rem; color: #1e293b; display: block; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${g.name}</strong>
+                        <span style="font-size: 0.75rem; color: #64748b; background: rgba(255,255,255,0.6); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.05); display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-link"></i> ${sourceLabel}</span>
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:6px; flex-shrink: 0;">
+                    <button style="width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; color: #0ea5e9; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f1f5f9'" onclick="editGoalSource(${i})" title="Ganti/Tambah Sumber Dana"><i class="fas fa-coins"></i></button>
+                    <button style="width: 32px; height: 32px; border-radius: 8px; background: #fef9c3; color: #ca8a04; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='#fde047'" onmouseout="this.style.background='#fef9c3'" onclick="editGoal(${i})" title="Edit Nama & Nominal"><i class="fas fa-edit"></i></button>
+                    <button style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #ef4444; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'" onclick="deleteGoal(${i})" title="Hapus Target"><i class="fas fa-trash"></i></button>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+                  <div>
+                      <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Terkumpul</div>
+                      <div style="font-size: 1.15rem; font-weight: 800; color: #1e293b;">${caDisplay} <span style="font-size:0.85rem; color:#94a3b8; font-weight: 600;">/ ${tgDisplay}</span></div>
+                  </div>
+                  <div style="text-align: right; font-size: 1.4rem; font-weight: 800; color: ${barColor};">${percent}%</div>
+              </div>
+
+              <div style="height: 12px; background: ${isAchieved ? '#bbf7d0' : '#e2e8f0'}; border-radius: 6px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+                  <div style="width:${percent}%; height: 100%; background: ${barColor}; border-radius: 6px; transition: width 0.5s ease;"></div>
+              </div>
+              
+            </div>
+          `;
+        });
+    }
   }
 
   if(document.getElementById("donutChart")){

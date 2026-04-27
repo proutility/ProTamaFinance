@@ -1827,20 +1827,21 @@ function deleteSubBudget(ym, bIdx, subIdx) {
   if(confirm("Hapus sub kategori ini?")) { budgetsData[ym][bIdx].subBudgets.splice(subIdx, 1); save(); update(); }
 }
 
-window.inlineEditBudget = function(ym, bIdx, subIdx = null) {
+window.inlineEditBudget = async function(ym, bIdx, subIdx = null) {
     let budgetList = budgetsData[ym];
     if (!budgetList || !budgetList[bIdx]) return;
 
     if (subIdx === null) {
         // Edit Anggaran Utama
         let b = budgetList[bIdx];
-        let newAmount = prompt(`Edit Batas Maksimal untuk ${b.category} (Rp):`, b.amount);
-        if (newAmount !== null) {
-            newAmount = parseInt(newAmount.replace(/\D/g, ''));
+        let newAmount = await modernPrompt(`Edit Batas Kategori: ${b.category}`, b.amount, 'number');
+        
+        if (newAmount !== undefined) {
+            newAmount = parseInt(newAmount.toString().replace(/\D/g, ''));
             if (!isNaN(newAmount) && newAmount >= 0) {
                 b.amount = newAmount;
-                save();
-                update();
+                save(); update();
+                Swal.fire({ text: 'Anggaran tersimpan!', icon: 'success', timer: 1200, showConfirmButton: false });
             } else {
                 alert("Nominal nggak valid bro!");
             }
@@ -1848,19 +1849,18 @@ window.inlineEditBudget = function(ym, bIdx, subIdx = null) {
     } else {
         // Edit Sub Anggaran
         let sub = budgetList[bIdx].subBudgets[subIdx];
-        let newAmount = prompt(`Edit Batas Maksimal untuk ${sub.name} (Rp):`, sub.amount);
-        if (newAmount !== null) {
-            newAmount = parseInt(newAmount.replace(/\D/g, ''));
+        let newAmount = await modernPrompt(`Edit Batas Sub: ${sub.name}`, sub.amount, 'number');
+        
+        if (newAmount !== undefined) {
+            newAmount = parseInt(newAmount.toString().replace(/\D/g, ''));
             if (!isNaN(newAmount) && newAmount >= 0) {
-                // Cek biar sub-budget nggak ngelebihi batas induknya
                 let currentSubTotal = budgetList[bIdx].subBudgets.reduce((acc, curr, idx) => acc + (idx === subIdx ? 0 : curr.amount), 0);
                 if (currentSubTotal + newAmount > budgetList[bIdx].amount) {
                     alert(`Gagal! Total Sub-Budget melebihi Batas Maksimal Kategori Utama (${formatRp(budgetList[bIdx].amount)}).`);
                     return;
                 }
                 sub.amount = newAmount;
-                save();
-                update();
+                save(); update();
             } else {
                 alert("Nominal nggak valid bro!");
             }
@@ -2475,18 +2475,23 @@ window.toggleGuestList = function(tipe) {
         ikon.classList.add("fa-chevron-down"); // Ubah panah ke bawah
     }
 };
-// 1. Fungsi Edit Mutasi (Klik 2x)
-window.inlineEditTrx = function(id, field) {
+// 1. Fungsi Edit Mutasi (Pop-up Modern)
+window.inlineEditTrx = async function(id, field) {
     let trx = transactions.find(t => t.id === id);
     if (!trx) return;
-    let oldVal = trx[field];
-    let newVal = prompt(`Edit ${field === 'amount' ? 'Nominal' : 'Keterangan'} Transaksi:`, oldVal);
     
-    if (newVal !== null && newVal.trim() !== "") {
+    let oldVal = trx[field];
+    let title = field === 'amount' ? 'Edit Nominal Mutasi' : 'Edit Keterangan';
+    let inputType = field === 'amount' ? 'number' : 'text';
+    
+    // Manggil Pop-up Modern
+    let newVal = await modernPrompt(title, oldVal, inputType);
+    
+    if (newVal !== undefined && newVal.trim() !== "") {
         if (field === 'amount') {
             let val = parseInt(newVal.replace(/\D/g, ''));
             if (isNaN(val)) return alert("Angka nggak valid!");
-            // Logika auto-update saldo aset (khusus Income & Expense)
+            // Logika auto-update saldo aset
             let diff = val - oldVal;
             let assetYM = trx.date.substring(0, 7);
             if (assetsData[assetYM]) {
@@ -2501,6 +2506,7 @@ window.inlineEditTrx = function(id, field) {
             trx[field] = newVal.trim();
         }
         save(); update();
+        Swal.fire({ text: 'Data berhasil diupdate!', icon: 'success', timer: 1200, showConfirmButton: false });
     }
 };
 
@@ -2635,6 +2641,42 @@ function processPin(mode) {
         }
     }
 }
+// ==========================================
+// FITUR BARU: POP-UP INPUT MODERN & ELEGAN
+// ==========================================
+// 1. CSS Tambahan untuk Input Pop-up
+document.head.insertAdjacentHTML("beforeend", `<style>
+  .swal2-custom-popup { border-radius: 20px !important; padding: 20px !important; box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important; }
+  .swal2-custom-input { border-radius: 14px !important; border: 2px solid #e2e8f0 !important; font-size: 1.1rem !important; padding: 15px !important; transition: all 0.2s; text-align: center; font-weight: 600; color: #1e293b !important; }
+  .swal2-custom-input:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important; outline: none !important; }
+  .swal2-title { font-size: 1.4rem !important; color: #1e293b !important; font-weight: 800 !important; }
+  .swal2-confirm, .swal2-cancel { border-radius: 12px !important; padding: 12px 24px !important; font-weight: 700 !important; font-size: 1rem !important; }
+</style>`);
+
+// 2. Mesin Pop-up Pintar
+window.modernPrompt = async function(title, defaultValue = '', inputType = 'text') {
+    const { value } = await Swal.fire({
+        title: title,
+        input: inputType,
+        inputValue: defaultValue,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-save"></i> Simpan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#f1f5f9',
+        customClass: {
+            popup: 'swal2-custom-popup',
+            input: 'swal2-custom-input',
+            cancelButton: 'swal2-cancel-btn'
+        },
+        didOpen: () => {
+            // Ubah warna teks tombol batal biar abu-abu elegan
+            const cancelBtn = Swal.getCancelButton();
+            cancelBtn.style.color = '#475569';
+        }
+    });
+    return value; // Bakal undefined kalau di-cancel
+};
 
 function unlockApp() {
     currentPinMode = ""; // Matiin sensor keyboard supaya nggak kepencet di background

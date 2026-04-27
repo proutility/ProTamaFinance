@@ -490,7 +490,7 @@ return `
        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch;">
           <input type="text" id="desc" placeholder="Keterangan transaksi..." style="flex: 2; min-width: 200px; padding: 12px; border-radius: 10px;">
           <input type="date" id="date" onchange="updateDropdowns()" style="flex: 0.8; min-width: 140px; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; outline: none;">
-          <button class="btn-success" onclick="addTransaction()" style="flex: 1; min-width: 160px; border-radius: 10px; font-weight: 700; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="fas fa-plus-circle"></i> Proses Transaksi</button>
+          <button class="action" onclick="addTransaction()" style="flex: 1; min-width: 160px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-plus-circle"></i> Proses Transaksi</button>
        </div>
     </div>
   </div>
@@ -534,7 +534,7 @@ return `
       <select id="budgetCategory" style="flex: 1;" onchange="handleBudgetCategoryChange()"></select>
       <input type="text" id="customBudgetCategory" placeholder="Ketik kategori baru..." style="flex: 1; display: none;">
       <input type="number" id="budgetAmount" placeholder="Batas Maksimal (Rp)" style="flex: 1;">
-      <button class="action" onclick="addBudget()"><i class="fas fa-plus"></i> Set Anggaran</button>
+      <button class="action" onclick="addBudget()" style="flex: 1; min-width: 150px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-plus-circle"></i> Set Anggaran</button>
     </div>
   </div>
   <div class="grid-2" id="budgetList"></div>
@@ -561,7 +561,7 @@ return `
       <input type="number" id="assetLot" placeholder="Jml Lot" style="display:none; flex: 0.5;">
       <input type="number" id="assetAvg" placeholder="Avg Beli (Rp)" step="any" style="display:none; flex: 0.5;">
       <input type="number" id="assetValue" placeholder="Nilai Awal / Saldo (Rp)" step="any">
-      <button class="action" onclick="addAsset()"><i class="fas fa-plus"></i> Tambah Aset</button>
+      <button class="action" onclick="addAsset()" style="flex: 1; min-width: 150px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-plus-circle"></i> Tambah Aset</button>
     </div>
   </div>
   <div style="margin-bottom: 15px; padding: 0 10px;">
@@ -580,7 +580,7 @@ return `
       <input id="goalName" placeholder="Nama Target (Misal: Biaya Nikah)" style="flex: 1.5; min-width: 200px; padding: 12px; border-radius: 10px;">
       <input type="number" id="goalValue" placeholder="Nominal Target (Rp)" style="flex: 1; min-width: 160px; padding: 12px; border-radius: 10px;">
       <button id="btnSelectSource" style="flex: 1; min-width: 180px; padding: 12px; border-radius: 10px; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'" onclick="openSourceModal('add')"><i class="fas fa-layer-group text-primary"></i> Semua Saldo Kas</button>
-      <button class="btn-success" style="flex: 1; min-width: 160px; border-radius: 10px; font-weight: 700; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);" onclick="addGoal()"><i class="fas fa-plus-circle"></i> Simpan Target</button>
+      <button class="action" onclick="addGoal()" style="flex: 1; min-width: 160px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-plus-circle"></i> Simpan Target</button>
     </div>
   </div>
   
@@ -613,7 +613,7 @@ return `
           <input id="wedBudgetItem" placeholder="Item (Catering, Venue, dll)" style="flex: 1.5; min-width: 180px; padding: 12px; border-radius: 10px;">
           <input type="number" id="wedBudgetTarget" placeholder="Alokasi Target (Rp)" style="flex: 1; min-width: 150px; padding: 12px; border-radius: 10px;">
           <input id="wedBudgetNotes" placeholder="Keterangan / Link IG Vendor" style="flex: 2; min-width: 200px; padding: 12px; border-radius: 10px;">
-          <button class="btn-success" onclick="addWedBudget()" style="flex: 1; min-width: 150px; border-radius: 10px; font-weight: 700; background: #db2777; box-shadow: 0 4px 10px rgba(219, 39, 119, 0.2);"><i class="fas fa-plus"></i> Tambah Item</button>
+         <button class="action" onclick="addWedBudget()" style="flex: 1; min-width: 150px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-plus"></i> Tambah Item</button>
         </div>
       </div>
       <div id="wedBudgetContainer"></div>
@@ -629,7 +629,7 @@ return `
               <option value="DP">Sudah DP</option>
               <option value="Lunas">Lunas</option>
           </select>
-          <button class="btn-success" onclick="addWedVendor()" style="flex: 1; min-width: 150px; border-radius: 10px; font-weight: 700; background: #8b5cf6; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);"><i class="fas fa-plus"></i> Tambah Vendor</button>
+         <button class="action" onclick="addWedVendor()" style="flex: 1; min-width: 150px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-plus"></i> Tambah Vendor</button>
         </div>
       </div>
       <div class="card" style="overflow-x: auto; border-radius: 16px; border: 1px solid #e2e8f0; padding: 0;">
@@ -661,7 +661,7 @@ return `
               <option value="Reguler">Reguler</option>
           </select>
           <input type="number" id="wedGuestCount" placeholder="Jml (Pax)" style="flex: 0.8; min-width: 90px; padding: 12px; border-radius: 10px;" value="1">
-          <button class="btn-success" onclick="addWedGuest()" style="flex: 1; min-width: 140px; border-radius: 10px; font-weight: 700; background: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="fas fa-user-plus"></i> Tambah</button>
+         <button class="action" onclick="addWedGuest()" style="flex: 1; min-width: 140px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-user-plus"></i> Tambah Tamu</button>
         </div>
       </div>
 
@@ -730,7 +730,7 @@ return `
       <div style="display: flex; align-items: center; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff; padding-right: 10px; flex: 1;">
           <input type="date" id="debtDate" title="Tanggal Jatuh Tempo per Bulan" style="border: none; background: transparent; width: 100%;">
       </div>
-      <button class="action" onclick="addDebt()"><i class="fas fa-plus"></i> Catat Hutang</button>
+      <button class="action" onclick="addDebt()" style="flex: 1; min-width: 150px; border-radius: 10px; font-weight: 700; background: #3b82f6; color: white; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); cursor: pointer;"><i class="fas fa-plus-circle"></i> Catat Hutang</button>
     </div>
   </div>
   <div class="card" style="overflow-x: auto;">

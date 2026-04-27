@@ -816,7 +816,6 @@ document.head.insertAdjacentHTML("beforeend", `<style>
   .menu-btn-modern:hover { transform: translateY(-5px); box-shadow: 0 12px 20px rgba(0,0,0,0.08); }
   .icon-box-modern { width: 55px; height: 55px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: white; margin-bottom: 10px; }
 </style>`);
-</style>`);
 
 // 2. Kamus Icon Kategori Otomatis
 function getCatIcon(catName) {

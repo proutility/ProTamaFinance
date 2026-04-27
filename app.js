@@ -3018,8 +3018,47 @@ window.modernPrompt = async function(title, defaultValue = '', inputType = 'text
 
 function unlockApp() {
     currentPinMode = ""; // Matiin sensor keyboard supaya nggak kepencet di background
+    
+    // 1. Bikin Tampilan Layar Loading Modern
+    let loaderWrapper = document.createElement('div');
+    loaderWrapper.id = 'premium-loader';
+    loaderWrapper.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(248, 250, 252, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);">
+            
+            <div style="position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 25px;">
+                <div style="width: 75px; height: 75px; border: 4px solid #e0f2fe; border-top-color: #0ea5e9; border-radius: 50%; animation: spinLoader 1s linear infinite; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);"></div>
+                <i class="fas fa-wallet" style="position: absolute; font-size: 1.5rem; color: #0ea5e9; animation: pulseIcon 1.5s ease-in-out infinite;"></i>
+            </div>
+            
+            <h3 style="color: #1e293b; font-family: 'Inter', sans-serif; font-size: 1.25rem; font-weight: 800; margin: 0 0 5px 0; letter-spacing: -0.5px;">Menyiapkan Dashboard</h3>
+            <p style="color: #64748b; font-family: 'Inter', sans-serif; font-size: 0.9rem; margin: 0; font-weight: 500;">Mengambil data keuangan Anda...</p>
+            
+        </div>
+        <style>
+            @keyframes spinLoader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            @keyframes pulseIcon { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.85); opacity: 0.7; } }
+        </style>
+    `;
+    document.body.appendChild(loaderWrapper);
+
+    // 2. Render UI di background (Nggak bakal kelihatan karena ketutup loading)
     document.getElementById("app").innerHTML = mainApp();
-    setTimeout(() => { showPage('dashboard'); update(); }, 100);
+    
+    // 3. Kasih waktu sistem buat napas & ngerender (sekitar 1 detik)
+    setTimeout(() => { 
+        showPage('dashboard'); 
+        update(); 
+        
+        // 4. Efek Fade-out (Pudar halus)
+        let loaderElement = loaderWrapper.firstElementChild;
+        loaderElement.style.opacity = '0';
+        
+        // Hapus elemen dari memori setelah animasi pudar selesai
+        setTimeout(() => { 
+            loaderWrapper.remove(); 
+        }, 500); 
+
+    }, 1200); // 1200ms = 1.2 detik (Bisa lo cepetin atau lamain)
 }
 
 // ==========================================

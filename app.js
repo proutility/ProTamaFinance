@@ -202,7 +202,7 @@ function save(){
 
 function mainApp(){
 return `
-<div class="main-content" style="position: relative; width: 100%; max-width: 100%; margin: 0 auto; padding-bottom: 50px;">
+<div class="main-content" style="position: relative; width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 15px 50px 15px; box-sizing: border-box;">
 
 <button class="hide-on-mobile" onclick="logout()" style="position: fixed; bottom: 30px; left: 30px; background: white; color: #ef4444; border: 1px solid #fecaca; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15); z-index: 9999; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;" onmouseover="this.style.background='#fef2f2'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='white'; this.style.transform='translateY(0)';">
     <i class="fas fa-sign-out-alt" style="font-size: 1.2rem;"></i> Logout
@@ -218,20 +218,20 @@ return `
 
 <div class="mobile-only-header">
    <div style="display:flex; align-items:center; gap:12px;">
-      <img src="logo.png" style="width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
-      <div style="width: 2px; height: 30px; background: #cbd5e1; border-radius: 2px;"></div>
-      <strong style="font-size:1.25rem; color:#1e293b; letter-spacing: -0.5px;">TamaverseWealth</strong>
+      <img src="logo.png" style="width: 65px; height: 65px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
+      <div style="width: 2px; height: 35px; background: #cbd5e1; border-radius: 2px;"></div>
+      <strong style="font-size:1.3rem; color:#1e293b; letter-spacing: -0.5px;">TamaverseWealth</strong>
    </div>
    <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
 </div>
 
 <div class="desktop-global-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
      <div style="display: flex; align-items: center; gap: 15px;">
-         <img src="logo.png" style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));" alt="Logo">
+         <img src="logo.png" style="width: 85px; height: 85px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));" alt="Logo">
          
-         <div style="width: 2px; height: 40px; background: #cbd5e1; border-radius: 2px;"></div>
+         <div style="width: 2px; height: 45px; background: #cbd5e1; border-radius: 2px;"></div>
          
-         <strong style="font-size:1.5rem; color:#1e293b; letter-spacing: -0.5px;">TamaverseWealth</strong>
+         <strong style="font-size:1.6rem; color:#1e293b; letter-spacing: -0.5px;">TamaverseWealth</strong>
      </div>
      
      <div style="display: flex; align-items: center; gap: 12px;">
@@ -239,16 +239,16 @@ return `
             <i class="fas fa-chevron-left" style="font-size: 0.85rem;"></i> Kembali
         </button>
 
-        <div onclick="toggleHideBalance()" style="display: flex; align-items: center; justify-content: center; background: white; width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Sembunyikan/Tampilkan Saldo" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-            <i class="fas fa-eye toggle-eye-icon" style="font-size:1.2rem; color:#94a3b8;"></i>
+        <div onclick="toggleHideBalance()" style="display: flex; align-items: center; justify-content: center; background: white; width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s; box-sizing: border-box; padding: 0;" title="Sembunyikan/Tampilkan Saldo" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+            <i class="fas fa-eye toggle-eye-icon" style="font-size:1.2rem; color:#94a3b8; margin: 0;"></i>
         </div>
         
-        <div class="desktop-bell" onclick="toggleNotif()" style="display: flex; align-items: center; justify-content: center; background: white; width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Notifikasi" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-           <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning);"></i>
+        <div class="desktop-bell" onclick="toggleNotif()" style="display: flex; align-items: center; justify-content: center; background: white; width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s; box-sizing: border-box; padding: 0;" title="Notifikasi" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+           <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning); margin: 0;"></i>
         </div>
 
-        <div onclick="showPage('profil')" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-             <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--primary);"></i>
+        <div onclick="showPage('profil')" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s; box-sizing: border-box; padding: 0;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+             <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--primary); margin: 0;"></i>
         </div>
      </div>
 </div>

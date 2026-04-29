@@ -117,7 +117,7 @@ auth.onAuthStateChanged((user) => {
         <div class="login-container">
           
           <div class="login-left">
-            <img src="logo.png" alt="Logo" style="width: 85px; height: 85px; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));">
+            <img src="logo.png" alt="Logo" style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 25px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));">
             <h1 style="margin: 0 0 10px 0; color: #1e293b; font-size: 2.2rem; line-height: 1.2;">Pro-Tama Finance</h1>
             <p style="color:#64748b; font-size: 1.05rem; margin-bottom: 20px; line-height: 1.5;">Platform manajemen keuangan & aset yang terintegrasi untuk masa depan yang lebih tertata.</p>
             
@@ -218,7 +218,7 @@ return `
 
 <div class="mobile-only-header">
    <div style="display:flex; align-items:center; gap:10px;">
-      <img src="logo.png" style="width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
+      <img src="logo.png" style="width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
       <strong style="font-size:1.2rem; color:#1e293b;">Pro-Tama Apps</strong>
    </div>
    <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
@@ -226,7 +226,7 @@ return `
 
 <div class="desktop-global-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
      <div style="display: flex; align-items: center; gap: 15px;">
-         <img src="logo.png" style="width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));" alt="Logo">
+         <img src="logo.png" style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));" alt="Logo">
          
          <div onclick="showPage('profil')" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
              <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--primary);"></i>

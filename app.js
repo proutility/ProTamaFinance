@@ -219,21 +219,15 @@ return `
 <div class="mobile-only-header">
    <div style="display:flex; align-items:center; gap:10px;">
       <img src="logo.png" style="width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
-      <strong style="font-size:1.2rem; color:#1e293b;">Tamaverse Wealth</strong>
-   </div>
+      <strong style="font-size:1.2rem; color:#1e293b;">TamaverseWealth</strong> </div>
    <i class="fas fa-bell" style="font-size:1.4rem; color:#64748b; cursor:pointer;" onclick="toggleNotif()"></i>
 </div>
 
 <div class="desktop-global-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0;">
      <div style="display: flex; align-items: center; gap: 15px;">
-         <img src="logo.png" style="width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));" alt="Logo">
+         <img src="logo.png" style="width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));" alt="Logo">
          
-         <div onclick="showPage('profil')" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-             <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--primary);"></i>
-         </div>
-
-         <h2 id="headerGreeting" class="header-title" style="margin: 0; font-size: 1.4rem; color: #1e293b; display: block;">${getGreeting()}, ${userProfile.fullname || currentUser}! ${getGreetingIcon()}</h2>
-     </div>
+         <strong style="font-size:1.5rem; color:#1e293b;">TamaverseWealth</strong> </div>
      
      <div style="display: flex; align-items: center; gap: 12px;">
         <button id="globalBackBtn" onclick="showPage('dashboard')" style="display: none; background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.2s; align-items: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
@@ -241,9 +235,12 @@ return `
         </button>
 
         <div onclick="toggleHideBalance()" style="display: flex; align-items: center; justify-content: center; background: white; padding: 10px 14px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Sembunyikan/Tampilkan Saldo" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
-           <i class="fas fa-eye toggle-eye-icon" style="font-size:1.2rem; color:#94a3b8;"></i>
+            <i class="fas fa-eye toggle-eye-icon" style="font-size:1.2rem; color:#94a3b8;"></i>
         </div>
         
+        <div onclick="showPage('profil')" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" title="Profil Saya" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'"> <i class="fas fa-user-circle" style="font-size:1.5rem; color:var(--primary);"></i>
+        </div>
+
         <div class="desktop-bell" onclick="toggleNotif()" style="display: flex; align-items: center; gap: 10px; background: white; padding: 10px 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; border: 1px solid #e2e8f0; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
            <i class="fas fa-bell" style="font-size:1.2rem; color:var(--warning);"></i>
            <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">Notifikasi</span>
@@ -254,8 +251,8 @@ return `
 <div id="dashboard" class="page">
   <div class="mobile-banner">
      <img src="banner.png" alt="Banner">
-     <div class="mobile-banner-text">Dashboard Tamaverse Wealth</div>
-  </div>
+     <div id="headerGreeting" class="mobile-banner-text">${getGreeting()}, ${userProfile.fullname || currentUser}! ${getGreetingIcon()}</div>
+</div>
 
  <div class="mobile-menu-grid">
      <div class="menu-btn" onclick="showPage('aset')"><div class="icon-box" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-coins"></i></div><span>Asetku</span></div>

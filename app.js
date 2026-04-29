@@ -114,33 +114,200 @@ auth.onAuthStateChanged((user) => {
  } else {
     document.getElementById("app").innerHTML = `
       <style>
-         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: white; }
-         #app { margin: 0; padding: 0; width: 100%; height: 100%; max-width: 100%; }
+         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: #f8fafc; }
+         /* Wrapper utama biar bisa scroll */
+         #landing-wrapper { margin: 0; padding: 0; width: 100%; height: 100vh; max-width: 100%; overflow-y: auto; scroll-behavior: smooth; position: relative; }
+         
+         /* Bagian 1: Hero/Login (Full Screen) */
+         .login-hero {
+             width: 100vw;
+             height: 100vh;
+             display: flex;
+             align-items: center;
+             justify-content: center; /* Kotak login kita bikin tengah bro biar seimbang pas jadi hero */
+             background: url('bg-login.jpg') no-repeat center center/cover fixed; /* Background Fixed buat efek Parallax */
+             position: relative;
+             box-sizing: border-box;
+             padding: 15px;
+         }
+
+         .login-card {
+             background: rgba(255, 255, 255, 0.65);
+             backdrop-filter: blur(25px);
+             -webkit-backdrop-filter: blur(25px);
+             border: 1px solid rgba(255, 255, 255, 0.8);
+             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+             border-radius: 28px;
+             padding: 50px 40px;
+             width: 100%;
+             max-width: 420px;
+             text-align: center;
+             position: relative;
+             z-index: 10;
+         }
+
+         /* Icon Panah Scroll ke Bawah */
+         .scroll-indicator {
+             position: absolute;
+             bottom: 30px;
+             color: white;
+             font-size: 2rem;
+             cursor: pointer;
+             animation: bounce 2s infinite;
+             z-index: 11;
+             text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+         }
+
+         @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-10px);} 60% {transform: translateY(-5px);} }
+
+         /* Bagian 2: Keunggulan (Di bawah Hero) */
+         .advantages-section {
+             width: 100%;
+             min-height: 100vh;
+             background: #f8fafc; /* Latar bersih di bawah background hero */
+             box-sizing: border-box;
+             padding: 80px 5% 100px 5%;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             position: relative;
+             z-index: 5; /* Di bawah kotak login tapi di atas background hero saat scroll */
+             box-shadow: 0 -15px 30px rgba(0,0,0,0.05); /* Bayangan halus di atasnya */
+         }
+
+         .section-title {
+             font-size: 2.2rem;
+             font-weight: 800;
+             color: #1e293b;
+             margin-bottom: 60px;
+             text-align: center;
+             letter-spacing: -0.5px;
+         }
+
+         .advantages-grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+             gap: 30px;
+             width: 100%;
+             max-width: 1200px;
+             box-sizing: border-box;
+         }
+
+         /* Kotak Keunggulan Modern & Minimalis (Ngikutin gaya app lo) */
+         .advantage-card {
+             background: white;
+             border: 1px solid #e2e8f0;
+             border-radius: 20px;
+             padding: 30px;
+             display: flex;
+             flex-direction: column;
+             transition: all 0.3s ease;
+             box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+         }
+
+         .advantage-card:hover {
+             transform: translateY(-8px);
+             box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+             border-color: #cbd5e1;
+         }
+
+         .advantage-icon {
+             width: 50px;
+             height: 50px;
+             border-radius: 14px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             font-size: 1.5rem;
+             margin-bottom: 20px;
+             box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
+         }
+
+         .advantage-title {
+             font-size: 1.25rem;
+             font-weight: 800;
+             color: #1e293b;
+             margin: 0 0 10px 0;
+             letter-spacing: -0.3px;
+         }
+
+         .advantage-description {
+             color: #64748b;
+             font-size: 0.95rem;
+             line-height: 1.6;
+             margin: 0;
+             font-weight: 500;
+         }
       </style>
 
-      <div style="width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: flex-end; padding-right: 10%; background: url('bg-login.png') no-repeat center center/cover; position: relative; box-sizing: border-box;">
+      <div id="landing-wrapper">
           
-          <div style="position: relative; z-index: 10; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); border-radius: 28px; padding: 50px 40px; width: 100%; max-width: 420px; text-align: center;">
+          <div class="login-hero">
+              <div class="login-card">
+                  <div style="width: 80px; height: 80px; background: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+                      <img src="logo.png" alt="Logo" style="width: 55px; height: 55px; object-fit: contain;">
+                  </div>
 
-              <div style="width: 80px; height: 80px; background: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-                  <img src="logo.png" alt="Logo" style="width: 55px; height: 55px; object-fit: contain;">
+                  <h1 style="margin: 0 0 10px 0; color: #1e293b; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">Tamaverse Wealth</h1>
+                  <p style="color:#475569; font-size: 1rem; margin-bottom: 40px; line-height: 1.6; font-weight: 500;">Command center eksklusif untuk manajemen aset, investasi, dan perencanaan masa depan Anda.</p>
+                  
+                  <button onclick="login()" style="width: 100%; padding: 16px 20px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight: 700; color: #1e293b; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: all 0.3s ease;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 15px rgba(0,0,0,0.05)';" onmouseout="this.style.background='white'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.02)';">
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px;"> 
+                      Lanjutkan dengan Google
+                  </button>
+
+                  <div style="margin-top: 35px; font-size: 0.85rem; color: #94a3b8; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;">
+                      <i class="fas fa-shield-alt"></i> Secured by Google Firebase
+                  </div>
               </div>
-
-              <h1 style="margin: 0 0 10px 0; color: #1e293b; font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px;">Tamaverse Wealth</h1>
-              <p style="color:#475569; font-size: 1rem; margin-bottom: 40px; line-height: 1.6; font-weight: 500;">Command center eksklusif untuk manajemen aset, investasi, dan perencanaan masa depan Anda.</p>
               
-              <button onclick="login()" style="width: 100%; padding: 16px 20px; background: white; border: 1px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight: 700; color: #1e293b; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: all 0.3s ease;" onmouseover="this.style.background='#f8fafc'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 15px rgba(0,0,0,0.05)';" onmouseout="this.style.background='white'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.02)';">
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px;"> 
-                  Lanjutkan dengan Google
-              </button>
+              <i class="fas fa-chevron-down scroll-indicator" onclick="document.getElementById('advantagesSection').scrollIntoView();"></i>
+          </div>
 
-              <div style="margin-top: 35px; font-size: 0.85rem; color: #94a3b8; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600;">
-                  <i class="fas fa-shield-alt"></i> Secured by Google Firebase
+          <div id="advantagesSection" class="advantages-section">
+              <h2 class="section-title">Keunggulan Tamaverse Wealth</h2>
+              
+              <div class="advantages-grid">
+                  <div class="advantage-card">
+                      <div class="advantage-icon" style="background: #e0f2fe; color: #0284c7;"><i class="fas fa-coins"></i></div>
+                      <h3 class="advantage-title">Monitor Portofolio & Aset Real-time</h3>
+                      <p class="advantage-description">Pantau semua aset Anda—rekening bank, RDN, portofolio saham, emas, hingga aset tetap—dalam satu dashboard komprehensif.</p>
+                  </div>
+                  
+                  <div class="advantage-card">
+                      <div class="advantage-icon" style="background: #dcfce7; color: #16a34a;"><i class="fas fa-chart-pie"></i></div>
+                      <h3 class="advantage-title">Budgeting & Analisis Cashflow Pintar</h3>
+                      <p class="advantage-description">Lacak pemasukan dan pengeluaran secara otomatis. Atur anggaran bulanan dan dapatkan peringatan cerdas sebelum anggaran Anda jebol.</p>
+                  </div>
+                  
+                  <div class="advantage-card">
+                      <div class="advantage-icon" style="background: #f3e8ff; color: #9333ea;"><i class="fas fa-bullseye"></i></div>
+                      <h3 class="advantage-title">Perencanaan Target & Impian Terukur</h3>
+                      <p class="advantage-description">Definisikan mimpi finansial Anda (beli rumah, pensiun, dana pendidikan). Track kemajuan tabungan Anda dari berbagai sumber aset.</p>
+                  </div>
+                  
+                  <div class="advantage-card">
+                      <div class="advantage-icon" style="background: #fce7f3; color: #db2777;"><i class="fas fa-ring"></i></div>
+                      <h3 class="advantage-title">Fitur Eksklusif: Wedding Planner</h3>
+                      <p class="advantage-description">Command center finansial untuk hari bahagia Anda. Pantau anggaran, biaya vendor, hingga daftar tamu dalam satu platform.</p>
+                  </div>
+                  
+                  <div class="advantage-card">
+                      <div class="advantage-icon" style="background: #e0e7ff; color: #7c3aed;"><i class="fas fa-calculator"></i></div>
+                      <h3 class="advantage-title">Kalkulator Saham Pintar (AVD / PL)</h3>
+                      <p class="advantage-description">Optimalkan investasi saham Anda dengan kalkulator Average Down dan estimasi Profit/Loss (TP & SL) yang akurat.</p>
+                  </div>
+                  
+                  <div class="advantage-card">
+                      <div class="advantage-icon" style="background: #ccfbf1; color: #0d9488;"><i class="fas fa-file-invoice"></i></div>
+                      <h3 class="advantage-title">Laporan Analytics & Kesehatan Keuangan</h3>
+                      <p class="advantage-description">Dapatkan wawasan mendalam mengenai kesehatan keuangan Anda melalui visualisasi data dan laporan bulanan otomatis.</p>
+                  </div>
               </div>
           </div>
       </div>
     `;
-  }
+}
 });
 
 function login(){

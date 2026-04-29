@@ -110,13 +110,17 @@ auth.onAuthStateChanged((user) => {
     currentUser = user.displayName || user.email.split('@')[0];
     currentUid = user.uid;
     loadDataFromFirebase();
-  } else {
+      
+ } else {
     document.getElementById("app").innerHTML = `
-      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: flex-end; padding: 5%; background: url('bg-login.png') no-repeat center center/cover; position: relative;">
-          
-          <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(to right, rgba(248, 250, 252, 0.1) 40%, rgba(248, 250, 252, 0.95) 100%); pointer-events: none;"></div>
+      <style>
+         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: white; }
+         #app { margin: 0; padding: 0; width: 100%; height: 100%; max-width: 100%; }
+      </style>
 
-          <div style="position: relative; z-index: 10; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); border-radius: 28px; padding: 50px 40px; width: 100%; max-width: 420px; text-align: center; margin-right: 5%;">
+      <div style="width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: flex-end; padding-right: 10%; background: url('bg-login.jpg') no-repeat center center/cover; position: relative; box-sizing: border-box;">
+          
+          <div style="position: relative; z-index: 10; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); border-radius: 28px; padding: 50px 40px; width: 100%; max-width: 420px; text-align: center;">
 
               <div style="width: 80px; height: 80px; background: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
                   <img src="logo.png" alt="Logo" style="width: 55px; height: 55px; object-fit: contain;">

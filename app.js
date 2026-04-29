@@ -118,7 +118,7 @@ auth.onAuthStateChanged((user) => {
          #app { margin: 0; padding: 0; width: 100%; height: 100%; max-width: 100%; }
       </style>
 
-      <div style="width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: flex-end; padding-right: 10%; background: url('bg-login.jpg') no-repeat center center/cover; position: relative; box-sizing: border-box;">
+      <div style="width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: flex-end; padding-right: 10%; background: url('bg-login.png') no-repeat center center/cover; position: relative; box-sizing: border-box;">
           
           <div style="position: relative; z-index: 10; background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); border-radius: 28px; padding: 50px 40px; width: 100%; max-width: 420px; text-align: center;">
 

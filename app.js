@@ -203,7 +203,7 @@ function renderLandingPage() {
              .mobile-view { 
                  display: flex !important; 
                  flex-direction: column; 
-                 min-height: 100%; /* PERBAIKAN BUG KEPOTONG */
+                 min-height: 100%; 
                  width: 100%; 
                  background: linear-gradient(180deg, #022c22 0%, #064e3b 60%, #0f766e 100%);
                  position: relative; 
@@ -362,11 +362,9 @@ async function checkSecurityOnStartup() {
     if (sessionStorage.getItem('biometricPassed') === 'true') {
         sessionStorage.removeItem('biometricPassed'); // Hapus jejak
         console.log("Bypass PIN via Fingerprint Landing Page!");
-        if(window.targetPageAfterLogin) {
-            setTimeout(() => { showPage(window.targetPageAfterLogin); update(); }, 500); 
-        } else {
-            unlockApp();
-        }
+        
+        // Panggil unlockApp UTAMA! (Ini yang kemarin kurang makanya stuck)
+        unlockApp(); 
         return;
     }
 
@@ -3347,6 +3345,10 @@ window.modernPrompt = async function(title, defaultValue = '', inputType = 'text
 function unlockApp() {
     currentPinMode = ""; 
     
+    // Pastikan gak ada loader ganda yg nyangkut
+    let oldLoader = document.getElementById('premium-loader');
+    if (oldLoader && oldLoader.parentNode) oldLoader.parentNode.removeChild(oldLoader);
+    
     let loaderWrapper = document.createElement('div');
     loaderWrapper.id = 'premium-loader';
     loaderWrapper.setAttribute('style', 'position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; background: rgba(248, 250, 252, 0.95); z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0; padding: 0; left: 0; top: 0;');
@@ -3367,24 +3369,28 @@ function unlockApp() {
     `;
     document.body.appendChild(loaderWrapper);
 
-    // Render HTML utama
+    // Render HTML utama (DASHBOARD KITA ADA DI DALAM SINI)
     document.getElementById("app").innerHTML = mainApp();
     
     setTimeout(() => { 
         try {
-            // Langsung buka halaman sesuai pilihan Fast Menu atau Dashboard
             let target = window.targetPageAfterLogin || 'dashboard';
             showPage(target); 
             update(); 
         } catch (error) {
-            console.log("Abaikan error render sesaat:", error);
+            console.log("Error render:", error);
         } finally {
-            // TRIK AMPUH: Apapun yang terjadi, paksakan layarnya ditutup!
-            loaderWrapper.style.transition = "opacity 0.4s ease";
-            loaderWrapper.style.opacity = '0';
-            setTimeout(() => loaderWrapper.remove(), 400); 
+            // Trik anti nyangkut: Pakai removeChild biar mutlak dihapus
+            let loader = document.getElementById('premium-loader');
+            if (loader) {
+                loader.style.transition = "opacity 0.4s ease";
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 400); 
+            }
         }
-    }, 1200); 
+    }, 800); 
 }
 
 // ==========================================

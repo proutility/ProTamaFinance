@@ -88,39 +88,16 @@ function getAssetsFor(ym) { return assetsData[ym] || []; }
 function getBudgetsFor(ym) { return budgetsData[ym] || []; }
 let assets = [];
 
-// ================= FUNGSI BANTUAN =================
-// FITUR BARU: Fungsi mendapatkan ucapan berdasarkan jam
-function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 11) return "Selamat Pagi";
-    if (hour >= 11 && hour < 15) return "Selamat Siang";
-    if (hour >= 15 && hour < 18) return "Selamat Sore";
-    return "Selamat Malam";
-}
-function getGreetingIcon() {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 11) return "☕";
-    if (hour >= 11 && hour < 15) return "☀️";
-    if (hour >= 15 && hour < 18) return "🌇";
-    return "🌙";
-}
+// ========================================================
+// INITIALIZATION & AUTH STATE
+// ========================================================
 
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    currentUser = user.displayName || user.email.split('@')[0];
-    currentUid = user.uid;
-    loadDataFromFirebase();
-
-    if(window.targetPageAfterLogin) {
-        setTimeout(() => showPage(window.targetPageAfterLogin), 1500); 
-    }
-      
- // Bikin layar transparan dulu sampai Firebase selesai ngecek (Biar gak blinking)
+// Hide body to prevent blinking while checking auth state
 document.body.style.opacity = "0";
 document.body.style.transition = "opacity 0.3s ease";
 
 auth.onAuthStateChanged((user) => {
-  document.body.style.opacity = "1"; // Munculin layar setelah selesai ngecek
+  document.body.style.opacity = "1"; // Show body once checked
 
   if (user) {
     currentUser = user.displayName || user.email.split('@')[0];

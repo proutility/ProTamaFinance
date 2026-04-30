@@ -115,59 +115,68 @@ auth.onAuthStateChanged((user) => {
         setTimeout(() => showPage(window.targetPageAfterLogin), 1500); 
     }
       
+ // Bikin layar transparan dulu sampai Firebase selesai ngecek (Biar gak blinking)
+document.body.style.opacity = "0";
+document.body.style.transition = "opacity 0.3s ease";
+
+auth.onAuthStateChanged((user) => {
+  document.body.style.opacity = "1"; // Munculin layar setelah selesai ngecek
+
+  if (user) {
+    currentUser = user.displayName || user.email.split('@')[0];
+    currentUid = user.uid;
+    loadDataFromFirebase();
+
+    if(window.targetPageAfterLogin) {
+        setTimeout(() => showPage(window.targetPageAfterLogin), 1500); 
+    }
+      
   } else {
-    // FUNGSI FINGERPRINT YANG UDAH ANTI-BLOCK
+    // SENSOR FINGERPRINT LOKAL (PEMANCING GOOGLE LOGIN)
     window.triggerFingerprint = async () => {
         if (window.PublicKeyCredential) {
             try {
                 const challenge = new Uint8Array(32);
                 window.crypto.getRandomValues(challenge);
-                
                 await navigator.credentials.create({
                     publicKey: {
                         challenge: challenge,
                         rp: { name: "Tamaverse Wealth" },
-                        user: {
-                            id: new Uint8Array(16),
-                            name: "user",
-                            displayName: "Tamaverse User"
-                        },
+                        user: { id: new Uint8Array(16), name: "user", displayName: "Tamaverse User" },
                         pubKeyCredParams: [{type: "public-key", alg: -7}],
-                        authenticatorSelection: {
-                            authenticatorAttachment: "platform", // Maksa buka sensor biometrik bawaan HP
-                            userVerification: "required"
-                        },
+                        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
                         timeout: 60000
                     }
                 });
-                
-                // JIKA JEMPOL COCOK: Login pake cara Redirect (Biar gak diblock browser Android/Safari)
+                // Kalo Jempol Cocok, langsung buka Popup Google
                 window.targetPageAfterLogin = 'dashboard';
-                const provider = new firebase.auth.GoogleAuthProvider();
-                firebase.auth().signInWithRedirect(provider); 
-                
+                login(); 
             } catch (err) {
                 console.log("Fingerprint batal / error:", err);
             }
         } else {
-            alert("Browser HP ini belum support fitur sidik jari bro.");
+            alert("HP/Browser ini belum support WebAuthn bro.");
         }
     };
 
     document.getElementById("app").innerHTML = `
       <style>
-         /* HAPUS SCROLLBAR BAWAAN BROWSER BIAR 100% NATIVE APP FEEL */
-         ::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
-         * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-         
-         /* KUNCI LEBAR LAYAR KE 100%, BUKAN 100VW BIAR GAK TEMBUS KANAN */
-         body, html { margin: 0; padding: 0; width: 100%; max-width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: #ffffff; scroll-behavior: smooth; overflow-x: hidden !important; touch-action: none; overscroll-behavior-y: none; }
-         #landing-wrapper { margin: 0; padding: 0; width: 100%; max-width: 100%; height: 100vh; overflow-y: auto; overflow-x: hidden !important; position: relative; }
+         /* KUNCI MATI LAYAR HP BIAR GAK BISA DI SCROLL/GESER SAMA SEKALI */
+         ::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+         body, html { 
+             margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; 
+             background: #ffffff; overflow: hidden !important; 
+             touch-action: none; overscroll-behavior: none; /* Anti narik-narik layar di Android */
+         }
+         #landing-wrapper { 
+             margin: 0; padding: 0; width: 100%; height: 100vh; height: 100dvh; 
+             overflow: hidden; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+         }
          
          /* =========================================
             TAMPILAN DESKTOP (LAPTOP/PC)
          ========================================= */
-         .desktop-view { display: block; }
+         .desktop-view { display: block; height: 100%; width: 100%; overflow-y: auto; overflow-x: hidden; }
          .login-hero { width: 100%; height: 100vh; background: #f8fafc url('bg-login.jpg') no-repeat center center/cover fixed; position: relative; box-sizing: border-box; }
          .landing-nav { position: absolute; top: 0; left: 0; width: 100%; padding: 25px 5%; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 20; }
          .nav-left { display: flex; align-items: center; gap: 12px; }
@@ -202,37 +211,26 @@ auth.onAuthStateChanged((user) => {
 
          @media (max-width: 768px) {
              .desktop-view { display: none !important; }
-             #landing-wrapper { overflow: hidden !important; }
              
              .mobile-view { 
                  display: flex !important; 
                  flex-direction: column; 
-                 height: 100dvh; 
-                 width: 100%; /* KUNCI BIAR GAK LEWAT BATAS KANAN */
+                 height: 100vh; height: 100dvh; 
+                 width: 100%; 
                  background: linear-gradient(180deg, #022c22 0%, #064e3b 60%, #0f766e 100%);
-                 position: relative; 
+                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
                  overflow: hidden; 
              }
              
-             .mobile-fast-menu {
-                 overflow-x: auto;
-                 scroll-snap-type: x mandatory;
-                 -webkit-overflow-scrolling: touch;
-             }
-             
+             .mobile-fast-menu { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
              .fast-menu-item { min-width: 80px; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
              .fast-menu-icon { width: 55px; height: 55px; border-radius: 18px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 4px 6px rgba(0,0,0,0.05); }
              .fast-menu-text { font-size: 0.75rem; font-weight: 700; color: #1e293b; }
-             
-             @keyframes floatMobile { 
-                 0%, 100% { transform: translateY(0); } 
-                 50% { transform: translateY(-10px); } 
-             }
+             @keyframes floatMobile { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
          }
       </style>
 
       <div id="landing-wrapper">
-          
           <!-- TAMPILAN DESKTOP -->
           <div class="desktop-view">
               <div class="login-hero">
@@ -269,39 +267,12 @@ auth.onAuthStateChanged((user) => {
                       <h2 class="section-title">Software finansial untuk gaya hidup modern.</h2>
                   </div>
                   <div class="advantages-grid">
-                      <div class="advantage-card fade-up-element" style="animation-delay: 0.2s;">
-                          <div class="adv-icon-circle" style="background: linear-gradient(135deg, #bae6fd, #e0f2fe); color: #0284c7;"><i class="fas fa-coins"></i></div>
-                          <h3 class="advantage-title">Aset Real-time</h3>
-                          <p class="advantage-description">Pantau saldo rekening, RDN, emas, hingga aset fisik dalam satu layar mutakhir.</p>
-                      </div>
-                      <div class="advantage-card fade-up-element" style="animation-delay: 0.3s;">
-                          <div class="adv-icon-circle" style="background: linear-gradient(135deg, #bbf7d0, #dcfce7); color: #16a34a;"><i class="fas fa-chart-pie"></i></div>
-                          <h3 class="advantage-title">Budgeting Pintar</h3>
-                          <p class="advantage-description">Kendalikan cashflow dan atur batas anggaran dengan sistem peringatan anti-jebol.</p>
-                      </div>
-                      <div class="advantage-card fade-up-element" style="animation-delay: 0.4s;">
-                          <div class="adv-icon-circle" style="background: linear-gradient(135deg, #e9d5ff, #f3e8ff); color: #9333ea;"><i class="fas fa-bullseye"></i></div>
-                          <h3 class="advantage-title">Target Terukur</h3>
-                          <p class="advantage-description">Wujudkan impian finansial Anda dengan fitur auto-tracking progres ke setiap target.</p>
-                      </div>
-                      <div class="advantage-card fade-up-element" style="animation-delay: 0.5s;">
-                          <div class="adv-icon-circle" style="background: linear-gradient(135deg, #fbcfe8, #fce7f3); color: #db2777;"><i class="fas fa-ring"></i></div>
-                          <h3 class="advantage-title">Wedding Planner</h3>
-                          <p class="advantage-description">Susun anggaran, kelola status vendor, dan pantau tamu undangan di satu tempat.</p>
-                      </div>
-                      <div class="advantage-card fade-up-element" style="animation-delay: 0.6s;">
-                          <div class="adv-icon-circle" style="background: linear-gradient(135deg, #c7d2fe, #e0e7ff); color: #4f46e5;"><i class="fas fa-calculator"></i></div>
-                          <h3 class="advantage-title">Kalkulator Saham</h3>
-                          <p class="advantage-description">Optimalkan cuan investasi dengan alat hitung Average Down dan simulasi TP/SL.</p>
-                      </div>
-                      <div class="advantage-card fade-up-element" style="animation-delay: 0.7s;">
-                          <div class="adv-icon-circle" style="background: linear-gradient(135deg, #99f6e4, #ccfbf1); color: #0d9488;"><i class="fas fa-file-invoice"></i></div>
-                          <h3 class="advantage-title">Analytics Detail</h3>
-                          <p class="advantage-description">Pahami kesehatan finansial bulanan lewat visualisasi data interaktif dan akurat.</p>
-                      </div>
-                  </div>
-                  <div class="fade-up-element" style="margin-top: 60px; animation-delay: 0.8s;">
-                      <button onclick="window.targetPageAfterLogin='dashboard'; login()" style="padding: 14px 28px; border-radius: 30px; background: white; color: #16a34a; border: 2px solid #16a34a; font-weight: 700; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#16a34a'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#16a34a';">Mulai Manajemen Aset Sekarang</button>
+                      <div class="advantage-card fade-up-element" style="animation-delay: 0.2s;"><div class="adv-icon-circle" style="background: linear-gradient(135deg, #bae6fd, #e0f2fe); color: #0284c7;"><i class="fas fa-coins"></i></div><h3 class="advantage-title">Aset Real-time</h3><p class="advantage-description">Pantau saldo rekening, RDN, emas, hingga aset fisik.</p></div>
+                      <div class="advantage-card fade-up-element" style="animation-delay: 0.3s;"><div class="adv-icon-circle" style="background: linear-gradient(135deg, #bbf7d0, #dcfce7); color: #16a34a;"><i class="fas fa-chart-pie"></i></div><h3 class="advantage-title">Budgeting Pintar</h3><p class="advantage-description">Kendalikan cashflow dan atur batas anggaran anti-jebol.</p></div>
+                      <div class="advantage-card fade-up-element" style="animation-delay: 0.4s;"><div class="adv-icon-circle" style="background: linear-gradient(135deg, #e9d5ff, #f3e8ff); color: #9333ea;"><i class="fas fa-bullseye"></i></div><h3 class="advantage-title">Target Terukur</h3><p class="advantage-description">Wujudkan impian finansial dengan fitur auto-tracking.</p></div>
+                      <div class="advantage-card fade-up-element" style="animation-delay: 0.5s;"><div class="adv-icon-circle" style="background: linear-gradient(135deg, #fbcfe8, #fce7f3); color: #db2777;"><i class="fas fa-ring"></i></div><h3 class="advantage-title">Wedding Planner</h3><p class="advantage-description">Susun anggaran, vendor, dan daftar tamu dalam satu tempat.</p></div>
+                      <div class="advantage-card fade-up-element" style="animation-delay: 0.6s;"><div class="adv-icon-circle" style="background: linear-gradient(135deg, #c7d2fe, #e0e7ff); color: #4f46e5;"><i class="fas fa-calculator"></i></div><h3 class="advantage-title">Kalkulator Saham</h3><p class="advantage-description">Optimalkan cuan investasi dengan simulasi AVD dan TP/SL.</p></div>
+                      <div class="advantage-card fade-up-element" style="animation-delay: 0.7s;"><div class="adv-icon-circle" style="background: linear-gradient(135deg, #99f6e4, #ccfbf1); color: #0d9488;"><i class="fas fa-file-invoice"></i></div><h3 class="advantage-title">Analytics Detail</h3><p class="advantage-description">Visualisasi kesehatan finansial interaktif dan akurat.</p></div>
                   </div>
               </div>
           </div>
@@ -310,38 +281,17 @@ auth.onAuthStateChanged((user) => {
           <div class="mobile-view">
               <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; width: 100%; box-sizing: border-box;">
                   <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; margin-top: 10px;">
-                      
-                      <div onclick="
-                          let langText = this.querySelector('#langText');
-                          let heroText = document.getElementById('mobileHeroText');
-                          if(langText.innerText === 'ID') {
-                              langText.innerText = 'EN';
-                              this.querySelector('#langFlag').innerText = '🇺🇸';
-                              heroText.innerHTML = 'Track Assets, Budgets & Stocks<br>Easily inside Tamaverse';
-                          } else {
-                              langText.innerText = 'ID';
-                              this.querySelector('#langFlag').innerText = '🇮🇩';
-                              heroText.innerHTML = 'Catat Aset, Budgeting & Saham<br>Praktis Langsung di Tamaverse';
-                          }
-                      " style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; color: white; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
-                          <span id="langFlag" style="font-size: 1.1rem;">🇮🇩</span> 
-                          <span id="langText">ID</span>
+                      <div onclick="..." style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; color: white; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
+                          <span id="langFlag" style="font-size: 1.1rem;">🇮🇩</span> <span id="langText">ID</span>
                       </div>
-                      
                       <div style="color: white; font-family: 'Playfair Display', 'Georgia', serif; font-size: 1.7rem; font-weight: 800; display: flex; flex-direction: column; align-items: center; line-height: 1;">
-                          TAMA
-                          <span style="font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500; letter-spacing: 4px; margin-top: 2px;">WEALTH</span>
+                          TAMA<span style="font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500; letter-spacing: 4px; margin-top: 2px;">WEALTH</span>
                       </div>
-                      
                       <div style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; color: white; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
                           <i class="fas fa-headset"></i> Kontak
                       </div>
                   </div>
-
-                  <h2 id="mobileHeroText" style="color: white; font-size: 1.2rem; text-align: center; line-height: 1.5; margin-bottom: auto; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                      Catat Aset, Budgeting & Saham<br>Praktis Langsung di Tamaverse
-                  </h2>
-
+                  <h2 id="mobileHeroText" style="color: white; font-size: 1.2rem; text-align: center; line-height: 1.5; margin-bottom: auto; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Catat Aset, Budgeting & Saham<br>Praktis Langsung di Tamaverse</h2>
                   <div style="width: 100%; flex: 1; display: flex; justify-content: center; align-items: center; padding-top: 10px; padding-bottom: 10px;">
                       <img src="illustration.png" alt="Ilustrasi" onerror="this.src='logo.png'; this.style.filter='brightness(0) invert(1) opacity(0.5)';" style="max-height: 260px; max-width: 100%; object-fit: contain; z-index: 10; animation: floatMobile 4s ease-in-out infinite; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); transform: scale(1.05);">
                   </div>
@@ -349,60 +299,32 @@ auth.onAuthStateChanged((user) => {
 
               <!-- BAGIAN BAWAH MOBILE -->
               <div style="background: #ffffff; width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px 30px 20px; z-index: 5; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; box-sizing: border-box;">
-                  
-                  <div style="text-align: center; color: #1e293b; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px;">
-                      Fast Menu <i class="fas fa-info-circle" style="color: #3b82f6; margin-left: 5px;"></i>
-                  </div>
-
+                  <div style="text-align: center; color: #1e293b; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px;">Fast Menu <i class="fas fa-info-circle" style="color: #3b82f6; margin-left: 5px;"></i></div>
                   <div class="mobile-fast-menu" style="display: flex; gap: 15px; padding-bottom: 15px; padding-left: 5px; padding-right: 5px;">
-                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='aset'; login()">
-                          <div class="fast-menu-icon" style="background: #e0f2fe; color: #0284c7;"><i class="fas fa-coins"></i></div>
-                          <span class="fast-menu-text">Asetku</span>
-                      </div>
-                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='budgeting'; login()">
-                          <div class="fast-menu-icon" style="background: #dcfce7; color: #16a34a;"><i class="fas fa-chart-pie"></i></div>
-                          <span class="fast-menu-text">Budget</span>
-                      </div>
-                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='transaksi'; login()">
-                          <div class="fast-menu-icon" style="background: #fef9c3; color: #ca8a04;"><i class="fas fa-exchange-alt"></i></div>
-                          <span class="fast-menu-text">Mutasi</span>
-                      </div>
-                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='target'; login()">
-                          <div class="fast-menu-icon" style="background: #f3e8ff; color: #9333ea;"><i class="fas fa-bullseye"></i></div>
-                          <span class="fast-menu-text">Target</span>
-                      </div>
-                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='kalkulator'; login()">
-                          <div class="fast-menu-icon" style="background: #e0e7ff; color: #4f46e5;"><i class="fas fa-chart-line"></i></div>
-                          <span class="fast-menu-text">Saham</span>
-                      </div>
+                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='aset'; login()"><div class="fast-menu-icon" style="background: #e0f2fe; color: #0284c7;"><i class="fas fa-coins"></i></div><span class="fast-menu-text">Asetku</span></div>
+                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='budgeting'; login()"><div class="fast-menu-icon" style="background: #dcfce7; color: #16a34a;"><i class="fas fa-chart-pie"></i></div><span class="fast-menu-text">Budget</span></div>
+                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='transaksi'; login()"><div class="fast-menu-icon" style="background: #fef9c3; color: #ca8a04;"><i class="fas fa-exchange-alt"></i></div><span class="fast-menu-text">Mutasi</span></div>
+                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='target'; login()"><div class="fast-menu-icon" style="background: #f3e8ff; color: #9333ea;"><i class="fas fa-bullseye"></i></div><span class="fast-menu-text">Target</span></div>
+                      <div class="fast-menu-item" onclick="window.targetPageAfterLogin='kalkulator'; login()"><div class="fast-menu-icon" style="background: #e0e7ff; color: #4f46e5;"><i class="fas fa-chart-line"></i></div><span class="fast-menu-text">Saham</span></div>
                   </div>
-
                   <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 25px;">
                       <div style="width: 25px; height: 5px; background: #064e3b; border-radius: 5px;"></div>
                       <div style="width: 15px; height: 5px; background: #cbd5e1; border-radius: 5px;"></div>
                   </div>
-
-                  <!-- TOMBOL LOGIN DAN FINGERPRINT REAL -->
+                  <!-- TOMBOL LOGIN -->
                   <div style="display: flex; gap: 12px; margin-top: auto;">
-                      <button onclick="window.targetPageAfterLogin='dashboard'; login()" style="flex: 1; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.15rem; font-weight: 700; padding: 16px; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3);">
-                          Login
-                      </button>
-                      
-                      <!-- TOMBOL FINGERPRINT TERHUBUNG KE HP -->
-                      <button onclick="triggerFingerprint()" style="width: 60px; height: 60px; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.6rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3); cursor: pointer;">
-                          <i class="fas fa-fingerprint"></i>
-                      </button>
+                      <button onclick="window.targetPageAfterLogin='dashboard'; login()" style="flex: 1; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.15rem; font-weight: 700; padding: 16px; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3);">Login</button>
+                      <button onclick="triggerFingerprint()" style="width: 60px; height: 60px; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.6rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3); cursor: pointer;"><i class="fas fa-fingerprint"></i></button>
                   </div>
-
               </div>
           </div>
-          
       </div>
     `;
   }
 });
     
 function login(){
+  // Pakai Popup biar gak muncul blank putih redirect
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).catch((error) => alert("Gagal login bro: " + error.message));
 }
@@ -3272,55 +3194,37 @@ window.modernPrompt = async function(title, defaultValue = '', inputType = 'text
 };
 
 function unlockApp() {
-    currentPinMode = ""; // Matiin sensor keyboard supaya nggak kepencet di background
+    currentPinMode = ""; 
     
-    // 1. Bikin Tampilan Layar Loading Modern & Responsive
+    // Perbaikan Posisi Loading mutlak di tengah layar HP
     let loaderWrapper = document.createElement('div');
     loaderWrapper.id = 'premium-loader';
+    loaderWrapper.setAttribute('style', 'position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; background: rgba(248, 250, 252, 0.95); z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0; padding: 0; left: 0; top: 0;');
+    
     loaderWrapper.innerHTML = `
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(248, 250, 252, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-sizing: border-box; padding: 20px; text-align: center;">
-            
-            <div class="loader-circle" style="position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 25px;">
-                <div style="width: 75px; height: 75px; border: 4px solid #e0f2fe; border-top-color: #0ea5e9; border-radius: 50%; animation: spinLoader 1s linear infinite; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);"></div>
-                <i class="fas fa-wallet" style="position: absolute; font-size: 1.5rem; color: #0ea5e9; animation: pulseIcon 1.5s ease-in-out infinite;"></i>
-            </div>
-            
-            <h3 class="loader-title" style="color: #1e293b; font-family: 'Inter', sans-serif; font-weight: 800; margin: 0 0 8px 0; letter-spacing: -0.5px;">Menyiapkan Dashboard</h3>
-            <p class="loader-text" style="color: #64748b; font-family: 'Inter', sans-serif; margin: 0; font-weight: 500;">Mengambil data keuangan Anda...</p>
-            
-        </div>
         <style>
             @keyframes spinLoader { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             @keyframes pulseIcon { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.85); opacity: 0.7; } }
-            
-            /* Penyesuaian khusus HP */
-            .loader-title { font-size: 1.25rem; }
-            .loader-text { font-size: 0.9rem; }
-            @media (max-width: 768px) {
-                .loader-circle { margin-bottom: 20px !important; transform: scale(0.85); }
-                .loader-title { font-size: 1.1rem; }
-                .loader-text { font-size: 0.85rem; }
-            }
+            #premium-loader h3 { font-size: 1.25rem; color: #1e293b; font-family: 'Inter', sans-serif; font-weight: 800; margin: 0 0 8px 0; }
+            #premium-loader p { font-size: 0.9rem; color: #64748b; font-family: 'Inter', sans-serif; margin: 0; font-weight: 500; }
         </style>
+        <div style="position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 25px;">
+            <div style="width: 75px; height: 75px; border: 4px solid #e0f2fe; border-top-color: #0ea5e9; border-radius: 50%; animation: spinLoader 1s linear infinite; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);"></div>
+            <i class="fas fa-wallet" style="position: absolute; font-size: 1.5rem; color: #0ea5e9; animation: pulseIcon 1.5s ease-in-out infinite;"></i>
+        </div>
+        <h3>Menyiapkan Dashboard</h3>
+        <p>Mengambil data keuangan Anda...</p>
     `;
     document.body.appendChild(loaderWrapper);
 
-    // 2. Render UI di background
     document.getElementById("app").innerHTML = mainApp();
     
-    // 3. Kasih waktu sistem buat napas & ngerender
     setTimeout(() => { 
         showPage('dashboard'); 
         update(); 
-        
-        // 4. Efek Fade-out
-        let loaderElement = loaderWrapper.firstElementChild;
-        loaderElement.style.opacity = '0';
-        
-        setTimeout(() => { 
-            loaderWrapper.remove(); 
-        }, 500); 
-
+        loaderWrapper.style.transition = "opacity 0.5s ease";
+        loaderWrapper.style.opacity = '0';
+        setTimeout(() => loaderWrapper.remove(), 500); 
     }, 1200); 
 }
 

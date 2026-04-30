@@ -88,10 +88,28 @@ function getAssetsFor(ym) { return assetsData[ym] || []; }
 function getBudgetsFor(ym) { return budgetsData[ym] || []; }
 let assets = [];
 
+// ================= FUNGSI BANTUAN =================
+// FITUR BARU: Fungsi mendapatkan ucapan berdasarkan jam
+function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 11) return "Selamat Pagi";
+    if (hour >= 11 && hour < 15) return "Selamat Siang";
+    if (hour >= 15 && hour < 18) return "Selamat Sore";
+    return "Selamat Malam";
+}
+function getGreetingIcon() {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 11) return "☕";
+    if (hour >= 11 && hour < 15) return "☀️";
+    if (hour >= 15 && hour < 18) return "🌇";
+    return "🌙";
+}
+
 // Bikin layar transparan dulu sampai Firebase selesai ngecek (Biar gak blinking)
 document.body.style.opacity = "0";
 document.body.style.transition = "opacity 0.3s ease";
 
+// PASTIKAN HANYA ADA SATU auth.onAuthStateChanged
 auth.onAuthStateChanged((user) => {
   document.body.style.opacity = "1"; // Munculin layar setelah selesai ngecek
 
@@ -101,8 +119,6 @@ auth.onAuthStateChanged((user) => {
     
     // Tarik data dari Firebase (Sistem PIN bakal dipanggil di dalem sini)
     loadDataFromFirebase();
-    
-    // Note: Kodingan showPage dipindah ke dalem unlockApp() biar nunggu PIN beres
       
   } else {
     // SENSOR FINGERPRINT LOKAL (PEMANCING GOOGLE LOGIN)
@@ -307,7 +323,7 @@ auth.onAuthStateChanged((user) => {
     `;
   }
 });
-    
+
 function login(){
   // Pakai Popup biar gak muncul blank putih redirect
   const provider = new firebase.auth.GoogleAuthProvider();

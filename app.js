@@ -179,13 +179,14 @@ auth.onAuthStateChanged((user) => {
 
          @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translate(-50%, 0);} 40% {transform: translate(-50%, -10px);} 60% {transform: translate(-50%, -5px);} }
 
-         /* =========================================
+       /* =========================================
             BAGIAN 2: KEUNGGULAN (MODERN UPGRADE)
          ========================================= */
          .advantages-section {
              width: 100%;
              min-height: 100vh;
-             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+             /* Trik Watermark: Background asli ditimpa gradien putih 95% biar elegan */
+             background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.92) 100%), url('bg-login.jpg') no-repeat center bottom/cover;
              box-sizing: border-box;
              padding: 100px 5% 120px 5%;
              display: flex;
@@ -264,10 +265,10 @@ auth.onAuthStateChanged((user) => {
           
           <div class="login-hero">
               <div class="landing-nav">
-                  <div class="nav-left">
-                      <img src="logo.png" alt="Logo" style="width: 45px; height: 45px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));">
-                      <div style="width: 2px; height: 25px; background: #cbd5e1; border-radius: 2px;"></div>
-                      <strong style="font-size: 1.3rem; color: #1e293b; letter-spacing: -0.5px;">TamaverseWealth</strong>
+                 <div class="nav-left">
+                      <img src="logo.png" alt="Logo" style="width: 65px; height: 65px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));">
+                      <div style="width: 2px; height: 40px; background: #cbd5e1; border-radius: 2px;"></div>
+                      <strong style="font-size: 1.6rem; color: #1e293b; letter-spacing: -0.5px;">TamaverseWealth</strong>
                   </div>
                   <div></div>
                   <button class="nav-right-btn" onclick="login()">

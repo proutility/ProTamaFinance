@@ -116,9 +116,57 @@ auth.onAuthStateChanged((user) => {
     }
       
 } else {
+    // FUNGSI UNTUK MENGAKTIFKAN SENSOR SIDIK JARI BAWAAN HP
+    window.triggerFingerprint = async () => {
+        if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (available) {
+                try {
+                    // Membuat request "bohongan" untuk memancing UI Biometrik HP muncul
+                    const challenge = new Uint8Array(32);
+                    window.crypto.getRandomValues(challenge);
+                    
+                    await navigator.credentials.create({
+                        publicKey: {
+                            challenge: challenge,
+                            rp: { name: "Tamaverse Wealth" },
+                            user: {
+                                id: new Uint8Array(16),
+                                name: "user",
+                                displayName: "User"
+                            },
+                            pubKeyCredParams: [{type: "public-key", alg: -7}],
+                            authenticatorSelection: {
+                                authenticatorAttachment: "platform",
+                                userVerification: "required"
+                            },
+                            timeout: 60000
+                        }
+                    });
+                    
+                    // JIKA SIDIK JARI COCOK, OTOMATIS LOGIN!
+                    window.targetPageAfterLogin = 'dashboard'; 
+                    login(); 
+                    
+                } catch (err) {
+                    console.log("Fingerprint dibatalkan atau gagal", err);
+                    // Batal gak perlu di-alert biar UX-nya smooth
+                }
+            } else {
+                alert("HP lo belum dipasang kunci sidik jari/wajah bro.");
+            }
+        } else {
+            alert("Browser HP ini belum support fitur sidik jari (WebAuthn).");
+        }
+    };
+
     document.getElementById("app").innerHTML = `
       <style>
-         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: #ffffff; scroll-behavior: smooth; overflow-x: hidden; }
+         /* HAPUS SCROLLBAR BAWAAN BROWSER BIAR 100% NATIVE APP FEEL */
+         ::-webkit-scrollbar { display: none; width: 0; background: transparent; }
+         * { -ms-overflow-style: none; scrollbar-width: none; }
+         
+         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; background: #ffffff; scroll-behavior: smooth; overflow: hidden !important; }
          #landing-wrapper { margin: 0; padding: 0; width: 100%; height: 100vh; max-width: 100%; overflow-y: auto; overflow-x: hidden; position: relative; }
          
          /* =========================================
@@ -165,8 +213,7 @@ auth.onAuthStateChanged((user) => {
                  display: flex !important; 
                  flex-direction: column; 
                  height: 100dvh; 
-                 width: 100%; 
-                 /* Perpaduan warna Dark Pine Green yang ngasih kesan Premium & match sama ilustrasi */
+                 width: 100vw; 
                  background: linear-gradient(180deg, #022c22 0%, #064e3b 60%, #0f766e 100%);
                  position: relative; 
                  overflow: hidden; 
@@ -177,7 +224,6 @@ auth.onAuthStateChanged((user) => {
                  scroll-snap-type: x mandatory;
                  -webkit-overflow-scrolling: touch;
              }
-             .mobile-fast-menu::-webkit-scrollbar { display: none; }
              
              .fast-menu-item { min-width: 80px; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
              .fast-menu-icon { width: 55px; height: 55px; border-radius: 18px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 4px 6px rgba(0,0,0,0.05); }
@@ -192,9 +238,7 @@ auth.onAuthStateChanged((user) => {
 
       <div id="landing-wrapper">
           
-          <!-- ======================================================== -->
-          <!-- 1. TAMPILAN DESKTOP (TETAP AMAN)                         -->
-          <!-- ======================================================== -->
+          <!-- TAMPILAN DESKTOP -->
           <div class="desktop-view">
               <div class="login-hero">
                   <div class="landing-nav">
@@ -267,15 +311,9 @@ auth.onAuthStateChanged((user) => {
               </div>
           </div>
 
-          <!-- ======================================================== -->
-          <!-- 2. TAMPILAN MOBILE (NATIVE APP STYLE)                    -->
-          <!-- ======================================================== -->
+          <!-- TAMPILAN MOBILE NATIVE APP -->
           <div class="mobile-view">
-              
-              <!-- Bagian Atas (Premium Dark Pine Green) -->
               <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; width: 100%; box-sizing: border-box;">
-                  
-                  <!-- Top Nav -->
                   <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; margin-top: 10px;">
                       
                       <div onclick="
@@ -295,7 +333,6 @@ auth.onAuthStateChanged((user) => {
                           <span id="langText">ID</span>
                       </div>
                       
-                      <!-- Logo Teks Elegan -->
                       <div style="color: white; font-family: 'Playfair Display', 'Georgia', serif; font-size: 1.7rem; font-weight: 800; display: flex; flex-direction: column; align-items: center; line-height: 1;">
                           TAMA
                           <span style="font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500; letter-spacing: 4px; margin-top: 2px;">WEALTH</span>
@@ -306,19 +343,16 @@ auth.onAuthStateChanged((user) => {
                       </div>
                   </div>
 
-                  <!-- Judul Hero Mobile -->
                   <h2 id="mobileHeroText" style="color: white; font-size: 1.2rem; text-align: center; line-height: 1.5; margin-bottom: auto; font-weight: 700; letter-spacing: -0.3px; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                       Catat Aset, Budgeting & Saham<br>Praktis Langsung di Tamaverse
                   </h2>
 
-                  <!-- Tempat Ilustrasi (Lebih Presisi, No Cut-Off) -->
                   <div style="width: 100%; flex: 1; display: flex; justify-content: center; align-items: center; padding-top: 10px; padding-bottom: 10px;">
-                      <!-- Hapus trik width 115% diganti pakai width 100% biar container aman -->
                       <img src="illustration.png" alt="Ilustrasi" onerror="this.src='logo.png'; this.style.filter='brightness(0) invert(1) opacity(0.5)';" style="max-height: 260px; max-width: 100%; object-fit: contain; z-index: 10; animation: floatMobile 4s ease-in-out infinite; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2)); transform: scale(1.05);">
                   </div>
               </div>
 
-              <!-- Bagian Bawah (Putih) - Menu & Login -->
+              <!-- BAGIAN BAWAH MOBILE -->
               <div style="background: #ffffff; width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px 30px 20px; z-index: 5; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; box-sizing: border-box;">
                   
                   <div style="text-align: center; color: #1e293b; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px;">
@@ -353,12 +387,14 @@ auth.onAuthStateChanged((user) => {
                       <div style="width: 15px; height: 5px; background: #cbd5e1; border-radius: 5px;"></div>
                   </div>
 
+                  <!-- TOMBOL LOGIN DAN FINGERPRINT REAL -->
                   <div style="display: flex; gap: 12px; margin-top: auto;">
-                      <!-- Warna tombol disamakan dengan tema background atas biar matching -->
                       <button onclick="window.targetPageAfterLogin='dashboard'; login()" style="flex: 1; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.15rem; font-weight: 700; padding: 16px; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3);">
                           Login
                       </button>
-                      <button onclick="window.targetPageAfterLogin='dashboard'; login()" style="width: 60px; height: 60px; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.6rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3);">
+                      
+                      <!-- TOMBOL FINGERPRINT TERHUBUNG KE HP -->
+                      <button onclick="triggerFingerprint()" style="width: 60px; height: 60px; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.6rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3); cursor: pointer;">
                           <i class="fas fa-fingerprint"></i>
                       </button>
                   </div>
@@ -369,8 +405,7 @@ auth.onAuthStateChanged((user) => {
       </div>
     `;
   }
-});
-
+    
 function login(){
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).catch((error) => alert("Gagal login bro: " + error.message));

@@ -104,7 +104,6 @@ function getGreetingIcon() {
     if (hour >= 15 && hour < 18) return "🌇";
     return "🌙";
 }
-
 // Bikin layar transparan dulu sampai Firebase selesai ngecek (Biar gak blinking)
 document.body.style.opacity = "0";
 document.body.style.transition = "opacity 0.3s ease";
@@ -116,11 +115,11 @@ auth.onAuthStateChanged((user) => {
     currentUser = user.displayName || user.email.split('@')[0];
     currentUid = user.uid;
     
-    // Tarik data dari Firebase, SETELAH ITU baru cek PIN/Fingerprint
+    // Tarik data dari Firebase (Sistem PIN/Fingerprint bakal dipanggil di dalem sini)
     loadDataFromFirebase();
       
   } else {
-    // SENSOR FINGERPRINT LOKAL (PEMANCING GOOGLE LOGIN DARI LANDING PAGE)
+    // SENSOR FINGERPRINT LOKAL (DARI LANDING PAGE)
     window.triggerFingerprint = async () => {
         if (window.PublicKeyCredential) {
             try {
@@ -136,6 +135,9 @@ auth.onAuthStateChanged((user) => {
                         timeout: 60000
                     }
                 });
+                
+                // JIKA SIDIK JARI COCOK, KITA KASIH TANDA BIAR GAK USAH MINTA PIN LAGI
+                sessionStorage.setItem('biometricPassed', 'true');
                 window.targetPageAfterLogin = 'dashboard';
                 login(); 
             } catch (err) {
@@ -146,106 +148,25 @@ auth.onAuthStateChanged((user) => {
         }
     };
 
-    // Render Landing Page Kalo Belum Login
     renderLandingPage();
   }
 });
 
-function login(){
-  // Pakai Popup biar gak muncul blank putih redirect
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch((error) => alert("Gagal login bro: " + error.message));
-}
-
-function logout() { auth.signOut().then(() => location.reload()); }
-
-function loadDataFromFirebase() {
-  db.collection("usersData").doc(currentUid).get().then((doc) => {
-    if (doc.exists) {
-      let data = doc.data();
-      transactions = data.transactions || [];
-      goals = data.goals || [];
-      debts = data.debts || [];
-      budgetsData = data.budgetsData || {};
-      assetsData = data.assetsData || {};
-      if(data.weddingData) weddingData = data.weddingData;
-      if(data.userProfile) userProfile = data.userProfile;
-    }
-    assets = getAssetsFor(defaultYM);
-    
-    // --- CEGATAN PIN & FINGERPRINT SETELAH LOGIN ---
-    checkSecurityOnStartup();
-
-    if ("Notification" in window) {
-        Notification.requestPermission().then(permission => {
-            if (permission === "granted") console.log("Izin notifikasi diberikan!");
-        });
-    }
-
-  }).catch((error) => {
-    alert("Gagal narik data dari server bro!");
-  });
-}
-
-// LOGIKA UTAMA KEAMANAN: BIOMETRIK DULUAN, KALAU BATAL BARU MUNCUL PIN
-async function checkSecurityOnStartup() {
-    currentPinInput = "";
-    
-    // Kalau belum pernah set PIN sama sekali
-    if (!userProfile.pin || userProfile.pin === "") {
-        renderPinScreen('setup'); 
-        return;
-    }
-
-    // Kalau udah punya PIN, kita coba pancing Fingerprint/FaceID HP nya
-    if (window.PublicKeyCredential && navigator.credentials.get) {
-        try {
-            const challenge = new Uint8Array(32);
-            window.crypto.getRandomValues(challenge);
-            
-            // HP akan memunculkan layar Fingerprint di sini
-            await navigator.credentials.get({
-                publicKey: {
-                    challenge: challenge,
-                    rpId: window.location.hostname,
-                    userVerification: "required",
-                    timeout: 60000
-                }
-            });
-
-            // JIKA SIDIK JARI COCOK: Langsung buka aplikasi, PIN gak usah muncul
-            console.log("Fingerprint Cocok!");
-            unlockApp(); 
-
-        } catch (err) {
-            // JIKA SIDIK JARI SALAH ATAU DI-CANCEL (Pencet tombol 'Gunakan PIN' di HP)
-            console.log("Fingerprint batal, munculkan PIN layar.");
-            renderPinScreen('verify');
-        }
-    } else {
-        // Kalau browser/HP jadul gak support biometrik, langsung munculin PIN
-        renderPinScreen('verify');
-    }
-}
-
 function renderLandingPage() {
     document.getElementById("app").innerHTML = `
       <style>
-         /* KUNCI MATI LAYAR HP BIAR GAK BISA DI SCROLL/GESER SAMA SEKALI */
          ::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
          body, html { 
              margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Inter', sans-serif; 
              background: #ffffff; overflow: hidden !important; 
-             touch-action: none; overscroll-behavior: none; 
          }
+         /* PERBAIKAN BUG KEPOTONG: Pakai absolute & height 100% biar fleksibel */
          #landing-wrapper { 
-             margin: 0; padding: 0; width: 100%; height: 100vh; height: 100dvh; 
-             overflow: hidden; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+             margin: 0; padding: 0; width: 100%; height: 100%; 
+             position: absolute; top: 0; left: 0;
+             overflow-y: auto; overflow-x: hidden; 
          }
          
-         /* =========================================
-            TAMPILAN DESKTOP (LAPTOP/PC)
-         ========================================= */
          .desktop-view { display: block; height: 100%; width: 100%; overflow-y: auto; overflow-x: hidden; }
          .login-hero { width: 100%; height: 100vh; background: #f8fafc url('bg-login.png') no-repeat center center/cover fixed; position: relative; box-sizing: border-box; }
          .landing-nav { position: absolute; top: 0; left: 0; width: 100%; padding: 25px 5%; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 20; }
@@ -274,9 +195,6 @@ function renderLandingPage() {
          .fade-up-element { opacity: 0; animation: fadeUpAnim 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
          @keyframes fadeUpAnim { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 
-         /* =========================================
-            TAMPILAN MOBILE (HP) - NATIVE APP STYLE
-         ========================================= */
          .mobile-view { display: none; }
 
          @media (max-width: 768px) {
@@ -285,27 +203,14 @@ function renderLandingPage() {
              .mobile-view { 
                  display: flex !important; 
                  flex-direction: column; 
-                 height: 100vh; height: 100dvh; 
+                 min-height: 100%; /* PERBAIKAN BUG KEPOTONG */
                  width: 100%; 
                  background: linear-gradient(180deg, #022c22 0%, #064e3b 60%, #0f766e 100%);
-                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-                 overflow: hidden; 
+                 position: relative; 
              }
              
-             /* PERBAIKAN POIN 1: CSS agar Logo Tengah di Mobile */
-             .mobile-header-container {
-                 width: 100%; display: flex; justify-content: space-between; align-items: center; 
-                 margin-bottom: 25px; margin-top: 10px; position: relative; min-height: 40px;
-             }
-             
-             .mobile-logo-text {
-                 color: white; font-family: 'Playfair Display', 'Georgia', serif; 
-                 font-size: 1.7rem; font-weight: 800; display: flex; flex-direction: column; 
-                 align-items: center; line-height: 1;
-                 /* Kunci agar pasti di tengah layar, mengabaikan tombol kiri-kanan */
-                 position: absolute; left: 50%; transform: translateX(-50%); z-index: 1;
-             }
-             
+             .mobile-header-container { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; margin-top: 10px; position: relative; min-height: 40px; }
+             .mobile-logo-text { color: white; font-family: 'Playfair Display', 'Georgia', serif; font-size: 1.7rem; font-weight: 800; display: flex; flex-direction: column; align-items: center; line-height: 1; position: absolute; left: 50%; transform: translateX(-50%); z-index: 1; }
              .mobile-fast-menu { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
              .fast-menu-item { min-width: 80px; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
              .fast-menu-icon { width: 55px; height: 55px; border-radius: 18px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 4px 6px rgba(0,0,0,0.05); }
@@ -315,7 +220,6 @@ function renderLandingPage() {
       </style>
 
       <div id="landing-wrapper">
-          <!-- TAMPILAN DESKTOP -->
           <div class="desktop-view">
               <div class="login-hero">
                   <div class="landing-nav">
@@ -361,33 +265,15 @@ function renderLandingPage() {
               </div>
           </div>
 
-          <!-- TAMPILAN MOBILE NATIVE APP -->
           <div class="mobile-view">
               <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; width: 100%; box-sizing: border-box;">
-                  
-                  <!-- PERBAIKAN POIN 1: Container Header Mobile -->
                   <div class="mobile-header-container">
-                      <div onclick="
-                          let langText = this.querySelector('#langText');
-                          let heroText = document.getElementById('mobileHeroText');
-                          if(langText.innerText === 'ID') {
-                              langText.innerText = 'EN';
-                              this.querySelector('#langFlag').innerText = '🇺🇸';
-                              heroText.innerHTML = 'Track Assets, Budgets & Stocks<br>Easily inside Tamaverse';
-                          } else {
-                              langText.innerText = 'ID';
-                              this.querySelector('#langFlag').innerText = '🇮🇩';
-                              heroText.innerHTML = 'Catat Aset, Budgeting & Saham<br>Praktis Langsung di Tamaverse';
-                          }
-                      " style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; color: white; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; z-index: 2; position: relative;">
+                      <div onclick="..." style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; color: white; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; z-index: 2; position: relative;">
                           <span id="langFlag" style="font-size: 1.1rem;">🇮🇩</span> <span id="langText">ID</span>
                       </div>
-                      
-                      <!-- Teks Logo TAMAWEALTH (Sekarang dijamin di tengah) -->
                       <div class="mobile-logo-text">
                           TAMA<span style="font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500; letter-spacing: 4px; margin-top: 2px;">WEALTH</span>
                       </div>
-                      
                       <div style="background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 20px; color: white; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px; z-index: 2; position: relative;">
                           <i class="fas fa-headset"></i> Kontak
                       </div>
@@ -399,7 +285,6 @@ function renderLandingPage() {
                   </div>
               </div>
 
-              <!-- BAGIAN BAWAH MOBILE -->
               <div style="background: #ffffff; width: 100%; border-radius: 35px 35px 0 0; padding: 25px 20px 30px 20px; z-index: 5; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; box-sizing: border-box;">
                   <div style="text-align: center; color: #1e293b; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px;">Fast Menu <i class="fas fa-info-circle" style="color: #3b82f6; margin-left: 5px;"></i></div>
                   <div class="mobile-fast-menu" style="display: flex; gap: 15px; padding-bottom: 15px; padding-left: 5px; padding-right: 5px;">
@@ -413,7 +298,6 @@ function renderLandingPage() {
                       <div style="width: 25px; height: 5px; background: #064e3b; border-radius: 5px;"></div>
                       <div style="width: 15px; height: 5px; background: #cbd5e1; border-radius: 5px;"></div>
                   </div>
-                  <!-- TOMBOL LOGIN -->
                   <div style="display: flex; gap: 12px; margin-top: auto;">
                       <button onclick="window.targetPageAfterLogin='dashboard'; login()" style="flex: 1; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.15rem; font-weight: 700; padding: 16px; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3);">Login</button>
                       <button onclick="triggerFingerprint()" style="width: 60px; height: 60px; background: #064e3b; color: white; border: none; border-radius: 16px; font-size: 1.6rem; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 15px rgba(6, 78, 59, 0.3); cursor: pointer;"><i class="fas fa-fingerprint"></i></button>
@@ -425,12 +309,17 @@ function renderLandingPage() {
 }
 
 function login(){
-  // Pakai Popup biar gak muncul blank putih redirect
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).catch((error) => alert("Gagal login bro: " + error.message));
 }
 
-function logout() { auth.signOut().then(() => location.reload()); }
+function logout() { 
+    sessionStorage.clear(); 
+    auth.signOut().then(() => {
+        document.body.removeAttribute('style'); // Reset style biar gak nyangkut
+        location.reload();
+    }); 
+}
 
 function loadDataFromFirebase() {
   db.collection("usersData").doc(currentUid).get().then((doc) => {
@@ -446,13 +335,174 @@ function loadDataFromFirebase() {
     }
     assets = getAssetsFor(defaultYM);
     
-    // --- CEGATAN PIN KEAMANAN ---
-    currentPinInput = "";
-    if (userProfile.pin) {
-        renderPinScreen('verify'); // Kalau udah punya PIN, suruh masukin
-    } else {
-        renderPinScreen('setup'); // Kalau baru pertama, suruh bikin PIN
+    // --- CEK KEAMANAN (PIN/FINGERPRINT) DISINI ---
+    checkSecurityOnStartup();
+
+    if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") console.log("Izin notifikasi diberikan!");
+        });
     }
+  }).catch((error) => {
+    alert("Gagal narik data dari server bro!");
+  });
+}
+
+// LOGIKA UTAMA KEAMANAN
+async function checkSecurityOnStartup() {
+    currentPinInput = "";
+    
+    // Kalau belum pernah set PIN sama sekali
+    if (!userProfile.pin || userProfile.pin === "") {
+        renderPinScreen('setup'); 
+        return;
+    }
+
+    // CEK BYPASS: Apakah user tadi login via Tombol Fingerprint di Landing Page?
+    if (sessionStorage.getItem('biometricPassed') === 'true') {
+        sessionStorage.removeItem('biometricPassed'); // Hapus jejak
+        console.log("Bypass PIN via Fingerprint Landing Page!");
+        if(window.targetPageAfterLogin) {
+            setTimeout(() => { showPage(window.targetPageAfterLogin); update(); }, 500); 
+        } else {
+            unlockApp();
+        }
+        return;
+    }
+
+    // Kalau aplikasi cuma di-refresh biasa, kita nampilin layar PIN
+    // TAPI kita juga nembak otomatis sensor sidik jari biar cepet
+    renderPinScreen('verify');
+    triggerAppFingerprint();
+}
+
+// FUNGSI FINGERPRINT DI DALEM APLIKASI (Pasca Refresh)
+window.triggerAppFingerprint = async () => {
+    if (window.PublicKeyCredential && navigator.credentials.get) {
+        try {
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+            await navigator.credentials.get({
+                publicKey: {
+                    challenge: challenge,
+                    rpId: window.location.hostname,
+                    userVerification: "required",
+                    timeout: 60000
+                }
+            });
+            // SUKSES! Langsung buka gembok.
+            unlockApp();
+        } catch (err) {
+            console.log("Auto-Fingerprint diblokir browser atau dibatalkan user. (Aman, layar PIN udah siap di belakangnya).");
+        }
+    }
+};
+
+let currentPinMode = ""; 
+
+function renderPinScreen(mode) {
+    currentPinMode = mode; 
+    
+    let title = mode === 'setup' ? "Set PIN Keamanan" : "Masukkan PIN";
+    let subtitle = mode === 'setup' ? "Buat 6 digit PIN untuk melindungi data keuangan Anda." : "Aplikasi terkunci. Silakan masukkan 6 digit PIN.";
+    
+    if (mode === 'setup_confirm') {
+        title = "Konfirmasi PIN";
+        subtitle = "Masukkan kembali 6 digit PIN yang baru saja dibuat.";
+    }
+
+    let dots = '';
+    for(let i=0; i<6; i++) {
+        let active = i < currentPinInput.length 
+            ? 'background: #0ea5e9; border-color: #0ea5e9; transform: scale(1.1); box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);' 
+            : 'background: #f1f5f9; border-color: #e2e8f0;';
+        dots += `<div style="width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid; ${active} transition: all 0.2s ease;"></div>`;
+    }
+
+    // Tombol Fingerprint CUMA muncul di mode 'verify'
+    let fingerprintBtn = mode === 'verify' 
+        ? `<button onclick="triggerAppFingerprint()" style="width: 76px; height: 76px; border-radius: 50%; border: none; background: transparent; font-size: 2rem; color: #0ea5e9; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)'"><i class="fas fa-fingerprint"></i></button>`
+        : `<button style="background: transparent; border: none;"></button>`;
+
+    let html = `
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; background: #f8fafc; overflow: hidden;">
+        
+        <div style="position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, rgba(255,255,255,0) 70%); filter: blur(50px); border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(255,255,255,0) 70%); filter: blur(50px); border-radius: 50%;"></div>
+
+        <div style="background: #ffffff; border: 1px solid #f1f5f9; border-radius: 36px; padding: 50px 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.03); display: flex; flex-direction: column; align-items: center; max-width: 380px; width: 90%; position: relative; z-index: 10; animation: fadeSlideUp 0.5s ease-out;">
+
+            <div style="text-align: center; margin-bottom: 40px;">
+                <div style="width: 60px; height: 60px; background: #e0f2fe; color: #0ea5e9; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);">
+                    <i class="fas ${mode.includes('setup') ? 'fa-shield-alt' : 'fa-lock'} " style="font-size: 1.8rem;"></i>
+                </div>
+                <h2 style="margin: 0 0 8px 0; color: #1e293b; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px;">${title}</h2>
+                <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5; margin: 0; font-weight: 400;">${subtitle}</p>
+            </div>
+            
+            <div style="display: flex; gap: 18px; margin-bottom: 45px; height: 20px; align-items: center;">
+                ${dots}
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; width: 100%; max-width: 270px;">
+                ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="handlePinPress('${n}', '${mode}')" style="width: 76px; height: 76px; border-radius: 50%; border: none; background: #f1f5f9; font-size: 1.9rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f1f5f9';" onmousedown="this.style.transform='scale(0.94)';" onmouseup="this.style.transform='scale(1)'">${n}</button>`).join('')}
+                ${fingerprintBtn}
+                <button onclick="handlePinPress('0', '${mode}')" style="width: 76px; height: 76px; border-radius: 50%; border: none; background: #f1f5f9; font-size: 1.9rem; font-weight: 600; color: #1e293b; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onmouseover="this.style.background='#e2e8f0';" onmouseout="this.style.background='#f1f5f9';" onmousedown="this.style.transform='scale(0.94)';" onmouseup="this.style.transform='scale(1)'">0</button>
+                <button onclick="handlePinDelete('${mode}')" style="width: 76px; height: 76px; border-radius: 50%; border: none; background: transparent; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'" onmousedown="this.style.transform='scale(0.94)';" onmouseup="this.style.transform='scale(1)'"><i class="fas fa-backspace"></i></button>
+            </div>
+
+        </div>
+
+        <button onclick="logout()" style="margin-top: 35px; background: white; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 24px; color: #64748b; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onmouseover="this.style.color='#ef4444'; this.style.borderColor='#fee2e2'; this.style.background='#fff1f2';" onmouseout="this.style.color='#64748b'; this.style.borderColor='#e2e8f0'; this.style.background='white';"><i class="fas fa-sign-out-alt"></i> Logout / Ganti Akun</button>
+
+    </div>
+    `;
+    document.getElementById("app").innerHTML = html;
+}
+
+function handlePinPress(num, mode) {
+    if (currentPinInput.length < 6) {
+        currentPinInput += num;
+        renderPinScreen(mode);
+        if (currentPinInput.length === 6) {
+            setTimeout(() => processPin(mode), 150); 
+        }
+    }
+}
+
+function handlePinDelete(mode) {
+    if (currentPinInput.length > 0) {
+        currentPinInput = currentPinInput.slice(0, -1);
+        renderPinScreen(mode);
+    }
+}
+
+function processPin(mode) {
+    if (mode === 'setup') {
+        tempSetupPin = currentPinInput;
+        currentPinInput = "";
+        renderPinScreen('setup_confirm');
+    } else if (mode === 'setup_confirm') {
+        if (currentPinInput === tempSetupPin) {
+            userProfile.pin = currentPinInput;
+            save(); // Simpan PIN ke Firebase
+            Swal.fire({ text: 'PIN Keamanan berhasil dipasang!', icon: 'success', timer: 1500, showConfirmButton: false });
+            unlockApp();
+        } else {
+            Swal.fire({ text: 'PIN tidak cocok! Ulangi dari awal.', icon: 'error' });
+            currentPinInput = "";
+            renderPinScreen('setup');
+        }
+    } else if (mode === 'verify') {
+        if (currentPinInput === userProfile.pin) {
+            unlockApp();
+        } else {
+            Swal.fire({ text: 'PIN Salah!', icon: 'error', timer: 1500, showConfirmButton: false });
+            currentPinInput = "";
+            renderPinScreen('verify');
+        }
+    }
+}
 // Tambahin ini di dalem loadDataFromFirebase
 if ("Notification" in window) {
     Notification.requestPermission().then(permission => {
